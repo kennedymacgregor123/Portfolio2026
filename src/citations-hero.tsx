@@ -3,24 +3,65 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react"
 import { CitationCard } from "./cite/citation-card"
 import { pipelineCreated } from "./cite/fixtures"
 
-/**
- * The card pops up only the first time the hero appears. When the carousel
- * brings it back, it arrives with the slide, already in place.
+/*
+ * The hero plays a short sequence each time it appears (on load, and each
+ * time the carousel turns to it): the report writes itself out word by word,
+ * and just after the cited figure is written it takes its highlight as the
+ * card pops up beside it, while the rest of the text is still arriving.
+ * Timed with CSS delays, so nothing re-renders while it plays.
  */
-let introPlayed = false
+
+/** When the first word appears, after the carousel's swing has mostly landed. */
+const WRITE_START = 250
+/** The gap between one word and the next. */
+const WORD_MS = 6
+/** How long after the figure is written it takes its highlight and, in the
+    same moment, the card rises beside it: while the rest of the report is
+    still writing itself out. */
+const REVEAL_AFTER = 150
+
+/** Hands out each word's place in the writing order. */
+function counter() {
+  let i = 0
+  return () => i++
+}
+
+/**
+ * A run of text, each word fading in at its turn. A plain function, not a
+ * component, so every word takes its place in order as the hero renders and
+ * the figure's and card's timings can follow on from the last one.
+ */
+function words(text: string, next: () => number) {
+  return text.split(/(\s+)/).map((w, k) =>
+    /\s/.test(w) || !w ? (
+      w
+    ) : (
+      <span key={k} className="word-in" style={{ animationDelay: `${WRITE_START + next() * WORD_MS}ms` }}>
+        {w}
+      </span>
+    ),
+  )
+}
 
 /** The cited figure, styled the way the prototype marks a number in prose. */
 function Mark({
   children,
   markRef,
+  writeAt,
+  markAt,
 }: {
   children: string
   markRef: React.Ref<HTMLSpanElement>
+  /** When the figure is written, with the words around it. */
+  writeAt: number
+  /** When it takes its highlight. */
+  markAt: number
 }) {
   return (
     <span
       ref={markRef}
-      className="rounded-sm bg-muted text-foreground underline decoration-dotted decoration-from-font underline-offset-[3px] [box-shadow:0_0_0_2px_var(--muted)]"
+      className="mark-in rounded-sm bg-muted text-foreground underline decoration-dotted decoration-from-font underline-offset-[3px] [box-shadow:0_0_0_2px_var(--muted)]"
+      style={{ animationDelay: `${writeAt}ms, ${markAt}ms` }}
     >
       {children}
     </span>
@@ -40,7 +81,8 @@ const AFTER = [
 
 /**
  * A report, faded on every side, with one marked number and the metric card it
- * opens, popped up slightly to the right of the mark.
+ * opens, popped up slightly to the right of the mark. Plays the writing
+ * sequence above each time it mounts.
  *
  * The card sits outside the faded layer so the fade never touches it, and is
  * placed from the mark's measured position so it follows the mark as the text
@@ -52,10 +94,6 @@ export function CitationsHero() {
   const markRef = useRef<HTMLSpanElement>(null)
   const cardRef = useRef<HTMLDivElement>(null)
   const liftRef = useRef<HTMLDivElement>(null)
-  const [intro] = useState(() => !introPlayed)
-  useEffect(() => {
-    introPlayed = true
-  }, [])
   const [place, setPlace] = useState({ left: 0, top: 0, scale: 1, ready: false })
 
   useLayoutEffect(() => {
@@ -128,6 +166,19 @@ export function CitationsHero() {
 
   const prose = "text-[9.5px] leading-[1.75] sm:text-[11px]"
 
+  // The writing order runs straight down the report, the figure included.
+  const next = counter()
+  const write = (t: string) => words(t, next)
+  const before = BEFORE.map((t) => <p key={t} className={prose}>{write(t)}</p>)
+  const citedLead = write("Over the last 90 days the team created")
+  const figureAt = WRITE_START + next() * WORD_MS
+  const citedRest = write(
+    "in new pipeline, led by Ramp, Linear and Vercel, and the stage mix suggests most of it will reach a decision before year end. Inbound held its share of the total, and outbound sourced the largest single deal of the period.",
+  )
+  const after = AFTER.map((t) => <p key={t} className={prose}>{write(t)}</p>)
+  const markAt = figureAt + REVEAL_AFTER
+  const cardAt = markAt
+
   return (
     <div ref={frameRef} className="relative h-full w-full">
       {/* The text overruns the frame on every side, so the fade cuts into it
@@ -138,23 +189,15 @@ export function CitationsHero() {
         {/* The shimmer sits on the whole block, so one diagonal band crosses
             every paragraph at once. */}
         <div className="prose-shimmer flex w-full flex-col gap-2.5 px-[7%]">
-          {BEFORE.map((t) => (
-            <p key={t} className={prose}>
-              {t}
-            </p>
-          ))}
+          {before}
           <p className={prose}>
-            Over the last 90 days the team created{" "}
-            <Mark markRef={markRef}>$1.28M</Mark> in new pipeline, led by Ramp,
-            Linear and Vercel, and the stage mix suggests most of it will reach
-            a decision before year end. Inbound held its share of the total, and
-            outbound sourced the largest single deal of the period.
+            {citedLead}{" "}
+            <Mark markRef={markRef} writeAt={figureAt} markAt={markAt}>
+              $1.28M
+            </Mark>{" "}
+            {citedRest}
           </p>
-          {AFTER.map((t) => (
-            <p key={t} className={prose}>
-              {t}
-            </p>
-          ))}
+          {after}
         </div>
       </div>
 
@@ -173,7 +216,8 @@ export function CitationsHero() {
         <div ref={liftRef} className="card-lift">
           <div
             ref={cardRef}
-            className={`hero-card ${intro ? "card-pop" : ""} drop-shadow-[0_18px_40px_rgba(15,23,42,0.16)]`}
+            className="hero-card card-pop drop-shadow-[0_18px_40px_rgba(15,23,42,0.16)]"
+            style={{ animationDelay: `${cardAt}ms` }}
           >
             <CitationCard citation={pipelineCreated} audience="in-app" detail="full" hideCta />
           </div>

@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useLayoutEffect, useRef, useState } from "react"
-import { ChevronDown, ChevronRight, ChevronsRight, Contrast, FileText, House, MessageSquare, Share, SquarePen, TrendingDown, TrendingUp, X } from "lucide-react"
+import { ChevronDown, ChevronRight, ChevronsRight, FileText, House, MessageSquare, Share, SquarePen, TrendingDown, TrendingUp, X } from "lucide-react"
 
 /*
  * The ReportUI hero, built from the "Deploy" frame in Portfolio '26: the app
@@ -154,14 +154,26 @@ function Infinity_({ className }: { className?: string }) {
 
 /* ---------- The chat ---------- */
 
+/** A thought bubble: a small cloud trailing two dots, drawn in Lucide's line
+    style (24px grid, round caps) since Lucide has no thought bubble. */
+function ThoughtBubble({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth={2.25} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <path d="M8.5 15.5a4 4 0 0 1-.9-7.9 5 5 0 0 1 9.4-1.4 4 4 0 0 1 .5 9.3Z" />
+      <circle cx="6.5" cy="19" r="1.4" />
+      <circle cx="3.6" cy="21.6" r="0.7" />
+    </svg>
+  )
+}
+
 /** The assistant thinking: its label shimmers until the reply starts. */
 function Thought({ at, until }: { at: number; until: number }) {
   const t = useT()
   return (
     <Appear at={at}>
       <div className="flex items-center gap-[7px] text-[13px]" style={{ color: MUTED }}>
-        <Contrast strokeWidth={2.25} aria-hidden className="size-[12px]" />
-        <span className={t >= at && t < until ? "rb-thinking" : ""}>Thoughts on the report?</span>
+        <ThoughtBubble className="size-[13px]" />
+        <span className={t >= at && t < until ? "rb-thinking" : ""}>Thoughts</span>
         <ChevronRight strokeWidth={2.25} aria-hidden className="size-[8px]" />
       </div>
     </Appear>

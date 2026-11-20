@@ -508,8 +508,14 @@ dd {
     transform: none;
   }
 }
+/* Shared with the cited figure's highlight, so the two arrive as one: a
+   gentle start, a soft landing. */
+:root {
+  --reveal-ease: cubic-bezier(0.45, 0, 0.2, 1);
+  --reveal-ms: 700ms;
+}
 .card-pop {
-  animation: card-pop 500ms 250ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  animation: card-pop var(--reveal-ms) 250ms var(--reveal-ease) both;
 }
 
 @keyframes slide-in {
@@ -768,4 +774,44 @@ main:has(.hero-slide a:focus-visible) .title-chevron,
 /* The chart's lines, drawing in from the left. */
 .rb-draw {
   transition: clip-path 1300ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ---------- The Citations hero's writing sequence ---------- */
+
+/* Each word arrives as the report is written: a quick fade out of a soft blur. */
+@keyframes word-in {
+  from {
+    opacity: 0;
+    filter: blur(3px);
+  }
+  to {
+    opacity: 1;
+    filter: blur(0);
+  }
+}
+.word-in {
+  animation: word-in 380ms ease-out both;
+}
+
+/* The cited figure: written like any other word, then it takes its mark (the
+   ground, the dotted rule and full ink) once the writing is done. */
+@keyframes mark-hl {
+  from {
+    background-color: transparent;
+    box-shadow: 0 0 0 2px transparent;
+    text-decoration-color: transparent;
+    color: inherit;
+  }
+}
+.mark-in {
+  animation:
+    word-in 380ms ease-out both,
+    mark-hl var(--reveal-ms) var(--reveal-ease) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .word-in,
+  .mark-in {
+    animation: none;
+  }
 }

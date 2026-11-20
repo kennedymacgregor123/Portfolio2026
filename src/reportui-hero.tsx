@@ -300,15 +300,48 @@ export function Kpi({
   )
 }
 
-/** The reported win rate, a soft wave climbing to the right. */
-const REPORTED =
-  "M0 116 C 10 104, 18 98, 30 104 S 46 112, 58 104 S 82 82, 98 80 S 114 92, 122 98 S 142 104, 156 100 S 176 64, 196 62 S 216 80, 230 76 S 260 46, 282 42 S 300 54, 316 52 S 334 44, 350 46 S 370 56, 384 50 S 404 22, 420 18 L 432 20"
-const FORECAST =
-  "M0 112 C 40 108, 80 98, 120 96 S 180 94, 220 90 S 280 86, 320 82 S 380 78, 432 70"
+/*
+ * The win rate, as weekly readings on the chart's 124px-high scale (6 is the
+ * 16% line, 118 the 0% line). The line is drawn from these at the chart's
+ * real width, so it keeps its shape and an even stroke however wide the chart
+ * is laid out, rather than one fixed curve stretched to fit.
+ */
+const REPORTED = [114, 106, 108, 96, 99, 86, 80, 84, 70, 62, 65, 52, 44, 34, 26]
+const FORECAST = [112, 106, 100, 94, 88, 82, 76, 70]
+const CHART_H = 124
+
+/** A smooth line through evenly spaced readings (Catmull-Rom as Béziers). */
+function smoothPath(ys: number[], width: number) {
+  const pts = ys.map((y, i) => [(i / (ys.length - 1)) * width, y] as const)
+  let d = `M${pts[0]![0]} ${pts[0]![1]}`
+  for (let i = 0; i < pts.length - 1; i++) {
+    const p0 = pts[i - 1] ?? pts[i]!
+    const p1 = pts[i]!
+    const p2 = pts[i + 1]!
+    const p3 = pts[i + 2] ?? p2
+    const c1 = [p1[0] + (p2[0] - p0[0]) / 6, p1[1] + (p2[1] - p0[1]) / 6]
+    const c2 = [p2[0] - (p3[0] - p1[0]) / 6, p2[1] - (p3[1] - p1[1]) / 6]
+    d += ` C ${c1[0]} ${c1[1]}, ${c2[0]} ${c2[1]}, ${p2[0]} ${p2[1]}`
+  }
+  return d
+}
 
 export function WinRateChart() {
   // The lines draw in from the left once the card is in place.
   const drawn = useT() >= T.chart + 250
+  // The plot's laid-out width (unaffected by any scaling around it).
+  const plotRef = useRef<HTMLDivElement>(null)
+  const [w, setW] = useState(432)
+  useLayoutEffect(() => {
+    const el = plotRef.current
+    if (!el) return
+    const measure = () => setW(el.offsetWidth || 432)
+    measure()
+    const ro = new ResizeObserver(measure)
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
+  const reported = smoothPath(REPORTED, w)
   return (
     <Build at={T.chart} radius={10} className="mt-[14px]">
       <div className="rounded-[10px] border bg-white px-[16px] pt-[14px] pb-[12px]" style={{ borderColor: "#e8e8e6" }}>
@@ -332,17 +365,16 @@ export function WinRateChart() {
               drawn narrow (the case study on a phone) and stay whole in the
               hero, which is laid out at full size and scaled. */}
           <div className="@container flex-1">
-            <div className="relative h-[124px]">
-              <svg viewBox="0 0 432 124" className="absolute inset-0 h-full w-full" preserveAspectRatio="none" aria-hidden>
+            <div ref={plotRef} className="relative h-[124px]">
+              <svg viewBox={`0 0 ${w} ${CHART_H}`} className="absolute inset-0 h-full w-full" aria-hidden>
                 {[6, 62, 118].map((y) => (
-                  <line key={y} x1="0" x2="432" y1={y} y2={y} stroke="#ececea" strokeDasharray="4 4" />
+                  <line key={y} x1="0" x2={w} y1={y} y2={y} stroke="#ececea" strokeDasharray="4 4" />
                 ))}
               </svg>
               <svg
-                viewBox="0 0 432 124"
-                className="rb-draw absolute inset-0 h-full w-full"
-                style={{ clipPath: drawn ? "inset(0 0 0 0)" : "inset(0 100% 0 0)" }}
-                preserveAspectRatio="none"
+                viewBox={`0 0 ${w} ${CHART_H}`}
+                className="rb-draw absolute inset-0 h-full w-full overflow-visible"
+                style={{ clipPath: drawn ? "inset(-4px -4px -4px 0)" : "inset(-4px 100% -4px 0)" }}
                 aria-hidden
               >
                 <defs>
@@ -351,9 +383,9 @@ export function WinRateChart() {
                     <stop offset="1" stopColor="#3fae7a" stopOpacity="0" />
                   </linearGradient>
                 </defs>
-                <path d={`${REPORTED} L 432 124 L 0 124 Z`} fill="url(#winrate-fill)" />
-                <path d={FORECAST} fill="none" stroke="#b8bcc4" strokeWidth="1.2" strokeDasharray="2 3" />
-                <path d={REPORTED} fill="none" stroke="#3fae7a" strokeWidth="1.5" />
+                <path d={`${reported} L ${w} ${CHART_H} L 0 ${CHART_H} Z`} fill="url(#winrate-fill)" />
+                <path d={smoothPath(FORECAST, w)} fill="none" stroke="#b8bcc4" strokeWidth="1.2" strokeDasharray="2 3" />
+                <path d={reported} fill="none" stroke="#3fae7a" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </div>
             <div className="mt-[8px] flex justify-between text-[10px]" style={{ color: "#a3a7b0" }}>

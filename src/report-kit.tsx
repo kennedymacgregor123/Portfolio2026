@@ -16,6 +16,8 @@ const HAIRLINE = "#ecedee"
 const BORDER = "#dadde2"
 const CHART = "#0371fe"
 const TICK = "#1f252db8"
+/** A forecast's dotted stroke: round dots with a gap, in the chart and its key alike. */
+const DOTS = "0.01 4"
 
 /* ---------- Scaling ---------- */
 
@@ -125,18 +127,25 @@ function Key({ label, kind = "dot" }: { label: string; kind?: "dot" | "line" | "
       {kind === "dot" ? (
         <span aria-hidden className="size-2 shrink-0 rounded-full" style={{ background: CHART }} />
       ) : (
-        <span
-          aria-hidden
-          className="inline-block w-[14px] shrink-0"
-          style={{ borderTop: `2px ${kind === "dashed" ? "dashed" : "solid"} ${CHART}`, borderRadius: 1 }}
-        />
+        // A sample of the line it names, drawn with the same stroke and, for a
+        // forecast, the same dots as the chart, so the two read as one.
+        <svg aria-hidden viewBox="0 0 16 4" className="h-[4px] w-[16px] shrink-0 overflow-visible">
+          <path
+            d="M2 2H14"
+            fill="none"
+            stroke={CHART}
+            strokeWidth={2}
+            strokeLinecap="round"
+            strokeDasharray={kind === "dashed" ? DOTS : undefined}
+          />
+        </svg>
       )}
       {label}
     </li>
   )
 }
 
-/** The card every chart sits in: title and legend, the plot, a table link. */
+/** The card every chart sits in: title and legend, then the plot. */
 function ChartCard({
   title,
   keys,
@@ -159,9 +168,6 @@ function ChartCard({
         </div>
       )}
       {children}
-      <div className="text-right text-[12px] underline underline-offset-2" style={{ color: MUTED }}>
-        View as table
-      </div>
     </div>
   )
 }
@@ -245,13 +251,13 @@ export function ForecastChart() {
             { label: "Q1", at: 53 },
             { label: "Q2", at: 126.25 },
             { label: "Q3", at: 199.5 },
-            { label: "Q4 (est)", at: 272.75 },
-            { label: "Q5 (est)", at: 333.125 },
+            { label: "Q4", at: 272.75 },
+            { label: "Q1 '27", at: 333.125 },
           ]}
         />
         <path d={`${reported}L272.75,182L53,182Z`} fill="url(#rk-forecast-fill)" fillOpacity={0.6} />
         <path d={reported} fill="none" stroke={CHART} strokeWidth={2} />
-        <path d="M272.75,46L346,27.938" fill="none" stroke={CHART} strokeWidth={2} strokeDasharray="2 4" />
+        <path d="M272.75,46L346,27.938" fill="none" stroke={CHART} strokeWidth={2} strokeLinecap="round" strokeDasharray={DOTS} />
       </svg>
     </ChartCard>
   )
@@ -338,6 +344,16 @@ const TONES = {
         <circle cx="12" cy="12" r="9.25" />
         <path d="M12 11v5.5M10 16.5h4M10.5 11H12" />
         <circle cx="12" cy="7.75" r="0.6" fill="currentColor" />
+      </>
+    ),
+  },
+  success: {
+    bg: "rgb(237,252,242)",
+    ink: "rgb(0,110,45)",
+    icon: (
+      <>
+        <circle cx="12" cy="12" r="9.25" />
+        <path d="m8.25 12.25 2.5 2.5 5-5.25" />
       </>
     ),
   },

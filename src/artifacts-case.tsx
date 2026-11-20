@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from "react"
 
 import type { CaseStudy } from "./case-study"
-import { TrendingDown, TrendingUp } from "lucide-react"
+import { Store, TrendingDown, TrendingUp } from "lucide-react"
 
 import { INK, Kpi, LINE, MUTED, ReportUIHero } from "./reportui-hero"
-import { BarChart, Callout, DataTable, ForecastChart, KpiCard, LineChart, ReportHeader, Scaled } from "./report-kit"
+import { Callout, ForecastChart, Scaled } from "./report-kit"
+import { ArtifactsHero } from "./artifacts-hero"
 import { ScribbleNote } from "./scribble-note"
 
 /*
@@ -122,49 +123,191 @@ function DriftingReports() {
 
 /* ---------- The kit ---------- */
 
-function KitTile({ name, width, children }: { name: string; width: number; children: React.ReactNode }) {
+/*
+ * The kit as one quiet set: each component drawn directly at a size that
+ * reads, in the site's ink and greys with a single green accent (the same
+ * green as the hero report's chart), all telling the same report's story.
+ */
+
+const KIT_GREEN = "#3fae7a"
+const KIT_GREEN_SOFT = "#e9f6ef"
+const KIT_SUBTLE = "#9aa0a9"
+const KIT_RULE = "#eeeeec"
+
+/** One component of the kit: a white tile holding its specimen, its name below. */
+function KitTile({ name, children }: { name: string; children: React.ReactNode }) {
   return (
-    <div className="flex flex-col gap-2">
-      <div className="flex min-h-[92px] flex-1 flex-col justify-center rounded-[10px] border bg-[#fbfbfa] p-3" style={{ borderColor: LINE }}>
-        <Scaled width={width}>{children}</Scaled>
+    <div className="flex flex-col gap-2.5">
+      <div
+        className={`flex h-[128px] flex-col justify-center rounded-[12px] border bg-white px-4 py-3.5 ${FONT}`}
+        style={{ borderColor: LINE, color: INK }}
+      >
+        {children}
       </div>
       <span className="project-blurb text-center !text-[12px]">{name}</span>
     </div>
   )
 }
 
-/** The kit: each tile a hand-built recreation of the component, laid out at
-    its design width and scaled into the tile. */
+/** A small eyebrow inside a specimen, naming what it shows. */
+function KitLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="text-[10.5px] leading-none font-medium" style={{ color: KIT_SUBTLE }}>
+      {children}
+    </div>
+  )
+}
+
+function KitHeader() {
+  return (
+    <>
+      <KitLabel>Vasco</KitLabel>
+      <div className="mt-1.5 text-[19px] leading-tight font-semibold tracking-[-0.3px]">ICP Analysis</div>
+      <div className="mt-3 flex gap-4 text-[10.5px]">
+        {[
+          ["Period", "Q4 FY26"],
+          ["Score", "6.4/10"],
+        ].map(([k, v]) => (
+          <div key={k}>
+            <div style={{ color: KIT_SUBTLE }}>{k}</div>
+            <div className="mt-0.5 font-semibold">{v}</div>
+          </div>
+        ))}
+      </div>
+    </>
+  )
+}
+
+function KitKpi() {
+  return (
+    <>
+      <KitLabel>Net New ARR</KitLabel>
+      <div className="mt-2 text-[24px] leading-none font-semibold tracking-[-0.4px] tabular-nums">$512K</div>
+      <div className="mt-1.5 text-[10.5px]" style={{ color: KIT_SUBTLE }}>
+        Across 4 quarters
+      </div>
+      <span
+        className="mt-2.5 inline-flex w-fit items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-medium tabular-nums"
+        style={{ background: KIT_GREEN_SOFT, color: "#2f855a" }}
+      >
+        <TrendingUp strokeWidth={2.5} className="size-[10px]" aria-hidden />
+        +80%
+      </span>
+    </>
+  )
+}
+
+function KitTrend() {
+  const line = "M0 52 C 14 48, 22 40, 34 42 S 52 50, 64 40 S 84 22, 98 26 S 118 34, 132 22 S 152 10, 168 8"
+  return (
+    <>
+      <KitLabel>Win rate, rolling 90d</KitLabel>
+      <svg viewBox="0 0 168 60" className="mt-3 block h-[58px] w-full" preserveAspectRatio="none" aria-hidden>
+        <defs>
+          <linearGradient id="kit-trend" x1="0" x2="0" y1="0" y2="1">
+            <stop offset="0" stopColor={KIT_GREEN} stopOpacity="0.16" />
+            <stop offset="1" stopColor={KIT_GREEN} stopOpacity="0" />
+          </linearGradient>
+        </defs>
+        {[10, 34, 58].map((y) => (
+          <line key={y} x1="0" x2="168" y1={y} y2={y} stroke={KIT_RULE} strokeDasharray="3 3" vectorEffect="non-scaling-stroke" />
+        ))}
+        <path d={`${line} L168 60 L0 60 Z`} fill="url(#kit-trend)" />
+        <path d={line} fill="none" stroke={KIT_GREEN} strokeWidth="1.75" vectorEffect="non-scaling-stroke" />
+      </svg>
+    </>
+  )
+}
+
+function KitBars() {
+  const bars = [
+    { k: "Ent", v: 0.92 },
+    { k: "Mid", v: 0.64 },
+    { k: "SMB", v: 0.38 },
+    { k: "Partner", v: 0.5 },
+  ]
+  return (
+    <>
+      <KitLabel>Revenue by segment</KitLabel>
+      <div className="mt-3 flex h-[58px] items-end gap-2">
+        {bars.map((b, i) => (
+          <div key={b.k} className="flex flex-1 flex-col items-center gap-1">
+            <span
+              className="w-full rounded-t-[3px]"
+              style={{ height: `${b.v * 44}px`, background: i === 0 ? KIT_GREEN : "#d9dcdf" }}
+            />
+            <span className="text-[9px] leading-none" style={{ color: KIT_SUBTLE }}>
+              {b.k}
+            </span>
+          </div>
+        ))}
+      </div>
+    </>
+  )
+}
+
+function KitTable() {
+  const rows = [
+    ["Enterprise", "$620K"],
+    ["Mid-market", "$410K"],
+    ["SMB", "$210K"],
+  ]
+  return (
+    <div className="text-[11px]">
+      <div className="flex justify-between pb-1.5 text-[10px] font-medium" style={{ color: KIT_SUBTLE }}>
+        <span>Segment</span>
+        <span>ARR</span>
+      </div>
+      {rows.map(([a, b]) => (
+        <div key={a} className="flex justify-between border-t py-1.5" style={{ borderColor: KIT_RULE }}>
+          <span>{a}</span>
+          <span className="tabular-nums" style={{ color: MUTED }}>
+            {b}
+          </span>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+/** ReportUI's green "Win" callout, drawn at the kit's size: the soft green
+    card, a circled check beside the bold title, the finding beneath. */
+function KitCallout() {
+  return (
+    <div className="rounded-[11px] px-3 py-2.5" style={{ background: "rgb(237,252,242)", color: "rgb(0,110,45)" }}>
+      <div className="flex items-center gap-1.5 text-[12.5px] font-semibold tracking-[-0.2px]">
+        <svg viewBox="0 0 24 24" className="size-[14px] shrink-0" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+          <circle cx="12" cy="12" r="9.25" />
+          <path d="m8.25 12.25 2.5 2.5 5-5.25" />
+        </svg>
+        Win
+      </div>
+      <p className="mt-1 text-[11px] leading-[1.45]">Net new ARR up 80% across the year.</p>
+    </div>
+  )
+}
+
+/** The kit: the components a report is built from. */
 function ComponentKit() {
   return (
-    <div className="grid w-full max-w-[38rem] grid-cols-2 gap-x-3 gap-y-4 sm:grid-cols-3">
-      <KitTile name="Report header" width={420}>
-        <ReportHeader title="Weekly Retro — Jun 23" meta={[{ label: "Period", value: "Jun 16–22" }]} />
+    <div className="grid w-full max-w-[38rem] grid-cols-2 gap-x-3 gap-y-5 sm:grid-cols-3">
+      <KitTile name="Report header">
+        <KitHeader />
       </KitTile>
-      <KitTile name="KPI card" width={240}>
-        <KpiCard label="Total ARR" value="$1.19M" note="vs $968K last quarter" change="+23%" />
+      <KitTile name="Trend chart">
+        <KitTrend />
       </KitTile>
-      <KitTile name="Trend chart" width={420}>
-        <LineChart />
+      <KitTile name="KPI card">
+        <KitKpi />
       </KitTile>
-      <KitTile name="Bar chart" width={420}>
-        <BarChart />
+      <KitTile name="Bar chart">
+        <KitBars />
       </KitTile>
-      <KitTile name="Table" width={420}>
-        <DataTable
-          columns={["Stage", "Count", "Value"]}
-          rows={[
-            ["Lead", "512", "$6.1M"],
-            ["MQL", "204", "$3.9M"],
-            ["SQL", "87", "$2.48M"],
-            ["Opportunity", "31", "$890K"],
-          ]}
-        />
+      <KitTile name="Table">
+        <KitTable />
       </KitTile>
-      <KitTile name="Callout" width={300}>
-        <Callout tone="caution" title="Watch">
-          MQL attainment at 82% — monitor closely next week.
-        </Callout>
+      <KitTile name="Callout">
+        <KitCallout />
       </KitTile>
     </div>
   )
@@ -199,7 +342,9 @@ const SPECS = {
     ],
     // A recreation of the ReportUI trend chart, with its forecast.
     render: (
-      <div className="w-full max-w-[25rem]">
+      // Nudged down, clear of the Component | Spec toggle above it; a shift,
+      // not a margin, so the panel keeps its height.
+      <div className="w-full max-w-[25rem] translate-y-3">
         <Scaled width={440}>
           <ForecastChart />
         </Scaled>
@@ -250,7 +395,7 @@ function AgentReadable() {
           description the agent reads it from. The toggle sits inside, top
           right, and the container holds its height either way. */}
       <div
-        className={`relative flex min-h-[25.5rem] flex-col rounded-[12px] border transition-colors duration-300 ${
+        className={`relative flex min-h-[23rem] flex-col rounded-[12px] border transition-colors duration-300 ${
           code ? "border-[#23262d] bg-[#23262d]" : "border-[#ebebe9] bg-[#f3f3f2]"
         }`}
       >
@@ -311,66 +456,203 @@ function AgentReadable() {
 
 /* ---------- Templates ---------- */
 
-const TEMPLATES: { name: string; cadence: string; layout: ("kpis" | "chart" | "text" | "table" | "bars")[] }[] = [
-  { name: "Daily signups", cadence: "Daily", layout: ["kpis", "chart"] },
-  { name: "Weekly pipeline review", cadence: "Weekly", layout: ["kpis", "chart", "table"] },
-  { name: "Monthly revenue health", cadence: "Monthly", layout: ["text", "kpis", "chart"] },
-  { name: "ICP analysis", cadence: "Quarterly", layout: ["text", "bars", "table"] },
-  { name: "Team scorecard", cadence: "Weekly", layout: ["kpis", "table"] },
-  { name: "Board update", cadence: "Quarterly", layout: ["text", "kpis", "bars"] },
+/*
+ * The templates as the product shows them, from the Vasco home screen's "Put
+ * your agents to work": a row of template cards, each naming the template and
+ * what it does, with a report sheet rising out of its foot at a slight tilt.
+ * The sheets are drawn in the kit's quiet palette (ink, soft greys and one
+ * green), small enough that every part sits inside its sheet. Laid out at a
+ * fixed size and scaled to the panel.
+ */
+
+const TPL_W = 980
+const TPL_LINE = "#f0f0ee"
+const TPL_EDGE = "#ececea"
+const TPL_GREEN = "#3fae7a"
+
+/** A grey placeholder line, standing in for text on a sheet. */
+function Skel({ w, h = 5, className = "" }: { w: string; h?: number; className?: string }) {
+  return <span className={`block rounded-full ${className}`} style={{ width: w, height: h, background: TPL_LINE }} />
+}
+
+/** A small KPI tile on a sheet: a label line, the figure, and its change. */
+function SheetKpi({ value, change }: { value: string; change?: string }) {
+  return (
+    <div className="min-w-0 flex-1 rounded-[8px] border px-2.5 pt-2.5 pb-2" style={{ borderColor: TPL_EDGE }}>
+      <Skel w="55%" h={4} />
+      <div className="mt-1.5 text-[12.5px] leading-none font-semibold tracking-[-0.2px] tabular-nums">{value}</div>
+      <div className="mt-1 h-[9px] text-[8.5px] leading-[9px] font-medium" style={{ color: TPL_GREEN }}>
+        {change}
+      </div>
+    </div>
+  )
+}
+
+/** A summary paragraph and a soft area chart. */
+function SheetSummary() {
+  const line =
+    "M0 34 C 12 32, 18 16, 30 13 S 44 26, 54 20 S 64 9, 74 14 S 92 29, 104 26 S 116 9, 128 11 S 142 26, 154 22 S 168 10, 180 12 S 194 19, 200 17"
+  return (
+    <>
+      <div className="mt-3.5 text-[9.5px] font-medium" style={{ color: MUTED }}>
+        Summary
+      </div>
+      <Skel w="100%" className="mt-2" />
+      <Skel w="72%" className="mt-1.5" />
+      <div className="mt-3.5 rounded-[8px] border px-2.5 pt-3 pb-1.5" style={{ borderColor: TPL_EDGE }}>
+        <svg viewBox="0 0 200 40" className="block h-[40px] w-full" preserveAspectRatio="none" aria-hidden>
+          <defs>
+            <linearGradient id="tpl-area" x1="0" x2="0" y1="0" y2="1">
+              <stop offset="0" stopColor={TPL_GREEN} stopOpacity="0.18" />
+              <stop offset="1" stopColor={TPL_GREEN} stopOpacity="0" />
+            </linearGradient>
+          </defs>
+          <path d={`${line} L200 40 L0 40 Z`} fill="url(#tpl-area)" />
+          <path d={line} fill="none" stroke={TPL_GREEN} strokeWidth="1.3" vectorEffect="non-scaling-stroke" />
+        </svg>
+      </div>
+    </>
+  )
+}
+
+/** A share of total, as a donut with its key, and two figures. */
+function SheetShare() {
+  const slices = [
+    { c: TPL_GREEN, len: 52 },
+    { c: "#a8d9c0", len: 28 },
+    { c: "#dcdfe2", len: 20 },
+  ]
+  let offset = 0
+  return (
+    <>
+      <div className="mt-3.5 flex items-center gap-3.5 rounded-[8px] border px-3 py-2.5" style={{ borderColor: TPL_EDGE }}>
+        <svg viewBox="0 0 36 36" className="size-[34px] shrink-0 -rotate-90" aria-hidden>
+          {slices.map((s) => {
+            const el = (
+              <circle
+                key={s.c}
+                cx="18"
+                cy="18"
+                r="14"
+                fill="none"
+                stroke={s.c}
+                strokeWidth="6"
+                pathLength={100}
+                strokeDasharray={`${s.len} ${100 - s.len}`}
+                strokeDashoffset={-offset}
+              />
+            )
+            offset += s.len
+            return el
+          })}
+        </svg>
+        <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+          {slices.map((s) => (
+            <div key={s.c} className="flex items-center gap-1.5">
+              <span className="size-[5px] shrink-0 rounded-full" style={{ background: s.c }} />
+              <Skel w="100%" h={4} />
+            </div>
+          ))}
+        </div>
+      </div>
+      <div className="mt-2.5 flex gap-2">
+        <SheetKpi value="$306K" change="↗ 18%" />
+        <SheetKpi value="$120K" change="↗ 26%" />
+      </div>
+    </>
+  )
+}
+
+/** A small column chart, its tallest bar in green, and three figures. */
+function SheetProgress() {
+  const bars = [0.42, 0.58, 0.5, 0.74, 0.62, 1, 0.82]
+  return (
+    <>
+      <div className="mt-3.5 rounded-[8px] border px-3 pt-3 pb-2.5" style={{ borderColor: TPL_EDGE }}>
+        <div className="flex h-[34px] items-end gap-[5px]">
+          {bars.map((v, i) => (
+            <span
+              key={i}
+              className="flex-1 rounded-t-[2px]"
+              style={{ height: `${v * 100}%`, background: v === 1 ? TPL_GREEN : "#d9dcdf" }}
+            />
+          ))}
+        </div>
+        <span className="mt-1 block h-px w-full" style={{ background: TPL_EDGE }} />
+      </div>
+      <div className="mt-2.5 flex gap-2">
+        <SheetKpi value="$400K" change="↗ 12%" />
+        <SheetKpi value="91%" change="↗ 4pp" />
+        <SheetKpi value="11d" change="↗ 2d" />
+      </div>
+    </>
+  )
+}
+
+/** The templates: each named for the report it makes, and that report's sheet. */
+const TEMPLATES: { title: string; blurb: string; sheet: React.ReactNode }[] = [
+  {
+    title: "ICP & TAM Discovery",
+    blurb: "Validates your Ideal Customer Profile against real deal outcomes and sizes the market it points to.",
+    sheet: <SheetShare />,
+  },
+  {
+    title: "Weekly Pipeline Review",
+    blurb: "New pipeline, win rate and slipped deals each week, so the team sees what moved and why.",
+    sheet: <SheetSummary />,
+  },
+  {
+    title: "Monthly Revenue Health",
+    blurb: "ARR, retention and payback month by month, with the drivers behind each change.",
+    sheet: <SheetProgress />,
+  },
 ]
 
-function TemplateThumb({ layout }: { layout: (typeof TEMPLATES)[number]["layout"] }) {
-  const block = "rounded-[3px] bg-[#e7e7e5]"
+function TemplateCard({ title, blurb, sheet }: (typeof TEMPLATES)[number]) {
   return (
-    <div className="flex flex-col gap-1.5 rounded-[8px] border bg-[#fbfbfa] p-2.5" style={{ borderColor: LINE }}>
-      <span className={`${block} h-[6px] w-1/2 !bg-[#d9d9d6]`} />
-      {layout.map((part, i) =>
-        part === "kpis" ? (
-          <div key={i} className="flex gap-1">
-            {[0, 1, 2].map((j) => (
-              <span key={j} className="h-[16px] flex-1 rounded-[3px] border bg-white" style={{ borderColor: "#e8e8e6" }} />
-            ))}
-          </div>
-        ) : part === "chart" ? (
-          <div key={i} className="rounded-[3px] border bg-white px-1 pt-1" style={{ borderColor: "#e8e8e6" }}>
-            <MiniTrend values={[0.2, 0.35, 0.3, 0.5, 0.55, 0.7]} className="h-[20px]" />
-          </div>
-        ) : part === "bars" ? (
-          <div key={i} className="flex h-[22px] items-end gap-1">
-            {[0.5, 0.8, 0.4, 0.9, 0.6].map((h, j) => (
-              <span key={j} className="flex-1 rounded-t-[2px] bg-[#c4d0f8]" style={{ height: `${h * 100}%` }} />
-            ))}
-          </div>
-        ) : part === "table" ? (
-          <div key={i} className="flex flex-col gap-1">
-            {[0, 1, 2].map((j) => (
-              <span key={j} className={`${block} h-[4px]`} />
-            ))}
-          </div>
-        ) : (
-          <div key={i} className="flex flex-col gap-1">
-            <span className={`${block} h-[4px]`} />
-            <span className={`${block} h-[4px] w-4/5`} />
-          </div>
-        ),
-      )}
+    // A step lighter than the panel, with a hairline edge. On hover the sheet
+    // rises and straightens a little inside it, then settles back.
+    <div
+      className="group relative h-[300px] min-w-0 flex-1 overflow-hidden rounded-[16px] border px-5 pt-5"
+      style={{ background: "#fbfbfa", borderColor: "#efefed" }}
+    >
+      <div className="text-[13.5px] font-semibold tracking-[-0.1px]">{title}</div>
+      <p className="mt-1.5 line-clamp-2 text-[12px] leading-[1.5]" style={{ color: "#6b7280" }}>
+        {blurb}
+      </p>
+      {/* The report the template makes, rising out of the card at a slight
+          tilt and running off its foot. */}
+      <div
+        className="tpl-sheet absolute top-[124px] right-[38px] left-[46px] rounded-[11px] border bg-white px-4 pt-4 pb-14 shadow-[0_1px_2px_rgba(15,15,15,0.03),0_8px_20px_-10px_rgba(15,15,15,0.12)]"
+        style={{ borderColor: TPL_EDGE }}
+      >
+        <div className="text-[12.5px] leading-tight font-semibold tracking-[-0.15px]">{title}</div>
+        <Skel w="60%" className="mt-2" />
+        {sheet}
+      </div>
     </div>
   )
 }
 
 function TemplateGallery() {
   return (
-    <div className="grid w-full max-w-[38rem] grid-cols-2 gap-x-3 gap-y-4 sm:grid-cols-3">
-      {TEMPLATES.map((t) => (
-        <div key={t.name} className="flex flex-col gap-2">
-          <TemplateThumb layout={t.layout} />
-          <div className="flex items-center justify-between gap-2">
-            <span className="project-blurb truncate !text-[12px] !text-[#0f0f0f]">{t.name}</span>
-            <span className="shrink-0 rounded-full bg-[#e6e6e3] px-1.5 py-px text-[10px] text-[#4a4a4a]">{t.cadence}</span>
+    <div className="w-full max-w-[40rem]">
+      <Scaled width={TPL_W}>
+        <div className={`${FONT} pt-1 pb-2`} style={{ color: INK }}>
+          <div className="flex items-center justify-between">
+            <span className="text-[14.5px] font-medium">Put your agents to work</span>
+            <span className="flex items-center gap-1.5 text-[12.5px] font-medium" style={{ color: "#4b5160" }}>
+              <Store strokeWidth={2} className="size-[13px]" aria-hidden />
+              Go to marketplace
+            </span>
+          </div>
+          <div className="mt-5 flex gap-5">
+            {TEMPLATES.map((t) => (
+              <TemplateCard key={t.title} {...t} />
+            ))}
           </div>
         </div>
-      ))}
+      </Scaled>
     </div>
   )
 }
@@ -533,6 +815,7 @@ export const ARTIFACTS_CASE: CaseStudy = {
     { label: "Timeline", value: "2026-07" },
     { label: "Company", value: "Vasco" },
   ],
+  hero: <ArtifactsHero />,
   sections: [
     {
       id: "problem",
@@ -585,7 +868,8 @@ export const ARTIFACTS_CASE: CaseStudy = {
       ],
       media: {
         kind: "demo",
-        caption: "A few of the templates, each with the cadence it's made for.",
+        caption: "Templates as the product offers them: each names what it does, with a glimpse of the report it makes. Hover one to lift its report.",
+        interactive: true,
         node: <TemplateGallery />,
       },
     },

@@ -89,7 +89,13 @@ const AFTER = [
  * reflows. It is decorative: the slide is a link, so the card is `inert` and
  * hidden from assistive tech.
  */
-export function CitationsHero() {
+export function CitationsHero({
+  compact = false,
+}: {
+  /** Drawn small, as a preview (the next-project tile): the card scales
+      with its frame and keeps clear of every edge. */
+  compact?: boolean
+} = {}) {
   const frameRef = useRef<HTMLDivElement>(null)
   const markRef = useRef<HTMLSpanElement>(null)
   const cardRef = useRef<HTMLDivElement>(null)
@@ -113,17 +119,22 @@ export function CitationsHero() {
       const f = { width: frame.offsetWidth, height: frame.offsetHeight }
       const m = { left: x, top: y, right: x + mark.offsetWidth, bottom: y + mark.offsetHeight }
       // Close to full size everywhere: narrow windows keep a readable card
-      // rather than shrinking it with the frame.
-      const scale = Math.min(0.8, Math.max(0.75, f.width / 1000))
+      // rather than shrinking it with the frame. As a preview, it scales with
+      // the frame instead, so it fits whole.
+      const scale = compact
+        ? Math.min(0.62, (f.width * 0.5) / card.offsetWidth, (f.height * 0.82) / card.offsetHeight)
+        : Math.min(0.8, Math.max(0.75, f.width / 1000))
       const width = card.offsetWidth * scale
       const height = card.offsetHeight * scale
       // The card rises beside the mark: its left edge just past the figure, and
       // its top a third of its height above the mark's line, so it reads as
       // popped up from the number. Where there is no room beside it, it drops
       // just under the mark's line instead, and it never leaves the frame's top.
-      const fitsBeside = m.right + 6 + width <= f.width - 8
-      const left = Math.max(8, Math.min(m.right + 6, f.width - width - 8))
-      const top = Math.max(4, fitsBeside ? m.top - height * 0.33 : m.bottom + 6)
+      // The space kept clear at the frame's edges: wider as a preview.
+      const edge = compact ? 22 : 8
+      const fitsBeside = m.right + 6 + width <= f.width - edge
+      const left = Math.max(edge, Math.min(m.right + 6, f.width - width - edge))
+      const top = Math.max(compact ? edge : 4, fitsBeside ? m.top - height * 0.33 : m.bottom + 6)
       setPlace({ left, top, scale, ready: true })
     }
     measure()
@@ -132,7 +143,7 @@ export function CitationsHero() {
     ro.observe(card)
     document.fonts?.ready.then(measure)
     return () => ro.disconnect()
-  }, [])
+  }, [compact])
 
   /* The card turns to face the pointer while it is over the slide, and levels
      out when it leaves. Written straight to CSS variables so a pointer move

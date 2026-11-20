@@ -867,3 +867,57 @@ main:has(.hero-slide a:focus-visible) .title-chevron,
     animation: none;
   }
 }
+
+/* ---------- The Artifacts templates ---------- */
+
+/* A template's report sheet, tilted as it rises out of its card. Hovering
+   the card turns it level, pivoting on its hidden bottom corner, so its foot
+   never comes into view; it tilts back on leaving. */
+.tpl-sheet {
+  transform-origin: bottom left;
+  rotate: -3deg;
+  transition:
+    rotate 550ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    box-shadow 550ms ease;
+}
+.group:hover .tpl-sheet {
+  rotate: 0deg;
+  box-shadow:
+    0 1px 2px rgba(15, 15, 15, 0.04),
+    0 14px 28px -12px rgba(15, 15, 15, 0.18);
+}
+@media (prefers-reduced-motion: reduce) {
+  .tpl-sheet {
+    transition: none;
+  }
+}
+
+/* ---------- The Artifacts case study's hero ---------- */
+
+/* The report and its notes rise into place in turn when the page opens. */
+@keyframes artifact-hero-in {
+  from {
+    opacity: 0;
+    translate: 0 14px;
+  }
+}
+.artifact-hero-in {
+  animation: artifact-hero-in 700ms var(--reveal-ease, ease-out) both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .artifact-hero-in {
+    animation: none;
+  }
+}
+
+/* The next-project tile: all white, unlike the grey demo panels above it,
+   with a soft hairline to hold its edge on the page. */
+.next-tile.case-media {
+  background: #fff;
+  border-color: #ebebe9;
+}
+.next-tile.case-media:hover {
+  box-shadow:
+    0 1px 2px rgba(15, 15, 15, 0.04),
+    0 14px 32px -12px rgba(15, 15, 15, 0.16);
+}

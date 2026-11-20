@@ -370,7 +370,7 @@ export function WinRateChart() {
   )
 }
 
-function Meta({ label, value, first }: { label: string; value: string; first?: boolean }) {
+export function Meta({ label, value, first }: { label: string; value: string; first?: boolean }) {
   return (
     <div className={first ? "pr-[12px]" : "border-l px-[12px]"} style={{ borderColor: "#e2e2e0" }}>
       <div className="text-[11.5px]" style={{ color: "#4b5160" }}>{label}</div>

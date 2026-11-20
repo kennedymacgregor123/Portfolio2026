@@ -254,7 +254,56 @@ function SectionDial({ sections, active }: { sections: Section[]; active: string
   )
 }
 
-export function CaseStudyPage({ study }: { study: CaseStudy }) {
+/** The project a case study hands on to, shown in the tile at its foot. */
+export type NextProject = {
+  title: string
+  blurb: string
+  href: string
+  /** The project's image from the home page. */
+  preview: React.ReactNode
+}
+
+/**
+ * The tile at the foot of a case study: the next project's name and line,
+ * beside its home-page image. The whole tile is the link; on hover it lifts
+ * a little and its arrow steps forward.
+ */
+function NextProjectTile({ next }: { next: NextProject }) {
+  return (
+    <a
+      href={next.href}
+      aria-label={`Next project: ${next.title}`}
+      className="next-tile case-media group/next relative flex flex-col overflow-hidden no-underline transition-[translate,box-shadow] duration-300 hover:-translate-y-1 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-foreground sm:flex-row sm:items-stretch"
+    >
+      <div className="flex flex-col justify-center gap-2 px-6 pt-6 pb-2 sm:w-[44%] sm:py-8 sm:pr-2 sm:pl-8">
+        <span className="case-heading">{next.title}</span>
+        <span className="case-text !text-[14px] text-balance">{next.blurb}</span>
+        <span className="mt-2 inline-flex items-center gap-1.5 text-[13px] font-medium text-[#0f0f0f]">
+          View case study
+          <svg
+            viewBox="0 0 16 16"
+            className="size-3.5 transition-transform duration-300 group-hover/next:translate-x-1"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden
+          >
+            <path d="M3 8h10M9 4l4 4-4 4" />
+          </svg>
+        </span>
+      </div>
+      {/* The project's own home-page image, shown as a picture of it: not a
+          control, so it neither takes focus nor answers the pointer. */}
+      <div inert aria-hidden className="pointer-events-none relative aspect-[16/10] min-w-0 flex-1 sm:aspect-auto sm:min-h-[15rem]">
+        <div className="absolute inset-0">{next.preview}</div>
+      </div>
+    </a>
+  )
+}
+
+export function CaseStudyPage({ study, next }: { study: CaseStudy; next?: NextProject }) {
   const [active, setActive] = useState(study.sections[0]!.id)
   const refs = useRef<Record<string, HTMLElement | null>>({})
 
@@ -342,6 +391,8 @@ export function CaseStudyPage({ study }: { study: CaseStudy }) {
               <MediaSlot media={s.media} />
             </section>
           ))}
+
+          {next && <NextProjectTile next={next} />}
         </article>
       </div>
     </main>

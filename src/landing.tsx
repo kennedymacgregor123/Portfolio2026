@@ -37,6 +37,8 @@ type Project = {
   /** Where clicking the hero goes. */
   href: string
   hero: React.ReactNode
+  /** The hero drawn small, for the next-project tile, where it differs. */
+  preview?: React.ReactNode
 }
 
 
@@ -48,6 +50,7 @@ const PROJECTS: Project[] = [
       "Enabled transparent verification by adding citation cards to every number, quote, and derived figure.",
     href: "#citations",
     hero: <CitationsHero />,
+    preview: <CitationsHero compact />,
   },
   {
     id: "artifacts",
@@ -58,6 +61,15 @@ const PROJECTS: Project[] = [
     hero: <ReportUIHero />,
   },
 ]
+
+/** The project after this one in the carousel's order, wrapping round: what
+    a case study's foot links on to. */
+function nextProject(id: string) {
+  const i = PROJECTS.findIndex((p) => p.id === id)
+  if (i < 0 || PROJECTS.length < 2) return undefined
+  const p = PROJECTS[(i + 1) % PROJECTS.length]!
+  return { title: p.title, blurb: p.blurb, href: p.href, preview: p.preview ?? p.hero }
+}
 
 function Arrow({
   direction,
@@ -219,7 +231,7 @@ export function Landing() {
       </div>
 
       {study ? (
-        <CaseStudyPage key={page.kind === "case" ? page.id : ""} study={study} />
+        <CaseStudyPage key={page.kind === "case" ? page.id : ""} study={study} next={nextProject(page.kind === "case" ? page.id : "")} />
       ) : page.kind === "about" ? (
         <About />
       ) : (

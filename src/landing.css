@@ -1,0 +1,771 @@
+@import "tailwindcss";
+@import "@fontsource-variable/inter";
+@source "./**/*.{ts,tsx}";
+
+/* The site's own small theme: the few colour tokens the pages use, and Inter
+   as the one typeface. */
+@theme {
+  --font-sans: "Inter Variable", Inter, sans-serif;
+  --color-foreground: rgb(31 37 45);
+  --color-muted-foreground: rgb(90 100 116);
+  --color-muted: rgb(31 37 45 / 0.04);
+  --color-border: rgb(218 221 226);
+  --color-accent: rgb(31 37 45 / 0.08);
+}
+:root {
+  --foreground: rgb(31 37 45);
+  --muted-foreground: rgb(90 100 116);
+  --muted: rgb(31 37 45 / 0.04);
+  --border: rgb(218 221 226);
+  --accent: rgb(31 37 45 / 0.08);
+}
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  color: var(--foreground);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Inter Display, as kennedymacgregor.com uses for project titles: Inter's
+   variable file with the optical-size axis, set to its display size where
+   it is used. Registered under its own name so nothing else changes face. */
+@font-face {
+  font-family: "Inter Display";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("../node_modules/@fontsource-variable/inter/files/inter-latin-opsz-normal.woff2")
+    format("woff2-variations");
+}
+.project-title,
+.project-blurb {
+  font-family: "Inter Display", "Inter Variable", sans-serif;
+  font-variation-settings: "opsz" 32;
+  line-height: 1.4;
+  letter-spacing: normal;
+}
+/* Measured from the project caption on kennedymacgregor.com/citations at
+   desktop width. */
+.project-title {
+  font-size: 15px;
+  font-weight: 500;
+  letter-spacing: 0.3px;
+  color: #0f0f0f;
+}
+/* The name in the header bar: the title style, a step smaller. */
+.site-name {
+  font-size: 14px;
+}
+.project-blurb {
+  font-size: 13px;
+  font-weight: 400;
+  color: #4a4a4a;
+}
+
+/* The switch reads in Inter Display, like the captions. */
+.view-switch {
+  font-family: "Inter Display", "Inter Variable", sans-serif;
+  font-variation-settings: "opsz" 32;
+}
+
+/* The About view, measured from kennedymacgregor.com/about. */
+.about,
+.email-dialog {
+  font-family: "Inter Display", "Inter Variable", sans-serif;
+  font-variation-settings: "opsz" 32;
+}
+.about-text {
+  font-size: 16px;
+  line-height: 1.4;
+  color: #4a4a4a;
+}
+.about-strong {
+  font-weight: 700;
+  color: #0f0f0f;
+}
+
+/* Letter by letter: each character starts invisible, blurred and low, and
+   settles in. --i is its place in the sequence. */
+@keyframes blur-in {
+  from {
+    opacity: 0;
+    filter: blur(10px);
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    filter: blur(0);
+    transform: none;
+  }
+}
+.blur-in-char {
+  display: inline-block;
+  animation: blur-in 600ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  animation-delay: calc(80ms + var(--i) * 3ms);
+}
+/* Behind the floating bar, the page colour fades out downward, so content
+   scrolling up passes under the bar cleanly instead of showing above it. */
+.header-shelf {
+  background: linear-gradient(to bottom, var(--page) 65%, transparent);
+}
+
+/* The header bar: white, with a soft two-layer shadow so it floats just
+   off the page. */
+.site-bar {
+  background: var(--bar);
+  border-color: #fff;
+  box-shadow:
+    0 1px 2px rgba(15, 15, 15, 0.04),
+    0 8px 24px -8px rgba(15, 15, 15, 0.1);
+}
+
+/* Case study pages. Type and colours follow the captions and About page. */
+.case-legend,
+.case-title,
+.case-heading,
+.case-text,
+.case-section {
+  font-family: "Inter Display", "Inter Variable", sans-serif;
+  font-variation-settings: "opsz" 32;
+}
+.case-legend {
+  font-size: 13px;
+  letter-spacing: 0.2px;
+}
+.case-title {
+  font-size: 28px;
+  font-weight: 500;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  color: #0f0f0f;
+}
+.case-heading {
+  font-size: 20px;
+  font-weight: 500;
+  line-height: 1.25;
+  letter-spacing: -0.005em;
+  color: #0f0f0f;
+}
+.case-text {
+  font-size: 15px;
+  line-height: 1.55;
+  color: #4a4a4a;
+}
+/* Media sits on the header bar's surface, with its white edge. */
+.case-media {
+  border-radius: 16px;
+  border: 1px solid #fff;
+  background: var(--bar);
+  box-shadow:
+    0 1px 2px rgba(15, 15, 15, 0.04),
+    0 8px 24px -8px rgba(15, 15, 15, 0.1);
+}
+.case-media.border-dashed {
+  border: 1px dashed #d9d9d6;
+  box-shadow: none;
+}
+/* Jumping to a section leaves room for the floating header. */
+.case-section {
+  scroll-margin-top: 120px;
+}
+/* On narrow screens the legend is a row pinned under the header, on the
+   page colour so content scrolls cleanly beneath it. */
+@media (max-width: 1023px) {
+  .case-legend-wrap {
+    background: var(--page);
+  }
+  .case-section {
+    scroll-margin-top: 150px;
+  }
+}
+
+/* Citation marks in report text, drawn the way the citation design marks
+   them: a figure or name, and a quote.
+
+   A figure or a name: medium-weight ink over the kit's dotted rule, a row of
+   soft dots tiled under the text rather than a text underline, on a ground
+   padded out and pulled back by the same amount so the sentence's spacing
+   is untouched. The ground lights on hover. Inline rather than the kit's
+   inline-block so a long phrase wraps, with the rule and ground repeated on
+   each line. */
+.cite-mark {
+  display: inline;
+  margin: 0 -0.25rem;
+  padding: 0.28em 0.25rem;
+  border-radius: 2px;
+  font-weight: 500;
+  color: #0f0f0f;
+  cursor: pointer;
+  background-image: radial-gradient(
+    circle,
+    color-mix(in srgb, var(--muted-foreground) 30%, transparent) 0.9px,
+    transparent 1.1px
+  );
+  background-size: 5px 2px;
+  background-repeat: round no-repeat;
+  background-position: left bottom;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+  transition: background-color 150ms ease;
+}
+/* The same words with nothing drawn, for the before state: plain weight, and
+   the mark's padding pulled back so its spacing matches. */
+.cite-mark-plain {
+  margin: 0 -0.25rem;
+  padding: 0 0.25rem;
+}
+.cite-mark:hover,
+.cite-mark:focus-visible,
+.cite-mark.is-on {
+  background-color: color-mix(in srgb, var(--accent) 60%, transparent);
+  outline: none;
+}
+.cite-mark.is-on {
+  background-color: var(--accent);
+}
+
+/* A quote: the claim stays plain text, and a small quote mark in a circle
+   follows it, centred on the cap height. Hovering or opening the mark grounds
+   the sentence it backs; the disc itself stays white so it doesn't dissolve
+   into that ground. */
+.cite-claim {
+  border-radius: 2px;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+  transition: background-color 150ms ease;
+}
+.cite-claim.is-grounded {
+  background-color: color-mix(in srgb, var(--accent) 60%, transparent);
+}
+.cite-quote {
+  display: inline-flex;
+  width: 1em;
+  height: 1em;
+  margin-left: 0.2em;
+  translate: 0 -0.08em;
+  align-items: center;
+  justify-content: center;
+  vertical-align: baseline;
+  border-radius: 9999px;
+  border: 1px solid var(--border);
+  background: #fff;
+  color: var(--muted-foreground);
+  cursor: pointer;
+  transition:
+    border-color 150ms ease,
+    color 150ms ease;
+}
+.cite-quote:hover,
+.cite-quote:focus-visible,
+.cite-quote.is-on {
+  border-color: color-mix(in srgb, #0f0f0f 25%, transparent);
+  color: #0f0f0f;
+  outline: none;
+}
+/* The card floats over the report text, so it carries a shadow like the
+   hero's card. */
+.cited-popover {
+  filter: drop-shadow(0 18px 40px rgba(15, 15, 15, 0.16));
+}
+@keyframes cited-card-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.cited-card-in {
+  animation: cited-card-in 220ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+/* The "Interactive" tag: Inter Display, and a cursor that gives a little
+   click whenever the panel is hovered. */
+.interactive-tag {
+  font-family: "Inter Display", "Inter Variable", sans-serif;
+  font-variation-settings: "opsz" 32;
+}
+@keyframes interactive-tap {
+  0%,
+  100% {
+    transform: none;
+  }
+  30% {
+    transform: translateY(1.5px) scale(0.9);
+  }
+  55% {
+    transform: none;
+  }
+  75% {
+    transform: translateY(1px) scale(0.94);
+  }
+}
+.interactive-pointer {
+  transform-origin: 40% 40%;
+}
+.group\/media:hover .interactive-pointer {
+  animation: interactive-tap 700ms ease-in-out 1;
+}
+@media (prefers-reduced-motion: reduce) {
+  .group\/media:hover .interactive-pointer {
+    animation: none;
+  }
+}
+
+/* A handwritten note on the "before" report, in a red pen, tilted a little
+   as if scrawled in the margin; the arrow is drawn in the same pen. */
+.scribble-note {
+  font-family: "Caveat", "Bradley Hand", "Segoe Print", cursive;
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 1;
+  color: #d4483b;
+  rotate: -5deg;
+  white-space: nowrap;
+}
+.scribble-arrow path {
+  fill: none;
+  stroke: #d4483b;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* The before/after slider. The before layer sits on the panel's surface so it
+   hides the cited text beneath it; the handle is a hairline with a white grip,
+   and the corner labels match the case study's small type. */
+.before-layer {
+  background: var(--bar);
+}
+.after-layer {
+  background: #fff;
+}
+.ba-line {
+  background: #c9c9c6;
+}
+.ba-grip {
+  background: #fff;
+  border: 1px solid #e1e1de;
+  color: #4a4a4a;
+  box-shadow: 0 4px 12px -4px rgba(15, 15, 15, 0.2);
+  transition:
+    transform 150ms ease,
+    box-shadow 150ms ease;
+}
+.ba-handle:hover .ba-grip,
+.ba-handle:focus-visible .ba-grip {
+  box-shadow: 0 6px 16px -4px rgba(15, 15, 15, 0.28);
+}
+.ba-handle:focus-visible {
+  outline: none;
+}
+.ba-handle:focus-visible .ba-grip {
+  outline: 1.5px solid #0f0f0f;
+  outline-offset: 2px;
+}
+.ba-label {
+  font-family: "Inter Display", "Inter Variable", sans-serif;
+  font-variation-settings: "opsz" 32;
+  font-size: 11.5px;
+  letter-spacing: 0.2px;
+  color: #898889;
+}
+
+/* The card-type wheel: each card with the same soft shadow as elsewhere,
+   a little smaller on a narrow screen so it fits between the arrows. */
+.card-wheel-card {
+  width: fit-content;
+  filter: drop-shadow(0 12px 28px rgba(15, 15, 15, 0.12));
+}
+@media (max-width: 639px) {
+  .card-wheel-card {
+    zoom: 0.86;
+  }
+}
+
+/* The email dialog rises in like the views do. */
+.email-dialog[open] {
+  animation: view-in 250ms cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+/* The signature video has a white ground; multiply drops it into the page.
+   The footer's fade-in isolates its contents, so the footer carries the page
+   colour itself for the video to blend against. */
+.signature {
+  mix-blend-mode: multiply;
+}
+.about-foot {
+  background: var(--page);
+}
+/* The email pop-up takes the bar's surface and edge. */
+.email-dialog {
+  background: var(--bar);
+  border-color: #fff;
+}
+.email-dialog::backdrop {
+  background: color-mix(in oklab, var(--page) 60%, transparent);
+}
+
+/* The rule and the footer follow once the text has mostly landed. */
+.about-rule,
+.about-foot {
+  animation: view-in 500ms cubic-bezier(0.4, 0, 0.2, 1) 650ms both;
+}
+
+/* Each view fades up as the switch changes it. */
+@keyframes view-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.view-in {
+  animation: view-in 350ms cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+/* The landing page's own surfaces: an off-white grey page and a slightly
+   lighter header bar with a white edge. */
+:root {
+  --page: #f1f1ef;
+  --bar: #f6f6f5;
+}
+
+html,
+body {
+  margin: 0;
+  background: var(--page);
+}
+
+/* No orphans: running text never leaves a single word alone on its last
+   line, and headings break into even lines. */
+.case-text,
+.project-blurb,
+.about-text,
+figcaption,
+dd {
+  text-wrap: pretty;
+}
+.case-title,
+.case-heading,
+.project-title {
+  text-wrap: balance;
+}
+/* Except in the before/after slider: its two layers must break in exactly
+   the same places, and smarter wrapping weighs each layer's slightly
+   different widths and can choose differently. */
+.before-after .case-text {
+  text-wrap: wrap;
+}
+
+/* The paragraph behind the card fades out on all four sides. Two gradients,
+   one per axis, intersected so the corners fade twice as fast. */
+.fade-edges {
+  --fade: linear-gradient(to bottom, transparent 8%, #000 42%, #000 58%, transparent 92%);
+  --fade-x: linear-gradient(to right, transparent 4%, #000 36%, #000 64%, transparent 96%);
+  -webkit-mask-image: var(--fade), var(--fade-x);
+  -webkit-mask-composite: source-in;
+  mask-image: var(--fade), var(--fade-x);
+  mask-composite: intersect;
+}
+/* The ReportUI hero fades out toward the bottom. On a phone, where it is
+   cropped, its sides fade too, where the window runs past them. */
+.report-window-fade {
+  --fade-y: linear-gradient(to bottom, #000 58%, transparent 96%);
+  -webkit-mask-image: var(--fade-y);
+  mask-image: var(--fade-y);
+}
+.report-window-fade.cropped {
+  --fade-x: linear-gradient(to right, transparent, #000 8%, #000 92%, transparent);
+  -webkit-mask-image: var(--fade-y), var(--fade-x);
+  -webkit-mask-composite: source-in;
+  mask-image: var(--fade-y), var(--fade-x);
+  mask-composite: intersect;
+}
+/* The window's edge: a white rim inside a hairline, then a soft shadow. */
+.report-window {
+  box-shadow:
+    inset 0 0 0 1px #fff,
+    0 0 0 1px rgba(15, 15, 15, 0.07),
+    0 2px 4px rgba(15, 15, 15, 0.03),
+    0 30px 60px -24px rgba(15, 15, 15, 0.12);
+}
+
+/* The card rises in when its slide appears. */
+@keyframes card-pop {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.card-pop {
+  animation: card-pop 500ms 250ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+@keyframes slide-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+.slide-in {
+  animation: slide-in 400ms ease both;
+}
+
+/* The carousel turns like a wheel whose hub sits far below the hero. The
+   incoming slide swings up from one side as the outgoing one swings away to
+   the other, through the same angle. */
+:root {
+  --arc-ms: 650ms;
+  --arc-angle: 22deg;
+  --arc-ease: cubic-bezier(0.5, 0, 0.25, 1);
+}
+.arc-slide {
+  transform-origin: 50% 260%;
+}
+/* While the wheel turns, the slides ignore the pointer. A slide swinging in
+   passes under the cursor (still on the arrow just clicked), and would
+   otherwise pick up the hover lift and drop it again as it settles. */
+.arc-stage.turning .arc-slide {
+  pointer-events: none;
+}
+@keyframes arc-in-right {
+  from {
+    transform: rotate(var(--arc-angle));
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+@keyframes arc-in-left {
+  from {
+    transform: rotate(calc(-1 * var(--arc-angle)));
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+@keyframes arc-out-left {
+  to {
+    transform: rotate(calc(-1 * var(--arc-angle)));
+    opacity: 0;
+  }
+}
+@keyframes arc-out-right {
+  to {
+    transform: rotate(var(--arc-angle));
+    opacity: 0;
+  }
+}
+.arc-in-right {
+  animation: arc-in-right var(--arc-ms) var(--arc-ease) both;
+}
+.arc-in-left {
+  animation: arc-in-left var(--arc-ms) var(--arc-ease) both;
+}
+.arc-out-left {
+  animation: arc-out-left var(--arc-ms) var(--arc-ease) both;
+}
+.arc-out-right {
+  animation: arc-out-right var(--arc-ms) var(--arc-ease) both;
+}
+
+/* The chevron beside the project title: hidden and tucked a little left,
+   it slides in whenever the project or its caption is hovered or focused. */
+.title-chevron {
+  opacity: 0;
+  translate: -4px 0;
+  transition:
+    opacity 200ms ease,
+    translate 250ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+main:has(.hero-slide:hover) .title-chevron,
+main:has(.hero-slide a:focus-visible) .title-chevron,
+.project-caption:hover .title-chevron,
+.project-caption:focus-visible .title-chevron {
+  opacity: 1;
+  translate: 0 0;
+}
+
+/* Hovering a project: the slide lifts a little, the card rises off the text,
+   and a light sweeps across the paragraph. */
+.prose-shimmer {
+  --ink: color-mix(in oklab, var(--foreground) 75%, transparent);
+  /* The band lightens the text it crosses without washing it out. */
+  --glint: color-mix(in oklab, var(--foreground) 10%, transparent);
+  color: var(--ink);
+}
+.hero-slide {
+  transition: transform 400ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.hero-slide:hover {
+  transform: translateY(-4px);
+}
+/* --rx and --ry are set from the pointer in citations-hero.tsx, so the card
+   tilts to face it. */
+.card-lift {
+  --rx: 0deg;
+  --ry: 0deg;
+  --lift-x: 0px;
+  --lift-y: 0px;
+  transform: perspective(900px) translate(var(--lift-x), var(--lift-y))
+    rotateX(var(--rx)) rotateY(var(--ry));
+  transition: transform 250ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  will-change: transform;
+}
+.hero-slide:hover .card-lift {
+  --lift-x: 4px;
+  --lift-y: -8px;
+}
+.hero-slide:hover .prose-shimmer {
+  /* A diagonal band, top left to bottom right. */
+  background-image: linear-gradient(
+    120deg,
+    var(--ink) 0%,
+    var(--ink) 35%,
+    var(--glint) 46%,
+    var(--glint) 54%,
+    var(--ink) 65%,
+    var(--ink) 100%
+  );
+  background-size: 250% 250%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  /* One pass each time the pointer enters, ending with the band off the
+     block's far edge. */
+  animation: shimmer 1.1s cubic-bezier(0.4, 0, 0.3, 1) 1 forwards;
+}
+/* The same diagonal light crosses the card, in step with the text, so the
+   shimmer reads even where the card covers most of the paragraph. */
+.hero-card {
+  position: relative;
+}
+.hero-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 8px;
+  pointer-events: none;
+  opacity: 0;
+  background-image: linear-gradient(
+    120deg,
+    transparent 0%,
+    transparent 38%,
+    rgba(255, 255, 255, 0.8) 50%,
+    transparent 62%,
+    transparent 100%
+  );
+  background-size: 250% 250%;
+}
+.hero-slide:hover .hero-card::after {
+  opacity: 1;
+  animation: shimmer 1.1s cubic-bezier(0.4, 0, 0.3, 1) 1 forwards;
+}
+
+/* The range starts and ends with the band just off the block's edge, so it
+   enters as soon as the pointer arrives and spends no time out of sight. */
+@keyframes shimmer {
+  from {
+    background-position: 85% 85%;
+  }
+  to {
+    background-position: 0% 0%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card-pop,
+  .slide-in,
+  .arc-in-right,
+  .arc-in-left,
+  .arc-out-left,
+  .arc-out-right,
+  .view-in,
+  .cited-card-in,
+  .hero-slide:hover .hero-card::after,
+  .blur-in-char,
+  .about-rule,
+  .about-foot,
+  .hero-slide:hover .prose-shimmer {
+    animation: none;
+  }
+  .hero-slide,
+  .card-lift {
+    transition: none;
+  }
+  .hero-slide:hover,
+  .card-lift,
+  .hero-slide:hover .card-lift {
+    transform: none;
+  }
+}
+
+/* ---------- The ReportUI hero's build ---------- */
+
+/* A piece arriving: it fades and rises into place. */
+.rb-appear {
+  opacity: 0;
+  transform: translateY(8px);
+  transition:
+    opacity 450ms ease,
+    transform 550ms cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+.rb-appear.rb-on {
+  opacity: 1;
+  transform: none;
+}
+
+/* A widget's placeholder: a soft grey block with a light sweeping across. */
+.rb-skel {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(100deg, #ececea 35%, #f7f7f6 50%, #ececea 65%);
+  background-size: 300% 100%;
+  animation: rb-shimmer 1.3s linear infinite;
+  opacity: 0;
+  transition: opacity 300ms ease;
+}
+.rb-skel.rb-on {
+  opacity: 1;
+}
+@keyframes rb-shimmer {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: 0 0;
+  }
+}
+
+/* The assistant thinking: a light runs along its label. */
+.rb-thinking {
+  background: linear-gradient(90deg, #9aa0aa 35%, #e2e4e8 50%, #9aa0aa 65%);
+  background-size: 300% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: rb-shimmer 1.1s linear infinite;
+}
+
+/* The chart's lines, drawing in from the left. */
+.rb-draw {
+  transition: clip-path 1300ms cubic-bezier(0.4, 0, 0.2, 1);
+}

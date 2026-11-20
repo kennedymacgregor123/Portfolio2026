@@ -1,3 +1,4 @@
+import { CitationsCascade } from "./citations-cascade"
 import { CitationCard, SLOT_HOLDS, SLOT_ORDER } from "./cite/citation-card"
 import { useLayoutEffect, useRef, useState } from "react"
 
@@ -166,6 +167,7 @@ export const CITATIONS_CASE: CaseStudy = {
     { label: "Timeline", value: "2026-09" },
     { label: "Company", value: "Vasco" },
   ],
+  hero: <CitationsCascade />,
   sections: [
     {
       id: "problem",

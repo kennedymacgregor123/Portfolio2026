@@ -215,7 +215,9 @@ export function Passage({
       >
         {excerpt.before ? (
           <span
-            className={cx("block", !open && "max-h-[2.6rem] overflow-hidden")}
+            // Whole lines only: two of them, ending in an ellipsis, never a sliver of
+            // a third.
+            className={cx("block", !open && "line-clamp-2")}
             style={{ color: SUBTLE }}
           >
             {excerpt.before}
@@ -231,7 +233,7 @@ export function Passage({
         </span>
         {excerpt.after ? (
           <span
-            className={cx("mt-1.5 block", !open && "max-h-[3rem] overflow-hidden")}
+            className={cx("mt-1.5 block", !open && "max-h-[54px] overflow-hidden")}
             style={{
               color: SUBTLE,
               maskImage: open ? undefined : FADE_DOWN,

@@ -125,11 +125,13 @@ export const countedAccounts: Citation = {
   definition:
     "Accounts where a pain surfaced in a conversation during the window and has not been resolved since.",
   counts: "accounts",
+  // A different set from the pipeline metric's, so the two cards don't
+  // repeat each other where they sit side by side.
   rows: [
-    { name: "Ramp", domain: "ramp.com" },
-    { name: "Linear", domain: "linear.app" },
-    { name: "Vercel", domain: "vercel.com" },
-    { name: "Notion", domain: "notion.so" },
+    { name: "Figma", domain: "figma.com" },
+    { name: "Stripe", domain: "stripe.com" },
+    { name: "Airtable", domain: "airtable.com" },
+    { name: "Canva", domain: "canva.com" },
   ],
   chips: [
     { kind: "timeframe", label: "Last 90 days" },

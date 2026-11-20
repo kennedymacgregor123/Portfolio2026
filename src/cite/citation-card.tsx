@@ -271,7 +271,10 @@ export function CitationCard({
         style={{ color: MUTED, letterSpacing: "0.3px" }}
       >
         <AttributionMark attribution={attribution} />
-        <span className="min-w-0 truncate">{attribution.label}</span>
+        {/* Room above and below for descenders (the g in "Metric Engine"),
+            which a one-line clip at this tight line height would cut off; the
+            negative margin keeps the row its height. */}
+        <span className="-my-[3px] min-w-0 truncate py-[3px]">{attribution.label}</span>
         {c.verified ? (
           <span
             className="inline-flex shrink-0 cursor-default"
@@ -433,6 +436,7 @@ export function CitationCard({
   }
 
   /* The gap above each slot, in px. */
+  const SLOT_GAP = 16
   const gap: Record<Slot, number> = {
     pager: 0,
     source: pager ? SPACE.band : 0,
@@ -451,8 +455,14 @@ export function CitationCard({
     gap[firstBody] = noFigure && c.kind !== "quote" ? SPACE.pair : SPACE.band
   }
 
-  /* The pager, when present, is the card's first band. */
+  /* The pager, when present, is the card's first band, and the anatomy shows
+     it there too. With the slots shown, every slot sits the same distance from
+     the next: the outlines and labels need that room to read as separate. */
   const order: Slot[] = ["pager", ...SLOT_ORDER.filter((s) => s !== "pager")]
+  if (showSlots) {
+    for (const s of SLOT_ORDER) gap[s] = SLOT_GAP
+    gap[order[0]!] = 0
+  }
 
   const frame = (slot: Slot, content: ReactNode) => {
     if (!showSlots) return content
@@ -460,18 +470,18 @@ export function CitationCard({
     return (
       <span className="block">
         <span
-          className="mb-1 block text-[9px] font-semibold uppercase leading-3 tracking-[0.12em]"
-          style={{ color: "rgba(37,99,235,0.75)" }}
+          className="mb-1.5 block text-[9px] font-semibold uppercase leading-3 tracking-[0.12em]"
+          style={{ color: "rgba(31,37,45,0.5)" }}
         >
           {slot}
           {empty ? " — empty" : ""}
         </span>
         <span
-          className="block rounded-[3px] border border-dashed p-1"
+          className="block rounded-[4px] border border-dashed p-1.5"
           style={{
-            borderColor: "rgba(37,99,235,0.35)",
-            background: empty ? "rgba(37,99,235,0.05)" : undefined,
-            minHeight: empty ? 14 : undefined,
+            borderColor: "rgba(31,37,45,0.22)",
+            background: empty ? "rgba(31,37,45,0.03)" : undefined,
+            minHeight: empty ? 16 : undefined,
           }}
         >
           {content}

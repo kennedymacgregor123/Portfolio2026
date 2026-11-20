@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useLayoutEffect, useRef, useState } from "react"
-import { ChevronDown, ChevronRight, ChevronsRight, FileText, House, MessageSquare, Share, SquarePen, TrendingDown, TrendingUp, X } from "lucide-react"
+import { ChevronDown, ChevronRight, ArrowRightToLine, FileText, House, MessageSquare, Share, SquarePen, TrendingDown, TrendingUp, X } from "lucide-react"
 
 /*
  * The ReportUI hero, built from the "Deploy" frame in Portfolio '26: the app
@@ -208,7 +208,7 @@ function Chat() {
         </span>
         <span className="flex items-center gap-[14px]">
           <X strokeWidth={2.25} aria-hidden className="size-[13px]" />
-          <ChevronsRight strokeWidth={2.25} aria-hidden className="size-[12px]" />
+          <ArrowRightToLine strokeWidth={2.25} aria-hidden className="size-[13px]" />
         </span>
       </div>
 

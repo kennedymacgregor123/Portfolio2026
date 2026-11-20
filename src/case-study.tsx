@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react"
+import { createPortal } from "react-dom"
 
 /*
  * A project case study: a short summary, then the sections in the order a UX
@@ -38,6 +39,8 @@ export type CaseStudy = {
   summary: string
   /** Small facts shown under the summary, such as role, team, timeline. */
   facts: { label: string; value: string }[]
+  /** A wide image under the header, before the first section. */
+  hero?: React.ReactNode
   sections: Section[]
 }
 
@@ -116,8 +119,7 @@ function scrollToSection(id: string) {
 
 /**
  * The legend: the section names in a vertical list, with the one being read
- * marked. Beside the content on wide screens; a row under the header on
- * narrow ones.
+ * marked. Beside the content on wide screens; on phones, SectionDial below.
  */
 function Legend({ sections, active }: { sections: Section[]; active: string }) {
   return (
@@ -145,6 +147,110 @@ function Legend({ sections, active }: { sections: Section[]; active: string }) {
         })}
       </ol>
     </nav>
+  )
+}
+
+/**
+ * The legend on a phone: a dial floating at the foot of the screen. The
+ * sections sit in a row that scrolls sideways and snaps each one to the
+ * middle; the further a section is from the middle, the smaller and fainter
+ * it is, and the row fades out at both ends, so it reads as a wheel turning.
+ * As the reader moves down the page the dial turns to keep the current
+ * section centred; tapping a section jumps to it.
+ */
+function SectionDial({ sections, active }: { sections: Section[]; active: string }) {
+  const track = useRef<HTMLOListElement>(null)
+  const items = useRef<(HTMLLIElement | null)[]>([])
+  /** True while a finger is on the dial, so the page doesn't turn it back. */
+  const touching = useRef(false)
+
+  // Each section's distance from the middle (0 at the centre, 1 at the edge),
+  // written to a CSS variable that sizes and fades it. Repainted as it scrolls.
+  useEffect(() => {
+    const t = track.current
+    if (!t) return
+    let raf = 0
+    const paint = () => {
+      raf = 0
+      const r = t.getBoundingClientRect()
+      const mid = r.left + r.width / 2
+      for (const li of items.current) {
+        if (!li) continue
+        const b = li.getBoundingClientRect()
+        const d = Math.min(1, Math.abs(b.left + b.width / 2 - mid) / (r.width / 2))
+        li.style.setProperty("--d", d.toFixed(3))
+      }
+    }
+    const schedule = () => {
+      if (!raf) raf = requestAnimationFrame(paint)
+    }
+    paint()
+    t.addEventListener("scroll", schedule, { passive: true })
+    window.addEventListener("resize", schedule)
+    return () => {
+      cancelAnimationFrame(raf)
+      t.removeEventListener("scroll", schedule)
+      window.removeEventListener("resize", schedule)
+    }
+  }, [])
+
+  // Turn the dial to the section being read, unless it's in the reader's hand.
+  useEffect(() => {
+    const t = track.current
+    const li = items.current[sections.findIndex((s) => s.id === active)]
+    if (!t || !li || touching.current) return
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    t.scrollTo({ left: li.offsetLeft + li.offsetWidth / 2 - t.clientWidth / 2, behavior: reduced ? "auto" : "smooth" })
+  }, [active, sections])
+
+  const hold = () => {
+    touching.current = true
+  }
+  const release = () => {
+    window.setTimeout(() => {
+      touching.current = false
+    }, 800)
+  }
+
+  // Rendered on the page body: the page fades in with a transform, and a
+  // fixed element inside a transformed one is fixed to it, not the screen.
+  return createPortal(
+    <nav aria-label="Sections" className="section-dial case-legend lg:hidden">
+      <ol
+        ref={track}
+        onTouchStart={hold}
+        onTouchEnd={release}
+        onPointerDown={hold}
+        onPointerUp={release}
+        className="section-dial-track relative flex items-center gap-1 overflow-x-auto py-1.5"
+      >
+        {sections.map((s, i) => {
+          const on = s.id === active
+          return (
+            <li
+              key={s.id}
+              ref={(el) => {
+                items.current[i] = el
+              }}
+              className="section-dial-item shrink-0"
+            >
+              <button
+                type="button"
+                aria-current={on ? "true" : undefined}
+                onClick={() => scrollToSection(s.id)}
+                className={`flex items-center gap-2 rounded-[8px] px-2.5 py-1.5 whitespace-nowrap transition-colors duration-200 ${
+                  on ? "bg-[#e6e6e3] text-[#0f0f0f]" : "text-[#7a7a77]"
+                }`}
+              >
+                <span className="tabular-nums text-[11px] text-[#a3a3a0]">{String(i + 1).padStart(2, "0")}</span>
+                <span className={on ? "font-medium" : ""}>{s.label}</span>
+              </button>
+            </li>
+          )
+        })}
+      </ol>
+    </nav>,
+    document.body,
   )
 }
 
@@ -185,9 +291,12 @@ export function CaseStudyPage({ study }: { study: CaseStudy }) {
   return (
     <main className="view-in mx-auto w-full max-w-[56rem] px-4 pt-10 pb-32">
       <div className="lg:grid lg:grid-cols-[11rem_1fr] lg:gap-12">
-        <aside className="case-legend-wrap sticky top-[60px] z-10 -mx-4 mb-8 px-4 pt-6 pb-2 lg:top-[108px] lg:mx-0 lg:mb-0 lg:self-start lg:px-0 lg:py-0">
+        {/* Wide screens: the list beside the content. Phones: the dial at the
+            foot of the screen. */}
+        <aside className="case-legend-wrap sticky top-[108px] z-10 hidden self-start lg:block">
           <Legend sections={study.sections} active={active} />
         </aside>
+        <SectionDial sections={study.sections} active={active} />
 
         <article className="flex min-w-0 flex-col gap-24">
           <header className="flex flex-col gap-3">
@@ -204,6 +313,8 @@ export function CaseStudyPage({ study }: { study: CaseStudy }) {
               </dl>
             )}
           </header>
+
+          {study.hero && <div className="case-hero -mt-12">{study.hero}</div>}
 
           {study.sections.map((s, i) => (
             <section

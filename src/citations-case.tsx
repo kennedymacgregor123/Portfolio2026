@@ -179,7 +179,7 @@ export const CITATIONS_CASE: CaseStudy = {
       ],
       media: {
         kind: "demo",
-        caption: "Before: every figure and claim arrives on its own, with nothing to check it against.",
+        caption: "A report with nothing behind its numbers.",
         node: <UncitedReport />,
       },
     },
@@ -193,8 +193,7 @@ export const CITATIONS_CASE: CaseStudy = {
       ],
       media: {
         kind: "demo",
-        caption:
-          "The live-card option, and why Customer Success couldn't accept it: the report and its own citation give two different numbers.",
+        caption: "The live card and the report disagree: 37 vs 57.",
         node: <DriftExample />,
       },
     },
@@ -208,7 +207,7 @@ export const CITATIONS_CASE: CaseStudy = {
       ],
       media: {
         kind: "demo",
-        caption: "The metric card with its slots shown, and what each one holds.",
+        caption: "The metric card, slot by slot.",
         node: <AnatomyBreakdown />,
       },
     },
@@ -221,7 +220,7 @@ export const CITATIONS_CASE: CaseStudy = {
       ],
       media: {
         kind: "demo",
-        caption: "Every card type. Use the arrows or dots to turn through them.",
+        caption: "Every card type.",
         interactive: true,
         bleed: true,
         node: <CardGallery />,
@@ -239,8 +238,7 @@ export const CITATIONS_CASE: CaseStudy = {
       ],
       media: {
         kind: "demo",
-        caption:
-          "Every kind of citation marked in a report. Each mark opens its own card.",
+        caption: "Each mark opens its own card.",
         interactive: true,
         node: <CitedReport />,
       },
@@ -256,8 +254,7 @@ export const CITATIONS_CASE: CaseStudy = {
       ],
       media: {
         kind: "demo",
-        caption:
-          "Drag to compare the same report before and after citations. On the cited side, each mark opens its card.",
+        caption: "Before and after citations. Drag to compare.",
         interactive: true,
         bleed: true,
         node: <BeforeAfter />,

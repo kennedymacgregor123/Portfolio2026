@@ -44,6 +44,14 @@ type Project = {
 
 const PROJECTS: Project[] = [
   {
+    id: "artifacts",
+    title: "Artifacts",
+    blurb:
+      "Made recurring reporting effortless by generating tailored, template-backed reports users can customize, share, and regenerate on demand.",
+    href: "#artifacts",
+    hero: <ReportUIHero />,
+  },
+  {
     id: "citations",
     title: "Citations",
     blurb:
@@ -51,14 +59,6 @@ const PROJECTS: Project[] = [
     href: "#citations",
     hero: <CitationsHero />,
     preview: <CitationsHero compact />,
-  },
-  {
-    id: "artifacts",
-    title: "Artifacts",
-    blurb:
-      "Made recurring reporting effortless by generating tailored, template-backed reports users can customize, share, and regenerate on demand.",
-    href: "#artifacts",
-    hero: <ReportUIHero />,
   },
 ]
 

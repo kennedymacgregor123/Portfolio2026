@@ -70,7 +70,8 @@ function InteractiveTag() {
   )
 }
 
-function MediaSlot({ media }: { media: Media }) {
+/** A section's media, with its caption numbered as a figure (Fig. 01…). */
+function MediaSlot({ media, figure }: { media: Media; figure: number }) {
   if (media.kind === "placeholder") {
     return (
       <div className="case-media flex aspect-[16/10] items-center justify-center border-dashed">
@@ -101,7 +102,8 @@ function MediaSlot({ media }: { media: Media }) {
         </div>
       )}
       {media.caption && (
-        <figcaption className="project-blurb !text-[12px] !text-[#898889]">
+        <figcaption className="case-caption">
+          <span className="case-fig">Fig. {String(figure).padStart(2, "0")}</span>
           {media.caption}
         </figcaption>
       )}
@@ -388,7 +390,7 @@ export function CaseStudyPage({ study, next }: { study: CaseStudy; next?: NextPr
                   </p>
                 ))}
               </div>
-              <MediaSlot media={s.media} />
+              <MediaSlot media={s.media} figure={i + 1} />
             </section>
           ))}
 

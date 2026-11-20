@@ -827,7 +827,7 @@ export const ARTIFACTS_CASE: CaseStudy = {
       ],
       media: {
         kind: "demo",
-        caption: "The same request on two Mondays, and two different reports. Invented figures.",
+        caption: "One request, two Mondays, two reports.",
         node: <DriftingReports />,
       },
     },
@@ -841,7 +841,7 @@ export const ARTIFACTS_CASE: CaseStudy = {
       ],
       media: {
         kind: "demo",
-        caption: "The kit: the components a report is built from, by the agent or by the user.",
+        caption: "The kit a report is built from.",
         node: <ComponentKit />,
       },
     },
@@ -854,7 +854,7 @@ export const ARTIFACTS_CASE: CaseStudy = {
       ],
       media: {
         kind: "demo",
-        caption: "Each component as the reader sees it, or as the agent reads it. Switch components, then toggle to its spec.",
+        caption: "Each component, as drawn and as read.",
         interactive: true,
         node: <AgentReadable />,
       },
@@ -868,7 +868,7 @@ export const ARTIFACTS_CASE: CaseStudy = {
       ],
       media: {
         kind: "demo",
-        caption: "Templates as the product offers them: each names what it does, with a glimpse of the report it makes. Hover one to lift its report.",
+        caption: "Templates, as the product offers them.",
         interactive: true,
         node: <TemplateGallery />,
       },
@@ -884,7 +884,7 @@ export const ARTIFACTS_CASE: CaseStudy = {
       ],
       media: {
         kind: "demo",
-        caption: "One recurring report across three runs: the layout holds, the numbers update. Invented figures.",
+        caption: "One report, three runs: same shape, new numbers.",
         interactive: true,
         node: <RecurringRuns />,
       },
@@ -899,7 +899,7 @@ export const ARTIFACTS_CASE: CaseStudy = {
       ],
       media: {
         kind: "demo",
-        caption: "A report building from the kit, as the agent writes it.",
+        caption: "A report, built from the kit.",
         bleed: true,
         node: <BuildingReport />,
       },
@@ -914,7 +914,7 @@ export const ARTIFACTS_CASE: CaseStudy = {
       ],
       media: {
         kind: "demo",
-        caption: "A week of reports: consistent, and hard to tell apart. Invented titles.",
+        caption: "A week of reports, hard to tell apart.",
         node: <ReportFatigue />,
       },
     },

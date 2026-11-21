@@ -1421,3 +1421,9 @@ main:has(.hero-slide a:focus-visible) .title-chevron,
 @media (prefers-reduced-motion: reduce) {
   .text-shimmer { animation: none; color: #8a8a86; }
 }
+
+/* The Planned prototype, new version: field titles' line height adds space
+   above the text, so the cards' top padding is trimmed to look even. */
+.tight-cards .field-card {
+  padding-top: 12px;
+}

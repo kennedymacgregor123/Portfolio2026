@@ -879,7 +879,7 @@ export function AiLabel({ size = 14 }: { size?: number }) {
 
 function Card({ children, className = "" }: { children: React.ReactNode; className?: string }) {
   return (
-    <div className={`rounded-[12px] border bg-white ${className}`} style={{ borderColor: LINE }}>
+    <div className={`field-card rounded-[12px] border bg-white ${className}`} style={{ borderColor: LINE }}>
       {children}
     </div>
   )
@@ -1210,7 +1210,7 @@ export function PlannedBadge({
           {/* The settings, scrolling in their own column. They run right up to
               the tabs' divider and down to the window's bottom edge, and get
               cut off at both; the padding only shows at either end of the scroll. */}
-          <div className={`flex min-w-0 flex-1 flex-col gap-4 pt-6 pb-6 ${embedded ? "overflow-y-auto pr-1" : "xl:overflow-y-auto xl:pr-1"}`}>
+          <div className={`flex min-w-0 flex-1 flex-col gap-4 pt-6 pb-6 ${ai ? "tight-cards" : ""} ${embedded ? "overflow-y-auto pr-1" : "xl:overflow-y-auto xl:pr-1"}`}>
             <div className="flex items-center justify-between">
               <h1 className="text-[22px] font-semibold tracking-[-0.01em]">Badge</h1>
               <span className="flex items-center gap-2 text-[13px]" style={{ color: MUTED }}>
@@ -1230,7 +1230,7 @@ export function PlannedBadge({
                doesn't leave a blank field; it says the one thing it needs,
                offers a one-click way to give it, and keeps watching. */
             <div className="rounded-[12px] border bg-white" style={{ borderColor: LINE }}>
-              <div className="p-4">
+              <div className="field-card p-4">
                 {/* Title and status share a text baseline. */}
                 <div className="flex items-baseline justify-between gap-2">
                   <div className="flex items-baseline gap-1.5">
@@ -1273,7 +1273,7 @@ export function PlannedBadge({
 
             {ai && known && (
             <div className="rounded-[12px] border bg-white" style={{ borderColor: LINE }}>
-              <div className="p-4">
+              <div className="field-card p-4">
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex items-center gap-1.5">
                     <span className={phase === "thinking" ? "ai-pulse inline-flex" : "inline-flex"}>

@@ -1043,11 +1043,11 @@ export function PlannedBadge({
           ))}
         </div>
 
-        <div className={`flex min-h-0 flex-1 gap-6 px-6 pt-6 ${embedded ? "flex-row" : "flex-col overflow-y-auto xl:flex-row xl:overflow-hidden"}`}>
-          {/* The settings, scrolling in their own column. They run right to the
-              window's bottom edge and get cut off there; the padding at the end
-              only shows once scrolled to the bottom. */}
-          <div className={`flex min-w-0 flex-1 flex-col gap-4 pb-6 ${embedded ? "overflow-y-auto pr-1" : "xl:overflow-y-auto xl:pr-1"}`}>
+        <div className={`flex min-h-0 flex-1 gap-6 px-6 ${embedded ? "flex-row" : "flex-col overflow-y-auto xl:flex-row xl:overflow-hidden"}`}>
+          {/* The settings, scrolling in their own column. They run right up to
+              the tabs' divider and down to the window's bottom edge, and get
+              cut off at both; the padding only shows at either end of the scroll. */}
+          <div className={`flex min-w-0 flex-1 flex-col gap-4 pt-6 pb-6 ${embedded ? "overflow-y-auto pr-1" : "xl:overflow-y-auto xl:pr-1"}`}>
             <div className="flex items-center justify-between">
               <h1 className="text-[22px] font-semibold tracking-[-0.01em]">Badge</h1>
               <span className="flex items-center gap-2 text-[13px]" style={{ color: MUTED }}>
@@ -1382,7 +1382,7 @@ export function PlannedBadge({
           </div>
 
           {/* The live preview. */}
-          <div className={embedded ? "w-[440px] shrink-0 pb-6" : "pb-6 xl:w-[440px] xl:shrink-0 xl:self-stretch"}>
+          <div className={embedded ? "w-[440px] shrink-0 pt-6 pb-6" : "pb-6 xl:w-[440px] xl:shrink-0 xl:self-stretch xl:pt-6"}>
             {/* The preview fills the page's height; the strap runs in from its
                 top edge and the badge hangs centred in the frame. */}
             <div

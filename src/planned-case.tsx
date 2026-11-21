@@ -533,7 +533,7 @@ export const PLANNED_CASE: CaseStudy = {
       label: "Problem",
       title: "A strong foundation",
       blurb: [
-        "Planned's badge builder already gets the essentials right. Organisers choose a size, a template, a colour per attendee type and what each badge shows, and it prints cleanly on site. The templates put legibility first, which is exactly what a badge needs to do.",
+        "Planned's badge builder already gets the essentials right. Organisers choose a size, a template, a colour per attendee type and what each badge shows. The templates put legibility first, which is exactly what a badge needs to do.",
         "That foundation leaves room for one more layer: helping each event's badge carry its own brand. Planned already calls itself the AI operating system for events, and the badge felt like a natural next place for that AI to lend a hand.",
       ],
       media: {

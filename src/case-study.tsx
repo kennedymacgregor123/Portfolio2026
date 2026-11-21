@@ -23,6 +23,8 @@ export type Media =
       tag?: string
       /** The demo fills the panel edge to edge and handles its own padding. */
       bleed?: boolean
+      /** A link that opens this demo on its own, full screen, in a new tab. */
+      fullPage?: string
     }
   | { kind: "placeholder"; label: string }
 
@@ -53,7 +55,7 @@ export type CaseStudy = {
 /** A plain label in the same corner and style as the Interactive tag. */
 function CornerTag({ children }: { children: React.ReactNode }) {
   return (
-    <span className="pointer-events-none absolute top-4 right-4 z-40 inline-flex items-center rounded-full border border-white bg-white/70 px-2.5 py-1 text-[11.5px] tracking-[0.2px] text-[#4a4a4a] shadow-[0_1px_2px_rgba(15,15,15,0.05)] backdrop-blur-sm">
+    <span className="pointer-events-none inline-flex items-center rounded-full border border-white bg-white/70 px-2.5 py-1 text-[11.5px] tracking-[0.2px] text-[#4a4a4a] shadow-[0_1px_2px_rgba(15,15,15,0.05)] backdrop-blur-sm">
       {children}
     </span>
   )
@@ -61,7 +63,7 @@ function CornerTag({ children }: { children: React.ReactNode }) {
 
 function InteractiveTag() {
   return (
-    <span className="interactive-tag pointer-events-none absolute top-4 right-4 z-40 inline-flex items-center gap-1.5 rounded-full border border-white bg-white/70 py-1 pr-2.5 pl-2 text-[11.5px] tracking-[0.2px] text-[#4a4a4a] shadow-[0_1px_2px_rgba(15,15,15,0.05)] backdrop-blur-sm">
+    <span className="interactive-tag pointer-events-none inline-flex items-center gap-1.5 rounded-full border border-white bg-white/70 py-1 pr-2.5 pl-2 text-[11.5px] tracking-[0.2px] text-[#4a4a4a] shadow-[0_1px_2px_rgba(15,15,15,0.05)] backdrop-blur-sm">
       <svg
         viewBox="0 0 24 24"
         className="interactive-pointer size-3.5 text-[#7a7a77]"
@@ -99,17 +101,36 @@ function MediaSlot({ media, figure }: { media: Media; figure: number }) {
           className={`case-media card-tidy group/media relative isolate flex min-h-[18rem] items-center justify-center ${
             media.bleed
               ? "overflow-hidden"
-              : `p-6 sm:p-10 ${media.interactive || media.tag ? "pt-[3.75rem] sm:pt-14" : ""}`
+              : `p-6 sm:p-10 ${media.interactive || media.tag || media.fullPage ? "pt-[3.75rem] sm:pt-14" : ""}`
           }`}
           onClickCapture={(e) => {
             // A prototype's own placeholder links (#studio, #vasco) would
             // change the page; inside a demo they do nothing.
-            const a = (e.target as HTMLElement).closest('a[href^="#"]')
+            const a = (e.target as HTMLElement).closest('a[href^="#"]:not([data-open])')
             if (a) e.preventDefault()
           }}
         >
-          {media.interactive && <InteractiveTag />}
-          {media.tag && !media.interactive && <CornerTag>{media.tag}</CornerTag>}
+          {/* The panel's top corner: an optional full-page link, then its tag. */}
+          {(media.interactive || media.tag || media.fullPage) && (
+            <div className="absolute top-4 right-4 z-40 flex items-center gap-2">
+              {media.fullPage && (
+                <a
+                  href={media.fullPage}
+                  target="_blank"
+                  rel="noopener"
+                  data-open
+                  className="hidden items-center gap-1.5 rounded-full border sm:inline-flex border-white bg-white/70 py-1 pr-2.5 pl-2 text-[11.5px] tracking-[0.2px] text-[#4a4a4a] no-underline shadow-[0_1px_2px_rgba(15,15,15,0.05)] backdrop-blur-sm transition-colors hover:bg-white"
+                >
+                  <svg viewBox="0 0 24 24" className="size-3.5 text-[#7a7a77]" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                    <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" />
+                  </svg>
+                  Open full page
+                </a>
+              )}
+              {media.interactive && <InteractiveTag />}
+              {media.tag && !media.interactive && <CornerTag>{media.tag}</CornerTag>}
+            </div>
+          )}
           {media.node}
         </div>
       )}

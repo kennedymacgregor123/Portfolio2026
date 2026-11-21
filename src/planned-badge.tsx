@@ -57,6 +57,24 @@ const ROLES = [
 ] as const
 type Role = (typeof ROLES)[number]["id"]
 
+/**
+ * Attendee colours for the AI-drafted styles, drawn from Planned's palette so
+ * the frame sits with the drafts: teal, warm gold, dusty sky, olive sage and
+ * slate. Each stays distinct at a glance. Today's badge keeps ROLES.
+ */
+const BRAND_ROLES: Record<Role, string> = {
+  General: "#4F9897",
+  VIP: "#C79A4E",
+  Speaker: "#6A8DB5",
+  Staff: "#8FA36A",
+  Supplier: "#56676B",
+}
+
+/** The attendee colour for a role, in today's set or the drafted brand's. */
+function roleColorFor(role: Role, style: Style) {
+  return style.art ? BRAND_ROLES[role] : ROLES.find((r) => r.id === role)!.color
+}
+
 /** A badge style: how the inner card looks, and the type it uses. */
 export type Style = {
   id: string
@@ -581,7 +599,7 @@ export function Badge({
   showName: boolean
   showCompany: boolean
 }) {
-  const roleColor = ROLES.find((r) => r.id === role)!.color
+  const roleColor = roleColorFor(role, style)
   const portrait = size === "portrait"
   const big = template === "big"
   const slot = cut ?? !!style.art
@@ -1007,7 +1025,11 @@ export function PlannedBadge({
   // The badge's code can also open a page of the
   // organiser's choosing for anyone who scans it with a phone.
   const [codeLink, setCodeLink] = useState(true)
-  const [codeUrl, setCodeUrl] = useState("planned.com/live")
+  const [codeUrl, setCodeUrl] = useState("planned.com/live/agenda")
+  // The code goes through a Planned link, so its destination can change after
+  // printing: the agenda during the event, and (suggested by the agent) the
+  // feedback survey after it.
+  const [afterUrl, setAfterUrl] = useState("planned.com/live/feedback")
 
   // The AI layer: one open field (words, a website, a reference picture)
   // that becomes the AI's instructions once something is generated.
@@ -1047,6 +1069,15 @@ export function PlannedBadge({
   }
   const [askedFiles, setAskedFiles] = useState<string[]>([])
   const [phase, setPhase] = useState<"thinking" | "done">("done")
+  // While drafting, a short status steps through what the skills are doing.
+  const STEPS = ["Reading planned.com…", "Pulling brand colours…", "Composing drafts…", "Checking contrast…"]
+  const [step, setStep] = useState(0)
+  useEffect(() => {
+    if (phase !== "thinking") return
+    setStep(0)
+    const iv = window.setInterval(() => setStep((n) => Math.min(n + 1, STEPS.length - 1)), 380)
+    return () => window.clearInterval(iv)
+  }, [phase, STEPS.length])
   // Nothing is applied until the organiser picks a draft; choosing one is optional.
   const [style, setStyle] = useState<Style>(PLAIN)
   const [accent, setAccent] = useState(PLAIN.accent)
@@ -1173,9 +1204,12 @@ export function PlannedBadge({
                offers a one-click way to give it, and keeps watching. */
             <div className="rounded-[12px] border bg-white" style={{ borderColor: LINE }}>
               <div className="p-4">
-                <div className="flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-1.5">
-                    <AiLabel size={12} />
+                {/* Title and status share a text baseline. */}
+                <div className="flex items-baseline justify-between gap-2">
+                  <div className="flex items-baseline gap-1.5">
+                    <span className="self-center">
+                      <AiLabel size={12} />
+                    </span>
                     <span className="text-[14px] font-medium" style={{ color: INK }}>Badge style</span>
                   </div>
                   <span className="text-[11.5px]" style={{ color: MUTED }}>Waiting for your brand</span>
@@ -1215,12 +1249,16 @@ export function PlannedBadge({
               <div className="p-4">
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex items-center gap-1.5">
-                    <AiLabel size={12} />
+                    <span className={phase === "thinking" ? "ai-pulse inline-flex" : "inline-flex"}>
+                      <AiLabel size={12} />
+                    </span>
                     <span className="text-[14px] font-medium" style={{ color: INK }}>Badge style</span>
                   </div>
                   {/* A quiet way to steer, up in the header. */}
                   {phase === "thinking" ? (
-                    <span className="text-[11.5px]" style={{ color: MUTED }}>Redrafting…</span>
+                    <span key={step} className="view-in text-[11.5px]" style={{ color: MUTED }}>
+                      {STEPS[step]}
+                    </span>
                   ) : (
                     <button
                       type="button"
@@ -1242,8 +1280,22 @@ export function PlannedBadge({
                   {DRAFTS.map((d, k) => {
                     const on = style.id === d.id
                     return phase === "thinking" ? (
-                      <div key={d.id} className="relative h-[143px] overflow-hidden rounded-[10px]">
-                        <span className="rb-skel rb-on" style={{ animationDelay: `${k * 120}ms` }} />
+                      /* Shaped like the card that's coming: a preview with a
+                         ghost badge, and two soft lines for its name. */
+                      <div key={d.id} className="flex h-[143px] flex-col overflow-hidden rounded-[10px] border" style={{ borderColor: LINE }}>
+                        <span className="flex h-[84px] items-center justify-center" style={{ background: PANEL }}>
+                          <span className="relative block h-[58px] w-[42px] overflow-hidden rounded-[5px] bg-white shadow-[0_2px_6px_rgba(15,15,15,0.06)]">
+                            <span className="rb-skel rb-on" style={{ animationDelay: `${k * 140}ms` }} />
+                          </span>
+                        </span>
+                        <span className="flex flex-col gap-1.5 px-3 py-3">
+                          <span className="relative block h-[9px] w-[58%] overflow-hidden rounded-full">
+                            <span className="rb-skel rb-on" style={{ animationDelay: `${k * 140 + 80}ms` }} />
+                          </span>
+                          <span className="relative block h-[8px] w-[78%] overflow-hidden rounded-full">
+                            <span className="rb-skel rb-on" style={{ animationDelay: `${k * 140 + 160}ms` }} />
+                          </span>
+                        </span>
                       </div>
                     ) : (
                       <button
@@ -1685,7 +1737,7 @@ export function PlannedBadge({
                     className="flex items-center gap-2 rounded-[9px] border px-3 py-1.5 text-[13px]"
                     style={{ borderColor: role === r.id ? INK : LINE, background: role === r.id ? PANEL : "#fff" }}
                   >
-                    <span className="size-[13px] rounded-[3px]" style={{ background: r.color }} />
+                    <span className="size-[13px] rounded-[3px] transition-colors" style={{ background: roleColorFor(r.id, style) }} />
                     {r.id}
                   </button>
                 ))}
@@ -1710,17 +1762,52 @@ export function PlannedBadge({
                 </div>
                 <Toggle on={codeLink} onClick={() => setCodeLink((v) => !v)} label="Code on badge, opens a link" />
                 {codeLink && (
-                  <div className="view-in pl-[46px]">
-                    <input
-                      value={codeUrl}
-                      onChange={(e) => setCodeUrl(e.target.value)}
-                      aria-label="Link the code opens"
-                      className="w-full rounded-[9px] border bg-white px-3 py-1.5 text-[13px] outline-none focus:border-[#b5b5b1]"
-                      style={{ borderColor: LINE }}
-                    />
-                    <p className="mt-1.5 text-[12px]" style={{ color: MUTED }}>
-                      Anyone who scans the badge with a phone lands here.
+                  <div className="view-in flex flex-col gap-2.5 pl-[46px]">
+                    <p className="text-[12px] leading-snug" style={{ color: MUTED }}>
+                      The code uses a Planned link, so where it leads can change after the badges are printed.
                     </p>
+                    {/* During the event. */}
+                    <label className="block">
+                      <span className="mb-1 block text-[12px] font-medium" style={{ color: INK }}>During the event</span>
+                      <input
+                        value={codeUrl}
+                        onChange={(e) => setCodeUrl(e.target.value)}
+                        className="w-full rounded-[9px] border bg-white px-3 py-1.5 text-[13px] outline-none focus:border-[#b5b5b1]"
+                        style={{ borderColor: LINE }}
+                      />
+                    </label>
+                    {/* After the event: the agent's suggestion, editable or clearable. */}
+                    <label className="block">
+                      <span className="mb-1 flex items-center justify-between">
+                        <span className="text-[12px] font-medium" style={{ color: INK }}>After the event</span>
+                        {afterUrl === "planned.com/live/feedback" && (
+                          <span className="flex items-center gap-1 text-[11px]" style={{ color: MUTED }}>
+                            <AiLabel size={10} />
+                            Suggested
+                          </span>
+                        )}
+                      </span>
+                      <span className="relative block">
+                        <input
+                          value={afterUrl}
+                          onChange={(e) => setAfterUrl(e.target.value)}
+                          placeholder="Keep the same link"
+                          className="w-full rounded-[9px] border bg-white py-1.5 pr-8 pl-3 text-[13px] outline-none placeholder:text-[#a3a3a0] focus:border-[#b5b5b1]"
+                          style={{ borderColor: LINE }}
+                        />
+                        {afterUrl && (
+                          <button
+                            type="button"
+                            aria-label="Clear the after-event link"
+                            onClick={() => setAfterUrl("")}
+                            className="absolute top-1/2 right-1.5 flex size-[22px] -translate-y-1/2 items-center justify-center rounded-[6px] hover:bg-[#f1f1ee]"
+                            style={{ color: MUTED }}
+                          >
+                            <X className="size-[12px]" strokeWidth={1.8} />
+                          </button>
+                        )}
+                      </span>
+                    </label>
                   </div>
                 )}
               </Card>
@@ -1728,7 +1815,7 @@ export function PlannedBadge({
           </div>
 
           {/* The live preview. */}
-          <div className={embedded ? "w-[440px] shrink-0 pt-6 pb-6" : "pb-6 xl:w-[440px] xl:shrink-0 xl:self-stretch xl:pt-6"}>
+          <div className={embedded ? "w-[440px] shrink-0 pt-6 pb-6" : `pb-6 xl:shrink-0 xl:self-stretch xl:pt-6 ${ai ? "xl:w-[560px] 2xl:w-[600px]" : "xl:w-[440px]"}`}>
             {/* The preview fills the page's height; the strap runs in from its
                 top edge and the badge hangs centred in the frame. */}
             <div
@@ -1740,8 +1827,9 @@ export function PlannedBadge({
                 {style.id !== "plain" && <span className="rounded-full bg-white px-2 py-[2px]">{style.name}</span>}
               </div>
               {ai ? (
-                /* The new version: the badge as it's worn, hanging in 3D. */
-                <div className="absolute inset-0 flex justify-center">
+                /* The new version: the badge as it's worn, hanging in 3D. Full
+                   page, it's drawn a little larger, still centred. */
+                <div className={`absolute inset-0 flex justify-center ${embedded ? "" : "xl:scale-[1.15]"}`}>
                   <HangingBadge
                     size={size}
                     template={template}

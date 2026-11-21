@@ -5,7 +5,11 @@ import "./landing.css"
 import { Landing } from "./landing"
 import { PlannedBadge } from "./planned-badge"
 
-/** The site, or (at #planned) the Planned badge-builder prototype, full screen. */
+/**
+ * The site, or the Planned badge-builder prototype, full screen: #planned is
+ * the new version, #planned-today the builder as it is today, and
+ * #planned-empty the new version with nothing to go on yet.
+ */
 function Root() {
   const [hash, setHash] = useState(window.location.hash)
   useEffect(() => {
@@ -13,7 +17,10 @@ function Root() {
     window.addEventListener("hashchange", on)
     return () => window.removeEventListener("hashchange", on)
   }, [])
-  return hash === "#planned" ? <PlannedBadge /> : <Landing />
+  if (hash === "#planned") return <PlannedBadge key={hash} />
+  if (hash === "#planned-today") return <PlannedBadge key={hash} ai={false} />
+  if (hash === "#planned-empty") return <PlannedBadge key={hash} known={false} />
+  return <Landing />
 }
 
 /*

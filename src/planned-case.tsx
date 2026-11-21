@@ -587,7 +587,7 @@ function ManualVsAgent() {
     "Check it's readable",
     "Work out how many to print",
   ]
-  const agent = ["Open Badges: three on-brand drafts are waiting", "Pick one, or ask for a change"]
+  const agent = ["Three on-brand drafts are waiting", "Pick one, or ask for a change"]
   return (
     <div className={`grid w-full gap-3 sm:grid-cols-2 ${FONT}`}>
       <div className="flex flex-col rounded-[16px] border bg-white p-4" style={{ borderColor: "#ebebe9" }}>
@@ -633,7 +633,7 @@ function ManualVsAgent() {
 export const PLANNED_CASE: CaseStudy = {
   title: "Planned Badges",
   summary:
-    "A concept for Planned, and a case for interfaces that are ready for an agentic world: less manual work on menial tasks, and an agent that uses context to get there first. Here, on-brand badges are drafted before the organiser asks.",
+    "A concept for Planned, and a case for interfaces that are ready for an agentic world: less manual work on repetitive tasks, and an agent that uses context to get there first. Here, on-brand badges are drafted before the organiser asks.",
   facts: [
     { label: "Company", value: "Planned (concept)" },
     { label: "Role", value: "Product Designer" },
@@ -647,8 +647,8 @@ export const PLANNED_CASE: CaseStudy = {
       label: "Thesis",
       title: "Interfaces for an agentic world",
       blurb: [
-        "Software is starting to do more of the work, not just hold it. I think our interfaces need to be ready for that: less manual effort, especially on the menial tasks, and an agent that uses the context it already has to be one step ahead of the person it's helping.",
-        "Event badges are a small, concrete place to show what that looks like. Designing one by hand takes a string of small, menial decisions. With the context a platform like Planned likely already has, an agent can make the first pass, so the organiser only makes the call that needs them.",
+        "Software is starting to do more of the work, not just hold it. I think our interfaces need to be ready for that: less manual effort, especially on routine tasks, and an agent that uses the context it already has to be one step ahead of the person it's helping.",
+        "Event badges are a small, concrete place to show what that looks like. Designing one by hand takes a string of small, routine decisions. With the context a platform like Planned likely already has, an agent can make the first pass, so the organiser only makes the call that needs them.",
       ],
       media: {
         kind: "demo",
@@ -669,6 +669,7 @@ export const PLANNED_CASE: CaseStudy = {
         caption: "The badge builder today, recreated.",
         tag: "Today",
         node: <PageFigure ai={false} />,
+        fullPage: "#planned-today",
       },
     },
     {
@@ -713,6 +714,7 @@ export const PLANNED_CASE: CaseStudy = {
         caption: "The prototype: styles already drafted from planned.com when the organiser arrives.",
         interactive: true,
         node: <PageFigure ai />,
+        fullPage: "#planned",
       },
     },
     {
@@ -741,6 +743,7 @@ export const PLANNED_CASE: CaseStudy = {
         caption: "The same page with nothing to go on yet. Try “Use the event website”.",
         interactive: true,
         node: <PageFigure ai known={false} />,
+        fullPage: "#planned-empty",
       },
     },
     {
@@ -777,8 +780,8 @@ export const PLANNED_CASE: CaseStudy = {
       label: "Code",
       title: "Every badge, a way in",
       blurb: [
-        "Event badges often carry a code next to the attendee's ID, and I'm assuming Planned's could too. It could also open a page the organiser chooses for anyone who scans it with a phone: the agenda, the event app, a sponsor's offer or a sign-up for next year.",
-        "That could turn hundreds of badges into hundreds of ways in, and every scan would be a moment the organiser can see and count. Here too the agent comes prepared: it points the code at the agenda during the event, and could suggest switching it to the feedback survey once the event is over.",
+        "Planned's badges carry the attendee's ID. Adding a code beside it, as many event badges have, would let the badge open a page the organiser chooses for anyone who scans it with a phone: the agenda, the event app, a sponsor's offer or a sign-up for next year.",
+        "That could turn hundreds of badges into hundreds of ways in, and every scan would be a moment the organiser can see and count. The printed code can't change, but if it points to a Planned link rather than a fixed address, which is how dynamic codes usually work, where it leads can. That would let the agent come prepared here too: pointing the code at the agenda during the event, and suggesting a switch to the feedback survey once it's over.",
       ],
       media: {
         kind: "demo",
@@ -792,7 +795,7 @@ export const PLANNED_CASE: CaseStudy = {
       title: "What I'd test next",
       blurb: [
         "First, whether the agent earns its place: how often organisers keep the suggested draft, how often they steer it, and whether arriving prepared feels helpful or presumptuous. Then the practical side: on-site printers often print attendee details in black only, so styles would need to live on the pre-printed stock while names stay crisp in black.",
-        "Beyond badges, the same pattern could take on other menial parts of running an event: drafting the agenda layout, the event app and the signage from the same brand, so organisers spend their time on decisions, not set-up.",
+        "Beyond badges, the same pattern could take on other repetitive parts of running an event: drafting the agenda layout, the event app and the signage from the same brand, so organisers spend their time on decisions, not set-up.",
       ],
       media: {
         kind: "demo",

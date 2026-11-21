@@ -396,10 +396,15 @@ function StyledFace({
   showCompany,
   highlightCode = false,
   showCode = true,
+  band = false,
+  bandColor = "#4F9897",
 }: {
   link?: string
   highlightCode?: boolean
   showCode?: boolean
+  /** The Top band template: a solid band of the attendee colour across the top. */
+  band?: boolean
+  bandColor?: string
   style: Style
   role: Role
   portrait: boolean
@@ -407,8 +412,22 @@ function StyledFace({
   showName: boolean
   showCompany: boolean
 }) {
-  const head = style.headInk ?? style.ink
-  const nameSize = big ? (portrait ? 50 : 40) : portrait ? 42 : 34
+  // On the band, the event header turns white.
+  const head = band ? "#ffffff" : style.headInk ?? style.ink
+  const metaColor = band ? "rgba(255,255,255,0.85)" : style.headInk ? head : style.sub
+  // Big type: the name set noticeably larger.
+  const nameSize = big ? (portrait ? 56 : 46) : portrait ? 42 : 34
+  const bandLayer = band && (
+    <span
+      aria-hidden
+      className="absolute inset-x-0 top-0"
+      style={{
+        height: portrait ? 118 : 76,
+        background: `linear-gradient(180deg, ${bandColor}, ${bandColor}ee)`,
+        boxShadow: "inset 0 -1px 0 rgba(255,255,255,0.25)",
+      }}
+    />
+  )
   const pill = (
     <span
       className="inline-flex items-center rounded-full px-2.5 py-[3px] text-[9px] font-semibold tracking-[0.1em] uppercase"
@@ -428,11 +447,12 @@ function StyledFace({
   if (!portrait) {
     return (
       <div className="relative flex h-full flex-col px-[22px] pt-[22px] pb-[16px]">
-        <div className="flex items-center gap-2.5" style={{ color: head }}>
+        {bandLayer}
+        <div className="relative flex items-center gap-2.5" style={{ color: head }}>
           <PlannedLogo size={20} />
           <div className="leading-tight">
             <div className="text-[13px] font-semibold tracking-[-0.01em]">Planned Live</div>
-            <div className="mt-[2px] text-[9.5px] whitespace-nowrap tabular-nums" style={{ color: style.headInk ? head : style.sub }}>
+            <div className="mt-[2px] text-[9.5px] whitespace-nowrap tabular-nums" style={{ color: metaColor }}>
               2026-10-06 – 2026-10-08 · San Francisco
             </div>
           </div>
@@ -471,12 +491,13 @@ function StyledFace({
   }
   return (
     <div className="relative flex h-full flex-col px-[20px] pt-[28px] pb-[16px]">
+      {bandLayer}
       {/* The event: Planned's mark, the name, the dates. */}
       {/* The event: Planned's mark, then the name, dates and city, each on its own line. */}
-      <div style={{ color: head }}>
+      <div className="relative" style={{ color: head }}>
         <PlannedLogo size={20} />
         <div className="mt-2.5 text-[13px] leading-tight font-semibold tracking-[-0.01em]">Planned Live</div>
-        <div className="mt-[3px] text-[9.5px] leading-[1.45] whitespace-nowrap tabular-nums" style={{ color: style.headInk ? head : style.sub }}>
+        <div className="mt-[3px] text-[9.5px] leading-[1.45] whitespace-nowrap tabular-nums" style={{ color: metaColor }}>
           <div>2026-10-06 – 2026-10-08</div>
           <div>San Francisco</div>
         </div>
@@ -580,7 +601,10 @@ export function Badge({
   highlightCode = false,
   showCode = true,
   cut,
+  roleColorOverride,
 }: {
+  /** A colour the organiser set for this attendee type, if any. */
+  roleColorOverride?: string
   /** A real, see-through slot (the new version). Today's badge keeps its own. */
   cut?: boolean
   /** Whether the badge carries a code at all. */
@@ -599,7 +623,7 @@ export function Badge({
   showName: boolean
   showCompany: boolean
 }) {
-  const roleColor = roleColorFor(role, style)
+  const roleColor = roleColorOverride ?? roleColorFor(role, style)
   const portrait = size === "portrait"
   const big = template === "big"
   const slot = cut ?? !!style.art
@@ -636,7 +660,7 @@ export function Badge({
         {/* A fine light edge around the printed face. */}
         {style.art && <span aria-hidden className="pointer-events-none absolute inset-0 z-[1] rounded-[14px]" style={{ boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.45), inset 0 1px 0 rgba(255,255,255,0.6)" }} />}
         {style.art ? (
-          <StyledFace style={style} role={role} portrait={portrait} big={big} showName={showName} showCompany={showCompany} link={link} highlightCode={highlightCode} showCode={showCode} />
+          <StyledFace style={style} role={role} portrait={portrait} big={big} showName={showName} showCompany={showCompany} link={link} highlightCode={highlightCode} showCode={showCode} band={template === "band"} bandColor={roleColor} />
         ) : (
         <div className="relative flex h-full flex-col px-[20px] pt-[30px] pb-[18px]">
           {/* The event's brand, now part of every badge. */}
@@ -874,10 +898,12 @@ function Radio({ on }: { on: boolean }) {
 
 /** What each kind of added context is called in the prototype. */
 const EXTRA_NAMES = {
-  link: "planned.com/live/speakers",
-  images: "Venue photos (8)",
-  file: "Brand guidelines.pdf",
+  link: ["planned.com/live/speakers", "planned.com/live/venue", "Sponsor site"],
+  images: ["Venue photos (8)", "Speaker headshots (12)", "Last year's event (24)"],
+  file: ["Brand guidelines.pdf", "Sponsor logos.pdf", "Signage spec.pdf"],
 } as const
+type ExtraKind = keyof typeof EXTRA_NAMES
+type Extra = { id: string; kind: ExtraKind; name: string; fresh: boolean }
 
 /** A small × for taking a source out of the list. */
 function RemoveButton({ label, onClick }: { label: string; onClick: () => void }) {
@@ -1026,6 +1052,10 @@ export function PlannedBadge({
   // organiser's choosing for anyone who scans it with a phone.
   const [codeLink, setCodeLink] = useState(true)
   const [codeUrl, setCodeUrl] = useState("planned.com/live/agenda")
+  // Colours the organiser picked for attendee types, over the defaults.
+  const [custom, setCustom] = useState<Partial<Record<Role, string>>>({})
+  const colorFor = (r: Role) => custom[r] ?? roleColorFor(r, style)
+  const [hexDraft, setHexDraft] = useState<string | null>(null)
   // The code goes through a Planned link, so its destination can change after
   // printing: the agenda during the event, and (suggested by the agent) the
   // feedback survey after it.
@@ -1043,22 +1073,23 @@ export function PlannedBadge({
   const [asking, setAsking] = useState(false)
   // Extra context the organiser adds to the sources, waiting to be used
   // until they regenerate; and files attached to a refine note.
-  const [extras, setExtras] = useState<{ kind: "link" | "images" | "file"; name: string; fresh: boolean }[]>([])
+  const [extras, setExtras] = useState<Extra[]>([])
   const [attached, setAttached] = useState<string[]>([])
   const [off, setOff] = useState<Record<string, boolean>>({})
   // Sources taken out of the list entirely; the last one can be undone.
   const [removed, setRemoved] = useState<string[]>([])
-  const [lastRemoved, setLastRemoved] = useState<{ key: string; name: string } | null>(null)
+  const [lastRemoved, setLastRemoved] = useState<{ key: string; name: string; extra?: Extra } | null>(null)
   const removeSource = (key: string, name: string) => {
-    if (extras.some((e) => e.kind === key)) setExtras((v) => v.filter((e) => e.kind !== key))
+    const extra = extras.find((e) => e.id === key)
+    if (extra) setExtras((v) => v.filter((e) => e.id !== key))
     else setRemoved((v) => [...v, key])
-    setLastRemoved({ key, name })
+    setLastRemoved({ key, name, extra })
     redraft()
   }
   const undoRemove = () => {
     if (!lastRemoved) return
-    const { key } = lastRemoved
-    if (key in EXTRA_NAMES) setExtras((v) => [...v, { kind: key as "link" | "images" | "file", name: EXTRA_NAMES[key as keyof typeof EXTRA_NAMES], fresh: false }])
+    const { key, extra } = lastRemoved
+    if (extra) setExtras((v) => [...v, extra])
     else setRemoved((v) => v.filter((k) => k !== key))
     setLastRemoved(null)
     redraft()
@@ -1069,15 +1100,6 @@ export function PlannedBadge({
   }
   const [askedFiles, setAskedFiles] = useState<string[]>([])
   const [phase, setPhase] = useState<"thinking" | "done">("done")
-  // While drafting, a short status steps through what the skills are doing.
-  const STEPS = ["Reading planned.com…", "Pulling brand colours…", "Composing drafts…", "Checking contrast…"]
-  const [step, setStep] = useState(0)
-  useEffect(() => {
-    if (phase !== "thinking") return
-    setStep(0)
-    const iv = window.setInterval(() => setStep((n) => Math.min(n + 1, STEPS.length - 1)), 380)
-    return () => window.clearInterval(iv)
-  }, [phase, STEPS.length])
   // Nothing is applied until the organiser picks a draft; choosing one is optional.
   const [style, setStyle] = useState<Style>(PLAIN)
   const [accent, setAccent] = useState(PLAIN.accent)
@@ -1106,18 +1128,23 @@ export function PlannedBadge({
     setAttached([])
     redraft()
   }
-  const EXTRA = EXTRA_NAMES
-  const addExtra = (kind: keyof typeof EXTRA) => {
-    if (extras.some((e) => e.kind === kind)) return
-    setExtras((v) => [...v, { kind, name: EXTRA[kind], fresh: true }])
+  // Each click adds another item; names cycle, then number themselves.
+  const addExtra = (kind: ExtraKind) => {
+    setExtras((v) => {
+      const n = v.filter((e) => e.kind === kind).length
+      const names = EXTRA_NAMES[kind]
+      const name = names[n % names.length]! + (n >= names.length ? ` (${Math.floor(n / names.length) + 1})` : "")
+      return [...v, { id: `${kind}-${Date.now()}-${n}`, kind, name, fresh: true }]
+    })
   }
   const useExtras = () => {
     setExtras((v) => v.map((e) => ({ ...e, fresh: false })))
     redraft()
   }
-  const fresh = extras.some((e) => e.fresh)
+  const freshCount = extras.filter((e) => e.fresh).length
+  const fresh = freshCount > 0
   const sourceCount =
-    ["site", "colours", "photos", "type"].filter((k) => !off[k] && !removed.includes(k)).length + extras.filter((e) => !e.fresh && !off[e.kind]).length
+    ["site", "colours", "photos", "type"].filter((k) => !off[k] && !removed.includes(k)).length + extras.filter((e) => !e.fresh && !off[e.id]).length
   const apply = (s: Style) => {
     setStyle(s)
     setAccent(s.accent)
@@ -1256,9 +1283,8 @@ export function PlannedBadge({
                   </div>
                   {/* A quiet way to steer, up in the header. */}
                   {phase === "thinking" ? (
-                    <span key={step} className="view-in text-[11.5px]" style={{ color: MUTED }}>
-                      {STEPS[step]}
-                    </span>
+                    /* One steady status, with a light sweeping across the words. */
+                    <span className="text-shimmer text-[12px]">Regenerating…</span>
                   ) : (
                     <button
                       type="button"
@@ -1497,7 +1523,7 @@ export function PlannedBadge({
                       {extras.map((e) => {
                         const Icon = e.kind === "link" ? Link2 : e.kind === "images" ? ImageIcon : FileText
                         return (
-                          <div key={e.kind} className="view-in flex items-center gap-3 px-3 py-2.5">
+                          <div key={e.id} className="view-in flex items-center gap-3 px-3 py-2.5">
                             <span className="flex size-[28px] shrink-0 items-center justify-center rounded-[8px]" style={{ background: PANEL }}>
                               <Icon className="size-[14px]" strokeWidth={1.7} />
                             </span>
@@ -1513,12 +1539,28 @@ export function PlannedBadge({
                               </span>
                             )}
                             <span className="flex items-center gap-1.5">
-                              <MiniSwitch on={!off[e.kind]} onClick={() => setOff((v) => ({ ...v, [e.kind]: !v[e.kind] }))} label={`Use ${e.name}`} />
-                              <RemoveButton label={`Remove ${e.name}`} onClick={() => removeSource(e.kind, e.name)} />
+                              <MiniSwitch on={!off[e.id]} onClick={() => setOff((v) => ({ ...v, [e.id]: !v[e.id] }))} label={`Use ${e.name}`} />
+                              <RemoveButton label={`Remove ${e.name}`} onClick={() => removeSource(e.id, e.name)} />
                             </span>
                           </div>
                         )
                       })}
+                      {/* New context waiting to be used: one clear prompt to redraft. */}
+                      {fresh && (
+                        <div className="view-in mx-2 mb-1.5 flex items-center justify-between gap-3 rounded-[9px] py-1.5 pr-1.5 pl-3" style={{ background: "#eef6f4" }}>
+                          <span className="text-[12px]" style={{ color: "#294B4F" }}>
+                            {freshCount} new {freshCount === 1 ? "source" : "sources"} not used yet
+                          </span>
+                          <button
+                            type="button"
+                            onClick={useExtras}
+                            className="rounded-[7px] px-2.5 py-1 text-[12px] font-medium text-white"
+                            style={{ background: "#1d1d1b" }}
+                          >
+                            Regenerate
+                          </button>
+                        </div>
+                      )}
 
                       {(asked || askedFiles.length > 0) && (
                         <div className="flex items-center gap-3 px-3 py-2.5">
@@ -1577,12 +1619,10 @@ export function PlannedBadge({
                             ["file", "Brand guidelines", FileText],
                           ] as const
                         ).map(([kind, label, Icon]) => {
-                          const added = extras.some((e) => e.kind === kind)
                           return (
                             <button
                               key={kind}
                               type="button"
-                              disabled={added}
                               onClick={() => addExtra(kind)}
                               className="flex items-center gap-1 rounded-full border bg-white py-[3px] pr-2.5 pl-2 text-[11.5px] font-medium transition-colors hover:bg-[#fafaf8] disabled:opacity-40"
                               style={{ borderColor: LINE, color: INK }}
@@ -1608,16 +1648,6 @@ export function PlannedBadge({
                           <Pencil className="size-[11px]" strokeWidth={1.8} style={{ color: MUTED }} />
                           Note
                         </button>
-                        {fresh && (
-                          <button
-                            type="button"
-                            onClick={useExtras}
-                            className="view-in ml-auto rounded-[8px] px-3 py-1 text-[12px] font-medium text-white"
-                            style={{ background: "#1d1d1b" }}
-                          >
-                            Regenerate
-                          </button>
-                        )}
                       </div>
 
 
@@ -1733,14 +1763,45 @@ export function PlannedBadge({
                   <button
                     key={r.id}
                     type="button"
-                    onClick={() => setRole(r.id)}
+                    onClick={() => {
+                      setRole(r.id)
+                      setHexDraft(null)
+                    }}
                     className="flex items-center gap-2 rounded-[9px] border px-3 py-1.5 text-[13px]"
                     style={{ borderColor: role === r.id ? INK : LINE, background: role === r.id ? PANEL : "#fff" }}
                   >
-                    <span className="size-[13px] rounded-[3px] transition-colors" style={{ background: roleColorFor(r.id, style) }} />
+                    <span className="size-[13px] rounded-[3px] transition-colors" style={{ background: colorFor(r.id) }} />
                     {r.id}
                   </button>
                 ))}
+              </div>
+              {/* The selected type's colour: a swatch that opens a picker, and its hex. */}
+              <div className="mt-3 flex items-center gap-2.5">
+                <label className="relative block size-[34px] shrink-0 cursor-pointer overflow-hidden rounded-[8px] border" style={{ borderColor: LINE, background: colorFor(role) }}>
+                  <input
+                    type="color"
+                    aria-label={`${role} colour`}
+                    value={colorFor(role)}
+                    onChange={(e) => {
+                      setCustom((v) => ({ ...v, [role]: e.target.value.toUpperCase() }))
+                      setHexDraft(null)
+                    }}
+                    className="absolute inset-0 size-full cursor-pointer opacity-0"
+                  />
+                </label>
+                <input
+                  aria-label={`${role} colour hex`}
+                  value={hexDraft ?? colorFor(role).toUpperCase()}
+                  onChange={(e) => {
+                    const v = e.target.value.trim()
+                    setHexDraft(v)
+                    const hex = v.startsWith("#") ? v : `#${v}`
+                    if (/^#[0-9a-fA-F]{6}$/.test(hex)) setCustom((c) => ({ ...c, [role]: hex.toUpperCase() }))
+                  }}
+                  onBlur={() => setHexDraft(null)}
+                  className="h-[34px] w-[220px] rounded-[9px] border bg-white px-3 text-[13px] tabular-nums outline-none focus:border-[#b5b5b1]"
+                  style={{ borderColor: LINE }}
+                />
               </div>
               <p className="mt-3 text-[12px]" style={{ color: MUTED }}>
                 The color is produced on pre-printed stock. On-site thermal printers add attendee details in black only.
@@ -1839,6 +1900,7 @@ export function PlannedBadge({
                     pattern={pattern}
                     showName={showName}
                     showCompany={showCompany}
+                    roleColorOverride={custom[role]}
                     loading={phase === "thinking"}
                     link={codeLink && codeUrl.trim() ? codeUrl.trim() : undefined}
                     showCode={codeLink}
@@ -1856,6 +1918,7 @@ export function PlannedBadge({
                     pattern={pattern}
                     showName={showName}
                     showCompany={showCompany}
+                    roleColorOverride={custom[role]}
                   />
                 </div>
               )}

@@ -1404,3 +1404,20 @@ main:has(.hero-slide a:focus-visible) .title-chevron,
 @media (prefers-reduced-motion: reduce) {
   .ai-pulse { animation: none; }
 }
+
+/* A status line with a soft light sweeping across its letters. */
+.text-shimmer {
+  color: transparent;
+  background: linear-gradient(90deg, #8a8a86 0%, #8a8a86 35%, #d9d9d5 50%, #8a8a86 65%, #8a8a86 100%);
+  background-size: 250% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  animation: text-shimmer 1.4s linear infinite;
+}
+@keyframes text-shimmer {
+  from { background-position: 100% 0; }
+  to { background-position: -150% 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .text-shimmer { animation: none; color: #8a8a86; }
+}

@@ -1,9 +1,9 @@
 import { useEffect, useId, useRef, useState } from "react"
 
 import type { CaseStudy } from "./case-study"
-import { Store, TrendingDown, TrendingUp } from "lucide-react"
+import { Activity, CalendarClock, ChartColumn, ChartSpline, FileText, Gauge, Lightbulb, Store, Table2, Target, TrendingDown, TrendingUp } from "lucide-react"
 
-import { INK, Kpi, LINE, MUTED, ReportUIHero } from "./reportui-hero"
+import { INK, Kpi, LINE, Meta, MUTED, ReportUIHero, WinRateChart } from "./reportui-hero"
 import { Callout, ForecastChart, Scaled } from "./report-kit"
 import { ArtifactsHero } from "./artifacts-hero"
 import { ScribbleNote } from "./scribble-note"
@@ -149,50 +149,123 @@ function DriftingReports() {
   return (
     <div className={`relative w-full max-w-[38rem] ${wide ? "pt-14" : ""}`}>
       {wide && note}
-      <div className="flex flex-col gap-4 sm:flex-row">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
+        {/* The first run, as an agent styled it with nothing to go on: the
+            familiar generated look. Not ugly, just too much: a gradient
+            header with an emoji, a different pastel card for every figure,
+            gradient bars, and an "AI insight" box nobody asked for. */}
         <div className="flex flex-1">
-          <Sheet className="flex-1 p-4">
-            <RunHeader title="Weekly pipeline review" date="2026-10-05" />
-            <div className="mt-3 flex gap-2">
-              <MiniKpi label="New pipeline" value="$412K" delta="+12%" />
-              <MiniKpi label="Win rate" value="31%" delta="+2pp" />
-              <MiniKpi label="Cycle" value="38d" delta="+4d" down />
+          <div
+            className={`flex-1 overflow-hidden rounded-[16px] border bg-white shadow-[0_10px_30px_-12px_rgba(79,70,229,0.35)] ${FONT}`}
+            style={{ borderColor: "#e0e7ff", color: "#1e1b4b" }}
+          >
+            <div className="px-3.5 py-2.5" style={{ background: "linear-gradient(120deg, #6366f1, #a855f7 60%, #ec4899)" }}>
+              <div className="text-[12.5px] font-bold text-white">📊 Weekly Pipeline Review</div>
+              <div className="mt-0.5 text-[9px] text-white/80">2026-10-05 · Sales overview</div>
             </div>
-            <ChartCard title="Pipeline created, by week" figure="Last 7 weeks">
-              <MiniTrend values={[0.2, 0.35, 0.3, 0.5, 0.45, 0.62, 0.7]} className="mt-1.5 h-[46px]" />
-            </ChartCard>
-          </Sheet>
+            <div className="p-3">
+              <div className="flex gap-1.5">
+                {[
+                  ["💰", "Pipeline", "$412K", "#eef2ff", "#4f46e5"],
+                  ["🎯", "Win rate", "31%", "#ecfdf5", "#059669"],
+                  ["⏱️", "Cycle", "38d", "#fff7ed", "#ea580c"],
+                ].map(([e, l, v, bg, c]) => (
+                  <div key={l} className="min-w-0 flex-1 rounded-[10px] px-2 py-1.5" style={{ background: bg }}>
+                    <div className="truncate text-[8.5px] font-medium" style={{ color: c }}>
+                      {e} {l}
+                    </div>
+                    <div className="text-[14px] font-extrabold" style={{ color: c }}>{v}</div>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-2 rounded-[10px] border px-2 pt-1.5 pb-1" style={{ borderColor: "#eef2ff" }}>
+                <div className="text-[9.5px] font-semibold">📈 Pipeline Growth Trend</div>
+                <div className="mt-1 flex h-[38px] items-end gap-[4px]">
+                  {[0.35, 0.55, 0.45, 0.7, 0.62, 0.85, 0.95].map((v, k) => (
+                    <span key={k} className="flex-1 rounded-t-[4px]" style={{ height: `${v * 100}%`, background: "linear-gradient(#a855f7, #6366f1)" }} />
+                  ))}
+                </div>
+              </div>
+              <div className="mt-2 rounded-[10px] px-2 py-1.5 text-[9px] leading-[1.4]" style={{ background: "linear-gradient(120deg, #fdf4ff, #eef2ff)", color: "#6b21a8" }}>
+                <b>✨ AI Insight:</b> Pipeline is trending up! Keep up the momentum 🚀
+              </div>
+            </div>
+          </div>
         </div>
-        {/* The next run of the same request: the chart gone, the KPIs
-            folded into prose, the sections in a new order. */}
+        {/* The next run of the same request, styled all over again: a
+            different gradient, a donut instead of bars, the figures moved
+            into the prose as coloured pills, and a deals list in badges. */}
         <div className={`relative flex flex-1 flex-col ${wide ? "" : "pt-12"}`}>
           {!wide && note}
           <div className="flex flex-1">
-            <Sheet className="flex-1 p-4">
-              {/* The note's arrow lands on the title, which is all that's
-                  left of the first report's name. */}
+            <div
+              className={`flex-1 overflow-hidden rounded-[12px] border bg-white p-3.5 shadow-[0_10px_30px_-12px_rgba(13,148,136,0.35)] ${FONT}`}
+              style={{ borderColor: "#ccfbf1", color: "#134e4a" }}
+            >
+              {/* The note's arrow lands on the title, which no longer
+                  matches the first report's name, or its style. */}
               <div className="flex items-center justify-between gap-2">
-                <span data-drift-run className="text-[13.5px] font-semibold tracking-[-0.15px]">Pipeline update</span>
-                <RunDate date="2026-10-12" />
+                <span
+                  data-drift-run
+                  className="bg-clip-text text-[14px] font-extrabold text-transparent"
+                  style={{ backgroundImage: "linear-gradient(90deg, #0d9488, #2563eb)" }}
+                >
+                  🚀 Pipeline Update
+                </span>
+                <span className="rounded-full px-1.5 py-[1px] text-[8.5px] font-semibold" style={{ background: "#ccfbf1", color: "#0f766e" }}>
+                  2026-10-12
+                </span>
               </div>
-              <p className="mt-3 text-[11.5px] leading-[1.55]" style={{ color: "#4b5160" }}>
-                This week the team added roughly $390K in new pipeline. Win rate is around 30%, and
-                deals are taking a little longer to close than last week.
+              <p className="mt-2 text-[10px] leading-[1.6]" style={{ color: "#475569" }}>
+                Great week! 🎉 The team added{" "}
+                <span className="rounded-[4px] px-1 font-semibold" style={{ background: "#dbeafe", color: "#1d4ed8" }}>$390K</span> in new pipeline,
+                win rate is around{" "}
+                <span className="rounded-[4px] px-1 font-semibold" style={{ background: "#dcfce7", color: "#15803d" }}>30%</span> and deals are
+                taking a little longer to close.
               </p>
-              <div className="mt-3.5 text-[10px] font-medium">Top deals</div>
-              <ul className="mt-1.5 flex flex-col text-[11px]" style={{ color: "#4b5160" }}>
+              <div className="mt-2 flex items-center gap-2.5">
+                <span
+                  aria-hidden
+                  className="relative size-[40px] shrink-0 rounded-full"
+                  style={{ background: "conic-gradient(#14b8a6 0 38%, #3b82f6 0 64%, #a78bfa 0 84%, #f472b6 0)" }}
+                >
+                  <span className="absolute inset-[9px] rounded-full bg-white" />
+                </span>
+                <div className="flex flex-wrap gap-1 text-[8.5px] font-medium">
+                  {[
+                    ["#14b8a6", "Inbound"],
+                    ["#3b82f6", "Outbound"],
+                    ["#a78bfa", "Partner"],
+                    ["#f472b6", "Events"],
+                  ].map(([c, l]) => (
+                    <span key={l} className="flex items-center gap-1 rounded-full px-1.5 py-[1px]" style={{ background: "#f8fafc", color: "#475569" }}>
+                      <span className="size-[5px] rounded-full" style={{ background: c }} />
+                      {l}
+                    </span>
+                  ))}
+                </div>
+              </div>
+              <div className="mt-2.5 text-[9.5px] font-bold">🔥 Top Deals</div>
+              <ul className="mt-1 flex flex-col gap-1 text-[9.5px]">
                 {[
-                  ["Northwind renewal", "$84K"],
-                  ["Acme expansion", "$61K"],
-                  ["Globex, new logo", "$47K"],
-                ].map(([deal, amount]) => (
-                  <li key={deal} className="flex justify-between border-t py-1.5" style={{ borderColor: "#f0f0ee" }}>
-                    <span>{deal}</span>
-                    <span className="font-medium tabular-nums" style={{ color: INK }}>{amount}</span>
+                  ["Northwind", "$84K", "Hot 🔥", "#fee2e2", "#b91c1c"],
+                  ["Acme", "$61K", "On track", "#dcfce7", "#15803d"],
+                  ["Globex", "$47K", "At risk", "#fef3c7", "#b45309"],
+                ].map(([deal, amount, tag, bg, c]) => (
+                  <li key={deal} className="flex items-center gap-1.5 rounded-[8px] px-1.5 py-1" style={{ background: "#f8fafc" }}>
+                    <span
+                      className="flex size-[14px] items-center justify-center rounded-full text-[7.5px] font-bold text-white"
+                      style={{ background: "linear-gradient(135deg, #14b8a6, #6366f1)" }}
+                    >
+                      {deal![0]}
+                    </span>
+                    <span className="flex-1 font-medium">{deal}</span>
+                    <span className="rounded-full px-1.5 text-[8px] font-semibold" style={{ background: bg, color: c }}>{tag}</span>
+                    <span className="font-bold">{amount}</span>
                   </li>
                 ))}
               </ul>
-            </Sheet>
+            </div>
           </div>
         </div>
       </div>
@@ -213,17 +286,54 @@ const KIT_GREEN_SOFT = "#e9f6ef"
 const KIT_SUBTLE = "#9aa0a9"
 const KIT_RULE = "#eeeeec"
 
-/** One component of the kit: a white tile holding its specimen, its name below. */
-function KitTile({ name, children }: { name: string; children: React.ReactNode }) {
+/**
+ * One component of the kit, shown the way a product's gallery shows one: a
+ * white card with a small icon tile and the component's name, over a soft
+ * inset panel where the specimen sits. Specimens are placed off-centre and
+ * allowed to run past the panel's edge, fading out as they go, so each reads
+ * as a glimpse of the real thing rather than a boxed-up icon.
+ */
+export function KitTile({ name, icon, children }: { name: string; icon: React.ReactNode; children: React.ReactNode }) {
   return (
-    <div className="flex flex-col gap-2.5">
+    <div
+      className={`kit-card flex flex-col gap-2.5 rounded-[14px] border bg-white p-2 ${FONT}`}
+      style={{ borderColor: "#ececea", color: INK }}
+    >
+      <div className="flex items-center gap-2 px-1 pt-1">
+        <span
+          className="flex size-[22px] shrink-0 items-center justify-center rounded-[6px] border bg-white"
+          style={{ borderColor: "#ececea", color: KIT_GREEN }}
+          aria-hidden
+        >
+          {icon}
+        </span>
+        <span className="truncate text-[12px] font-medium">{name}</span>
+      </div>
+      <div className="relative h-[104px] overflow-hidden rounded-[10px] border" style={{ background: "#f7f7f6", borderColor: "#f0f0ee" }}>
+        {children}
+      </div>
+    </div>
+  )
+}
+
+/** A faint grid on a panel, fading out from its middle. */
+function KitGrid() {
+  return <span aria-hidden className="kit-grid pointer-events-none absolute inset-0" />
+}
+
+/** A small white sheet inside a panel: set in from the top left, running off
+    the right and bottom, and fading as it goes. */
+function KitSheet({ children, className = "", fit = false }: { children: React.ReactNode; className?: string; fit?: boolean }) {
+  // `fit` keeps the sheet inside the panel's width, fading only at the foot,
+  // for specimens whose right-hand side carries the figures.
+  return (
+    <div className={`absolute top-3 left-3 ${fit ? "kit-fade-b right-3" : "kit-fade"} ${className}`}>
       <div
-        className={`flex h-[128px] flex-col justify-center rounded-[12px] border bg-white px-4 py-3.5 ${FONT}`}
-        style={{ borderColor: LINE, color: INK }}
+        className="rounded-[9px] border bg-white shadow-[0_1px_2px_rgba(15,15,15,0.04),0_8px_20px_-12px_rgba(15,15,15,0.14)]"
+        style={{ borderColor: "#ececea" }}
       >
         {children}
       </div>
-      <span className="project-blurb text-center !text-[12px]">{name}</span>
     </div>
   )
 }
@@ -231,7 +341,7 @@ function KitTile({ name, children }: { name: string; children: React.ReactNode }
 /** A small eyebrow inside a specimen, naming what it shows. */
 function KitLabel({ children }: { children: React.ReactNode }) {
   return (
-    <div className="text-[10.5px] leading-none font-medium" style={{ color: KIT_SUBTLE }}>
+    <div className="text-[10px] leading-none font-medium" style={{ color: KIT_SUBTLE }}>
       {children}
     </div>
   )
@@ -239,61 +349,72 @@ function KitLabel({ children }: { children: React.ReactNode }) {
 
 function KitHeader() {
   return (
-    <>
-      <KitLabel>Vasco</KitLabel>
-      <div className="mt-1.5 text-[19px] leading-tight font-semibold tracking-[-0.3px]">ICP Analysis</div>
-      <div className="mt-3 flex gap-4 text-[10.5px]">
-        {[
-          ["Period", "Q4 FY26"],
-          ["Score", "6.4/10"],
-        ].map(([k, v]) => (
-          <div key={k}>
-            <div style={{ color: KIT_SUBTLE }}>{k}</div>
-            <div className="mt-0.5 font-semibold">{v}</div>
-          </div>
-        ))}
+    <KitSheet className="w-[210px]">
+      <div className="px-3 pt-3 pb-4">
+        <KitLabel>Vasco</KitLabel>
+        <div className="mt-1.5 text-[16px] leading-tight font-semibold tracking-[-0.3px]">ICP Analysis</div>
+        <div className="mt-2.5 flex text-[10px]">
+          {[
+            ["Period", "Q4 FY26"],
+            ["Score", "6.4/10"],
+            ["Bottleneck", "Demand gen"],
+          ].map(([k, v], i) => (
+            <div key={k} className={i ? "border-l px-2.5" : "pr-2.5"} style={{ borderColor: KIT_RULE }}>
+              <div style={{ color: KIT_SUBTLE }}>{k}</div>
+              <div className="mt-0.5 font-semibold whitespace-nowrap">{v}</div>
+            </div>
+          ))}
+        </div>
       </div>
-    </>
+    </KitSheet>
   )
 }
 
-function KitKpi() {
+export function KitKpi() {
   return (
-    <>
-      <KitLabel>Net New ARR</KitLabel>
-      <div className="mt-2 text-[24px] leading-none font-semibold tracking-[-0.4px] tabular-nums">$512K</div>
-      <div className="mt-1.5 text-[10.5px]" style={{ color: KIT_SUBTLE }}>
-        Across 4 quarters
+    <KitSheet fit>
+      <div className="px-3 pt-2.5 pb-4">
+        <KitLabel>Net New ARR</KitLabel>
+        <div className="mt-1.5 text-[20px] leading-none font-semibold tracking-[-0.4px] tabular-nums">$512K</div>
+        <div className="mt-1 text-[10px]" style={{ color: KIT_SUBTLE }}>
+          Across 4 quarters
+        </div>
+        <span
+          className="mt-1.5 inline-flex w-fit items-center gap-1 rounded-full px-1.5 py-0.5 text-[9.5px] font-medium tabular-nums"
+          style={{ background: KIT_GREEN_SOFT, color: "#2f855a" }}
+        >
+          <TrendingUp strokeWidth={2.5} className="size-[9px]" aria-hidden />
+          +80%
+        </span>
       </div>
-      <span
-        className="mt-2.5 inline-flex w-fit items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-medium tabular-nums"
-        style={{ background: KIT_GREEN_SOFT, color: "#2f855a" }}
-      >
-        <TrendingUp strokeWidth={2.5} className="size-[10px]" aria-hidden />
-        +80%
-      </span>
-    </>
+    </KitSheet>
   )
 }
 
-function KitTrend() {
-  const line = "M0 52 C 14 48, 22 40, 34 42 S 52 50, 64 40 S 84 22, 98 26 S 118 34, 132 22 S 152 10, 168 8"
+export function KitTrend() {
+  const line = "M0 66 C 14 62, 22 52, 34 54 S 52 63, 64 52 S 84 30, 98 34 S 118 44, 132 30 S 152 16, 170 14"
   return (
     <>
-      <KitLabel>Win rate, rolling 90d</KitLabel>
-      <svg viewBox="0 0 168 60" className="mt-3 block h-[58px] w-full" preserveAspectRatio="none" aria-hidden>
+      <KitGrid />
+      <svg viewBox="0 0 190 104" className="kit-fade-r absolute inset-0 h-full w-full" preserveAspectRatio="none" aria-hidden>
         <defs>
           <linearGradient id="kit-trend" x1="0" x2="0" y1="0" y2="1">
-            <stop offset="0" stopColor={KIT_GREEN} stopOpacity="0.16" />
+            <stop offset="0" stopColor={KIT_GREEN} stopOpacity="0.22" />
             <stop offset="1" stopColor={KIT_GREEN} stopOpacity="0" />
           </linearGradient>
         </defs>
-        {[10, 34, 58].map((y) => (
-          <line key={y} x1="0" x2="168" y1={y} y2={y} stroke={KIT_RULE} strokeDasharray="3 3" vectorEffect="non-scaling-stroke" />
-        ))}
-        <path d={`${line} L168 60 L0 60 Z`} fill="url(#kit-trend)" />
-        <path d={line} fill="none" stroke={KIT_GREEN} strokeWidth="1.75" vectorEffect="non-scaling-stroke" />
+        <g transform="translate(12 10)">
+          <path d={`${line} L170 94 L0 94 Z`} fill="url(#kit-trend)" />
+          <path d={line} fill="none" stroke={KIT_GREEN} strokeWidth="1.75" strokeLinecap="round" vectorEffect="non-scaling-stroke" />
+        </g>
       </svg>
+      {/* The latest reading: a dot with a soft halo, drawn outside the
+          stretched chart so it stays round. */}
+      <span
+        aria-hidden
+        className="absolute size-[7px] rounded-full border-[1.5px] bg-white"
+        style={{ left: "calc((182 / 190) * 100% - 3.5px)", top: "calc((24 / 104) * 100% - 3.5px)", borderColor: KIT_GREEN, boxShadow: "0 0 0 4px rgba(63,174,122,0.16)" }}
+      />
     </>
   )
 }
@@ -307,13 +428,16 @@ function KitBars() {
   ]
   return (
     <>
-      <KitLabel>Revenue by segment</KitLabel>
-      <div className="mt-3 flex h-[58px] items-end gap-2">
+      <KitGrid />
+      <div className="absolute inset-x-4 top-4 bottom-2.5 flex items-end gap-2.5">
         {bars.map((b, i) => (
-          <div key={b.k} className="flex flex-1 flex-col items-center gap-1">
+          <div key={b.k} className="flex flex-1 flex-col items-center gap-1.5">
             <span
-              className="w-full rounded-t-[3px]"
-              style={{ height: `${b.v * 44}px`, background: i === 0 ? KIT_GREEN : "#d9dcdf" }}
+              className="w-full rounded-t-[4px]"
+              style={{
+                height: `${b.v * 58}px`,
+                background: i === 0 ? `linear-gradient(${KIT_GREEN}, #6cc79c)` : "linear-gradient(#d9dcdf, #e8eaec)",
+              }}
             />
             <span className="text-[9px] leading-none" style={{ color: KIT_SUBTLE }}>
               {b.k}
@@ -332,60 +456,66 @@ function KitTable() {
     ["SMB", "$210K"],
   ]
   return (
-    <div className="text-[11px]">
-      <div className="flex justify-between pb-1.5 text-[10px] font-medium" style={{ color: KIT_SUBTLE }}>
-        <span>Segment</span>
-        <span>ARR</span>
-      </div>
-      {rows.map(([a, b]) => (
-        <div key={a} className="flex justify-between border-t py-1.5" style={{ borderColor: KIT_RULE }}>
-          <span>{a}</span>
-          <span className="tabular-nums" style={{ color: MUTED }}>
-            {b}
-          </span>
+    <KitSheet fit>
+      <div className="text-[10.5px]">
+        <div className="flex justify-between px-3 pt-2 pb-1.5 text-[9.5px] font-medium" style={{ color: KIT_SUBTLE }}>
+          <span>Segment</span>
+          <span>ARR</span>
         </div>
-      ))}
-    </div>
+        {rows.map(([a, b]) => (
+          <div key={a} className="flex justify-between border-t px-3 py-[7px]" style={{ borderColor: KIT_RULE }}>
+            <span>{a}</span>
+            <span className="font-medium tabular-nums">{b}</span>
+          </div>
+        ))}
+      </div>
+    </KitSheet>
   )
 }
 
 /** ReportUI's green "Win" callout, drawn at the kit's size: the soft green
     card, a circled check beside the bold title, the finding beneath. */
-function KitCallout() {
+export function KitCallout() {
   return (
-    <div className="rounded-[11px] px-3 py-2.5" style={{ background: "rgb(237,252,242)", color: "rgb(0,110,45)" }}>
-      <div className="flex items-center gap-1.5 text-[12.5px] font-semibold tracking-[-0.2px]">
-        <svg viewBox="0 0 24 24" className="size-[14px] shrink-0" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-          <circle cx="12" cy="12" r="9.25" />
-          <path d="m8.25 12.25 2.5 2.5 5-5.25" />
-        </svg>
-        Win
+    <div className="kit-fade-b absolute top-3 right-3 left-3">
+      <div
+        className="rounded-[10px] border px-3 py-2.5 shadow-[0_1px_2px_rgba(15,15,15,0.03),0_8px_20px_-12px_rgba(0,110,45,0.18)]"
+        style={{ background: "rgb(237,252,242)", borderColor: "rgb(212,241,222)", color: "rgb(0,110,45)" }}
+      >
+        <div className="flex items-center gap-1.5 text-[12px] font-semibold tracking-[-0.2px]">
+          <svg viewBox="0 0 24 24" className="size-[13px] shrink-0" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+            <circle cx="12" cy="12" r="9.25" />
+            <path d="m8.25 12.25 2.5 2.5 5-5.25" />
+          </svg>
+          Win
+        </div>
+        <p className="mt-1 text-[10.5px] leading-[1.45]">Net new ARR up 80% across the year, led by enterprise.</p>
       </div>
-      <p className="mt-1 text-[11px] leading-[1.45]">Net new ARR up 80% across the year.</p>
     </div>
   )
 }
 
 /** The kit: the components a report is built from. */
 function ComponentKit() {
+  const icon = "size-[12px]"
   return (
-    <div className="grid w-full max-w-[38rem] grid-cols-2 gap-x-3 gap-y-5 sm:grid-cols-3">
-      <KitTile name="Report header">
+    <div className="grid w-full max-w-[40rem] grid-cols-1 gap-3 sm:grid-cols-3">
+      <KitTile name="Report header" icon={<FileText strokeWidth={2} className={icon} />}>
         <KitHeader />
       </KitTile>
-      <KitTile name="Trend chart">
+      <KitTile name="Trend chart" icon={<ChartSpline strokeWidth={2} className={icon} />}>
         <KitTrend />
       </KitTile>
-      <KitTile name="KPI card">
+      <KitTile name="KPI card" icon={<Gauge strokeWidth={2} className={icon} />}>
         <KitKpi />
       </KitTile>
-      <KitTile name="Bar chart">
+      <KitTile name="Bar chart" icon={<ChartColumn strokeWidth={2} className={icon} />}>
         <KitBars />
       </KitTile>
-      <KitTile name="Table">
+      <KitTile name="Table" icon={<Table2 strokeWidth={2} className={icon} />}>
         <KitTable />
       </KitTile>
-      <KitTile name="Callout">
+      <KitTile name="Callout" icon={<Lightbulb strokeWidth={2} className={icon} />}>
         <KitCallout />
       </KitTile>
     </div>
@@ -672,45 +802,65 @@ function SheetProgress() {
 }
 
 /** The templates: each named for the report it makes, and that report's sheet. */
-const TEMPLATES: { title: string; blurb: string; sheet: React.ReactNode }[] = [
+const TEMPLATES: { title: string; blurb: string; icon: React.ReactNode; sheet: React.ReactNode }[] = [
   {
     title: "ICP & TAM Discovery",
     blurb: "Validates your Ideal Customer Profile against real deal outcomes and sizes the market it points to.",
+    icon: <Target strokeWidth={2} className="size-[14px]" />,
     sheet: <SheetShare />,
   },
   {
     title: "Weekly Pipeline Review",
     blurb: "New pipeline, win rate and slipped deals each week, so the team sees what moved and why.",
+    icon: <CalendarClock strokeWidth={2} className="size-[14px]" />,
     sheet: <SheetSummary />,
   },
   {
     title: "Monthly Revenue Health",
     blurb: "ARR, retention and payback month by month, with the drivers behind each change.",
+    icon: <Activity strokeWidth={2} className="size-[14px]" />,
     sheet: <SheetProgress />,
   },
 ]
 
-function TemplateCard({ title, blurb, sheet }: (typeof TEMPLATES)[number]) {
+function TemplateCard({ title, blurb, icon, sheet }: (typeof TEMPLATES)[number]) {
   return (
-    // A step lighter than the panel, with a hairline edge. On hover the sheet
-    // rises and straightens a little inside it, then settles back.
+    // A white card: an icon tile beside the name and what it makes, over a
+    // soft inset panel. The report rises out of the panel at a slight tilt
+    // and fades away towards its foot. On hover it straightens a little.
     <div
-      className="group relative h-[300px] min-w-0 flex-1 overflow-hidden rounded-[16px] border px-5 pt-5"
-      style={{ background: "#fbfbfa", borderColor: "#efefed" }}
+      className="group relative h-[300px] min-w-0 flex-1 overflow-hidden rounded-[16px] border bg-white p-2.5 shadow-[0_1px_2px_rgba(15,15,15,0.03)]"
+      style={{ borderColor: "#ececea" }}
     >
-      <div className="text-[13.5px] font-semibold tracking-[-0.1px]">{title}</div>
-      <p className="mt-1.5 line-clamp-2 text-[12px] leading-[1.5]" style={{ color: "#6b7280" }}>
-        {blurb}
-      </p>
-      {/* The report the template makes, rising out of the card at a slight
-          tilt and running off its foot. */}
+      <div className="flex gap-3 px-2 pt-2">
+        <span
+          className="flex size-[30px] shrink-0 items-center justify-center rounded-[8px] border bg-white shadow-[0_1px_2px_rgba(15,15,15,0.04)]"
+          style={{ borderColor: "#ececea", color: TPL_GREEN }}
+          aria-hidden
+        >
+          {icon}
+        </span>
+        <div className="min-w-0">
+          <div className="text-[13.5px] font-semibold tracking-[-0.1px]">{title}</div>
+          <p className="mt-1 line-clamp-2 text-[11.5px] leading-[1.5]" style={{ color: "#6b7280" }}>
+            {blurb}
+          </p>
+        </div>
+      </div>
       <div
-        className="tpl-sheet absolute top-[124px] right-[38px] left-[46px] rounded-[11px] border bg-white px-4 pt-4 pb-14 shadow-[0_1px_2px_rgba(15,15,15,0.03),0_8px_20px_-10px_rgba(15,15,15,0.12)]"
-        style={{ borderColor: TPL_EDGE }}
+        className="absolute inset-x-2.5 top-[96px] bottom-2.5 overflow-hidden rounded-[12px] border"
+        style={{ background: "#f7f7f6", borderColor: "#f0f0ee" }}
       >
-        <div className="text-[12.5px] leading-tight font-semibold tracking-[-0.15px]">{title}</div>
-        <Skel w="60%" className="mt-2" />
-        {sheet}
+        <div className="kit-fade-b absolute inset-0">
+          <div
+            className="tpl-sheet absolute top-[22px] right-[30px] left-[34px] rounded-[11px] border bg-white px-4 pt-4 pb-14 shadow-[0_1px_2px_rgba(15,15,15,0.04),0_12px_28px_-14px_rgba(15,15,15,0.18)]"
+            style={{ borderColor: TPL_EDGE }}
+          >
+            <div className="text-[12.5px] leading-tight font-semibold tracking-[-0.15px]">{title}</div>
+            <Skel w="60%" className="mt-2" />
+            {sheet}
+          </div>
+        </div>
       </div>
     </div>
   )
@@ -742,51 +892,135 @@ function TemplateGallery() {
 /* ---------- Key decisions: same shape, fresh numbers ---------- */
 
 const RUNS = [
-  { date: "2026-10-05", kpis: ["$412K", "31%", "38d"], deltas: ["+12%", "+2pp", "+4d"], trend: [0.2, 0.35, 0.3, 0.5, 0.45, 0.62, 0.7] },
-  { date: "2026-10-12", kpis: ["$390K", "30%", "41d"], deltas: ["−5%", "−1pp", "+3d"], trend: [0.35, 0.3, 0.5, 0.45, 0.62, 0.7, 0.58] },
-  { date: "2026-10-19", kpis: ["$468K", "33%", "36d"], deltas: ["+20%", "+3pp", "−5d"], trend: [0.3, 0.5, 0.45, 0.62, 0.7, 0.58, 0.8] },
+  { date: "2026-10-05", week: "40", summary: "New pipeline is up 12% on last week, led by inbound. Win rate held steady, though deals are taking a few days longer to close.", kpis: ["$412K", "31%", "38d"], deltas: ["+12%", "+2pp", "+4d"], trend: [0.2, 0.35, 0.3, 0.5, 0.45, 0.62, 0.7] },
+  { date: "2026-10-12", week: "41", summary: "A quieter week: new pipeline dipped 5% and two late-stage deals slipped to next quarter. Cycle time crept up again.", kpis: ["$390K", "30%", "41d"], deltas: ["−5%", "−1pp", "+3d"], trend: [0.35, 0.3, 0.5, 0.45, 0.62, 0.7, 0.58] },
+  { date: "2026-10-19", week: "42", summary: "The strongest week this quarter. New pipeline jumped 20%, win rate rose to 33%, and deals are closing five days faster.", kpis: ["$468K", "33%", "36d"], deltas: ["+20%", "+3pp", "−5d"], trend: [0.3, 0.5, 0.45, 0.62, 0.7, 0.58, 0.8] },
 ]
+
+/**
+ * A run's trend, drawn the way the hero's win-rate chart is: a white card
+ * with a legend, a y axis, dashed guides, a smooth green line over a soft
+ * fill, and a dot on the latest week. Drawn at a fixed size (the page is
+ * scaled as one), so the curve never stretches.
+ */
+function RunTrend({ values }: { values: number[] }) {
+  const id = useId()
+  const W = 400
+  const H = 104
+  const pts = values.map((v, i) => [(i / (values.length - 1)) * W, H - 6 - v * (H - 16)] as [number, number])
+  const line = smoothLine(pts)
+  const last = pts[pts.length - 1]!
+  return (
+    <div className="mt-[12px] rounded-[10px] border bg-white px-[16px] pt-[14px] pb-[12px]" style={{ borderColor: "#e8e8e6" }}>
+      <div className="flex items-center gap-[6px] text-[12px]" style={{ color: "#4b5160" }}>
+        <span className="size-[7px] rounded-full bg-[#3fae7a]" />
+        Pipeline created
+      </div>
+      <div className="mt-[12px] flex">
+        <div className="flex w-[40px] flex-col justify-between pb-[22px] text-[10px]" style={{ color: "#a3a7b0" }}>
+          <span>$500K</span>
+          <span>$250K</span>
+          <span>$0</span>
+        </div>
+        <div className="min-w-0 flex-1">
+          <svg viewBox={`0 0 ${W} ${H}`} className="block h-auto w-full overflow-visible" aria-hidden>
+            <defs>
+              <linearGradient id={id} x1="0" x2="0" y1="0" y2="1">
+                <stop offset="0" stopColor="#3fae7a" stopOpacity="0.16" />
+                <stop offset="1" stopColor="#3fae7a" stopOpacity="0" />
+              </linearGradient>
+            </defs>
+            {[4, H / 2, H - 4].map((y) => (
+              <line key={y} x1="0" x2={W} y1={y} y2={y} stroke="#ececea" strokeDasharray="4 4" />
+            ))}
+            <path d={`${line} L ${W} ${H} L 0 ${H} Z`} fill={`url(#${id})`} />
+            <path d={line} fill="none" stroke="#3fae7a" strokeWidth="1.6" strokeLinecap="round" />
+            <circle cx={last[0]} cy={last[1]} r="3.4" fill="#fff" stroke="#3fae7a" strokeWidth="1.6" />
+          </svg>
+          <div className="mt-[8px] flex justify-between text-[10px]" style={{ color: "#a3a7b0" }}>
+            {["W36", "W37", "W38", "W39", "W40", "W41", "W42"].map((w) => (
+              <span key={w}>{w}</span>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
 
 function RecurringRuns() {
   const [i, setI] = useState(0)
   const run = RUNS[i]!
-  const labels = ["New pipeline", "Win rate", "Cycle"]
+  const kpis = [
+    { label: "New pipeline", note: "This week" },
+    { label: "Win rate", note: "Rolling 90d" },
+    { label: "Cycle time", note: "Median days" },
+  ]
   return (
     <div className="flex w-full max-w-[30rem] flex-col gap-4">
+      {/* The runs, one plain tab per week, the chosen one on a soft grey pill. */}
       <div className="flex gap-1">
         {RUNS.map((r, j) => (
           <button
             key={r.date}
             type="button"
             onClick={() => setI(j)}
-            className={`rounded-[8px] px-2.5 py-1 text-[13px] tabular-nums transition-colors ${
+            className={`rounded-[8px] px-2.5 py-1 text-[13px] whitespace-nowrap tabular-nums transition-colors ${
               j === i ? "bg-[#e6e6e3] font-medium text-[#0f0f0f]" : "text-[#7a7a77] hover:text-[#0f0f0f]"
             }`}
           >
-            {r.date}
+            Week {r.week}
           </button>
         ))}
       </div>
-      <Sheet className="p-5">
-        <RunHeader title="Weekly pipeline review" date={run.date} />
-        {/* Keyed by run, so each run's numbers fade in over the same layout. */}
-        <div key={run.date} className="view-in">
-          <div className="mt-3 flex gap-2">
-            {labels.map((l, j) => (
-              <MiniKpi
-                key={l}
-                label={l}
-                value={run.kpis[j]!}
-                delta={run.deltas[j]!}
-                down={j === 2 ? !run.deltas[j]!.startsWith("−") : run.deltas[j]!.startsWith("−")}
-              />
-            ))}
+      {/* The report, in the hero's style, drawn at a fixed size and scaled
+          to the panel. The shape stays put; only the run's numbers change.
+          Its foot fades away, the way the hero's report runs off its panel. */}
+      <div className="kit-fade-b max-h-[33rem] overflow-hidden">
+      <Scaled width={520}>
+        <div
+          className={`rounded-[14px] border bg-[#fbfbfa] px-[30px] pt-[26px] pb-[28px] shadow-[0_1px_2px_rgba(15,15,15,0.04),0_18px_40px_-16px_rgba(15,15,15,0.16)] ${FONT}`}
+          style={{ borderColor: LINE, color: INK }}
+        >
+          <div className="text-[11.5px]" style={{ color: "#4b5160" }}>
+            Vasco
           </div>
-          <ChartCard title="Pipeline created, by week" figure="Last 7 weeks">
-            <MiniTrend values={run.trend} className="mt-1.5 h-[54px]" />
-          </ChartCard>
+          <div className="mt-[8px] text-[24px] leading-none font-semibold tracking-[-0.3px]">Weekly Pipeline Review</div>
+          {/* Keyed by run, so each run's figures fade in over the same layout. */}
+          <div key={run.date} className="view-in">
+            {/* The hero's divided meta row, with more room between items:
+                these values are short, so they'd otherwise huddle together. */}
+            <div className="mt-[16px] flex">
+              {[
+                ["Week", run.week],
+                ["Owner", "Sales"],
+                ["Run", run.date],
+              ].map(([k, v], j) => (
+                <div key={k} className={j ? "border-l px-[22px]" : "pr-[22px]"} style={{ borderColor: "#e2e2e0" }}>
+                  <div className="text-[11.5px]" style={{ color: "#4b5160" }}>{k}</div>
+                  <div className="mt-[4px] text-[12.5px] font-semibold">{v}</div>
+                </div>
+              ))}
+            </div>
+            <p className="mt-[16px] text-[13.5px] leading-[1.5]" style={{ color: "#3b4150" }}>
+              {run.summary}
+            </p>
+            <div className="mt-[20px] text-[15px] font-semibold">Scorecard</div>
+            <div className="mt-[10px] flex gap-[10px]">
+              {kpis.map((k, j) => {
+                const delta = run.deltas[j]!
+                const falling = delta.startsWith("−")
+                // A shorter cycle is good news, so its arrow points the other way.
+                const bad = j === 2 ? !falling : falling
+                return <Kpi key={k.label} at={0} label={k.label} value={run.kpis[j]!} note={k.note} change={delta} down={bad} />
+              })}
+            </div>
+            <div className="mt-[22px] text-[15px] font-semibold">Pipeline created, by week</div>
+            <RunTrend values={run.trend} />
+          </div>
         </div>
-      </Sheet>
+      </Scaled>
+      </div>
     </div>
   )
 }
@@ -803,12 +1037,59 @@ const INBOX = [
 ]
 
 /** A week's reports side by side: the same shape, the same wall of text. */
-function ReportFatigue() {
+/** One report in the week's pile: the same shape, the same wall of text. */
+function FatigueCard({ r, i, showDate = false }: { r: (typeof INBOX)[number]; i: number; showDate?: boolean }) {
   const line = "h-[4px] rounded-full bg-[#ebebe9]"
+  return (
+    <Sheet className="p-3.5">
+      {/* The note points at the second card, which is in the top row
+          at every width. Dates give way when the cards are narrow. */}
+      <div className="flex items-baseline justify-between gap-2">
+        <span data-fatigue-target={i === 1 ? "" : undefined} className="min-w-0 text-[11px] leading-tight font-semibold">
+          {r.title}
+        </span>
+        <span className={`shrink-0 text-[9px] tabular-nums ${showDate ? "inline" : "hidden sm:inline"}`} style={{ color: MUTED }}>
+          {r.date.slice(5)}
+        </span>
+      </div>
+      {/* Three KPI tiles, drawn as placeholders: a label line over a
+          darker figure bar, in the report kit's quiet tiles. */}
+      <div className="mt-2.5 flex gap-1">
+        {[60, 45, 55].map((w, j) => (
+          <span
+            key={j}
+            className="flex flex-1 flex-col gap-[4px] rounded-[5px] border bg-[#fafaf9] px-1.5 pt-1.5 pb-[7px]"
+            style={{ borderColor: "#efefed" }}
+          >
+            <span className="h-[3px] w-[70%] rounded-full bg-[#e6e6e4]" />
+            <span className="h-[5px] rounded-full bg-[#d4d4d1]" style={{ width: `${w}%` }} />
+          </span>
+        ))}
+      </div>
+      {/* The same wall of text in every one: two paragraphs. */}
+      <div className="mt-2.5 flex flex-col gap-[5px]">
+        {[100, 94, 97, 62].map((w, j) => (
+          <span key={j} className={line} style={{ width: `${w}%` }} />
+        ))}
+      </div>
+      <div className="mt-[9px] flex flex-col gap-[5px]">
+        {[96, 88, 74].map((w, j) => (
+          <span key={j} className={line} style={{ width: `${w}%` }} />
+        ))}
+      </div>
+    </Sheet>
+  )
+}
+
+/** A week's reports side by side: the same shape, the same wall of text.
+    On a phone they pile up as a stack instead of a long grid: only each
+    report's title peeks out above the next, which makes the same point. */
+function ReportFatigue() {
   /* When the panel is narrow the note spans nearly its width, so any arrow
      would cross it: there the note stands alone, centred. */
   const ref = useRef<HTMLDivElement>(null)
   const [wide, setWide] = useState(true)
+  const grid = useMinWidth(640)
   useEffect(() => {
     const el = ref.current
     if (!el) return
@@ -816,6 +1097,8 @@ function ReportFatigue() {
     ro.observe(el)
     return () => ro.disconnect()
   }, [])
+  const PEEK = 26
+  const back = INBOX.length - 1
   return (
     <div ref={ref} className="relative w-full max-w-[38rem] pt-12">
       {wide ? (
@@ -827,47 +1110,30 @@ function ReportFatigue() {
           Which one do I read?
         </ScribbleNote>
       )}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-        {INBOX.map((r, i) => (
-          <Sheet key={i} className="p-3.5">
-            {/* The note points at the second card, which is in the top row
-                at every width. Dates give way when the cards are narrow. */}
-            <div className="flex items-baseline justify-between gap-2">
-              <span data-fatigue-target={i === 1 ? "" : undefined} className="min-w-0 text-[11px] leading-tight font-semibold">
-                {r.title}
-              </span>
-              <span className="hidden shrink-0 text-[9px] tabular-nums sm:inline" style={{ color: MUTED }}>
-                {r.date.slice(5)}
-              </span>
+      {grid ? (
+        <div className="grid grid-cols-3 gap-3">
+          {INBOX.map((r, i) => (
+            <FatigueCard key={i} r={r} i={i} />
+          ))}
+        </div>
+      ) : (
+        <div className="relative" style={{ paddingTop: back * PEEK }}>
+          {/* The earlier reports sit behind, each a little narrower and
+              higher, so only their titles show; the latest is in front. */}
+          {INBOX.slice(0, back).map((r, i) => (
+            <div
+              key={i}
+              className="absolute"
+              style={{ top: i * PEEK, left: (back - i) * 7, right: (back - i) * 7, zIndex: i }}
+            >
+              <FatigueCard r={r} i={i} showDate />
             </div>
-            {/* Three KPI tiles, drawn as placeholders: a label line over a
-                darker figure bar, in the report kit's quiet tiles. */}
-            <div className="mt-2.5 flex gap-1">
-              {[60, 45, 55].map((w, j) => (
-                <span
-                  key={j}
-                  className="flex flex-1 flex-col gap-[4px] rounded-[5px] border bg-[#fafaf9] px-1.5 pt-1.5 pb-[7px]"
-                  style={{ borderColor: "#efefed" }}
-                >
-                  <span className="h-[3px] w-[70%] rounded-full bg-[#e6e6e4]" />
-                  <span className="h-[5px] rounded-full bg-[#d4d4d1]" style={{ width: `${w}%` }} />
-                </span>
-              ))}
-            </div>
-            {/* The same wall of text in every one: two paragraphs. */}
-            <div className="mt-2.5 flex flex-col gap-[5px]">
-              {[100, 94, 97, 62].map((w, j) => (
-                <span key={j} className={line} style={{ width: `${w}%` }} />
-              ))}
-            </div>
-            <div className="mt-[9px] flex flex-col gap-[5px]">
-              {[96, 88, 74].map((w, j) => (
-                <span key={j} className={line} style={{ width: `${w}%` }} />
-              ))}
-            </div>
-          </Sheet>
-        ))}
-      </div>
+          ))}
+          <div className="relative" style={{ zIndex: back }}>
+            <FatigueCard r={INBOX[back]!} i={back} showDate />
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -876,27 +1142,191 @@ function ReportFatigue() {
 
 /** The hero's report, which starts building once it's scrolled into view
     rather than playing unseen when the page loads. */
-function BuildingReport() {
+/*
+ * The outcome, as a little demo of how it works: a prompt box where a request
+ * for a report is typed out; the send button is pressed; the box gives way to
+ * the report it asked for, which fills in a piece at a time, from shimmering
+ * placeholders to finished numbers and a chart drawing in. It holds, then
+ * starts again. It only runs while it is on screen.
+ */
+const PROMPT =
+  "Analyse our ICP across FY2026: revenue health, how win rate is trending, and where we're bottlenecked."
+const TYPE_AT = 500
+const CHAR_MS = 26
+const TYPED_AT = TYPE_AT + PROMPT.length * CHAR_MS
+const SEND_AT = TYPED_AT + 350
+const SWAP_AT = SEND_AT + 450
+// The report waits until the prompt box has fully faded (450ms) before it
+// comes in, so the two never overlap.
+const REPORT_AT = SWAP_AT + 550
+const R = REPORT_AT + 200 // the report starts building
+const BUILD = { title: R, meta: R + 450, summary: R + 800, kpi: [R + 1150, R + 1400, R + 1650], chart: R + 2000, line: R + 2400 }
+const LOOP_MS = R + 6200
+
+/** A part of the building report: a shimmering placeholder of its size
+    until its turn, then the real thing fading up in its place. */
+function Reveal({ on, skel, className = "", children }: { on: boolean; skel: boolean; className?: string; children: React.ReactNode }) {
+  return (
+    <div className={`relative ${className}`}>
+      {on ? (
+        <div className="view-in">{children}</div>
+      ) : (
+        <div className="absolute inset-0 overflow-hidden rounded-[10px]">
+          <span className={`rb-skel ${skel ? "rb-on" : ""}`} />
+        </div>
+      )}
+    </div>
+  )
+}
+
+function PromptToReport() {
   const ref = useRef<HTMLDivElement>(null)
-  const [seen, setSeen] = useState(false)
+  const [t, setT] = useState(0)
+  const [reduced] = useState(() => typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches)
+
   useEffect(() => {
     const el = ref.current
-    if (!el) return
+    if (!el || reduced) return
+    let timer: number | undefined
+    let start = 0
+    const run = () => {
+      start = performance.now() - 0
+      timer = window.setInterval(() => {
+        setT((performance.now() - start) % LOOP_MS)
+      }, 40)
+    }
     const io = new IntersectionObserver(
       ([e]) => {
-        if (e?.isIntersecting) {
-          setSeen(true)
-          io.disconnect()
-        }
+        window.clearInterval(timer)
+        timer = undefined
+        if (e?.isIntersecting) run()
+        else setT(0)
       },
-      { threshold: 0.4 },
+      { threshold: 0.35 },
     )
     io.observe(el)
-    return () => io.disconnect()
-  }, [])
+    return () => {
+      io.disconnect()
+      window.clearInterval(timer)
+    }
+  }, [reduced])
+
+  // With reduced motion, show the finished report and nothing moving.
+  const now = reduced ? LOOP_MS - 1 : t
+  const typed = PROMPT.slice(0, Math.max(0, Math.floor((now - TYPE_AT) / CHAR_MS)))
+  const pressed = now >= SEND_AT && now < SEND_AT + 220
+  const promptGone = now >= SWAP_AT
+  const leaving = now >= LOOP_MS - 450
+  const reportIn = now >= REPORT_AT
+  const at = (ms: number) => now >= ms
+
   return (
-    <div ref={ref} className="aspect-[16/10] w-full">
-      {seen && <ReportUIHero />}
+    <div ref={ref} className={`relative flex aspect-[5/6] w-full items-center justify-center overflow-hidden px-5 sm:aspect-[16/10] sm:px-6 ${FONT}`} style={{ color: INK }}>
+      {/* The prompt box. */}
+      <div
+        className="absolute inset-x-5 mx-auto max-w-[27rem] transition-[opacity,translate,scale] sm:inset-x-6 duration-[450ms] ease-[cubic-bezier(0.4,0,0.2,1)]"
+        style={{
+          opacity: promptGone ? 0 : 1,
+          translate: promptGone ? "0 -10px" : "0 0",
+          scale: promptGone ? "0.97" : "1",
+        }}
+        aria-hidden={promptGone}
+      >
+        <div
+          className="rounded-[18px] border bg-white p-3.5 shadow-[0_1px_2px_rgba(15,15,15,0.04),0_14px_34px_-18px_rgba(15,15,15,0.18)]"
+          style={{ borderColor: "#e9e9e6" }}
+        >
+          <p className="min-h-[3.4em] text-[13.5px] leading-[1.55]" style={{ color: typed ? INK : "#a3a3a0" }}>
+            {typed || "Describe the report you want…"}
+            {!promptGone && <span className="prompt-caret ml-px inline-block h-[1.05em] w-[1.5px] translate-y-[2px] bg-[#1d1d1b]" />}
+          </p>
+          <div className="mt-2 flex items-center justify-end">
+            <span
+              className="flex size-8 items-center justify-center rounded-full text-white transition-[scale,background-color] duration-150"
+              style={{
+                background: typed.length === PROMPT.length ? "#1d1d1b" : "#c9c9c6",
+                scale: pressed ? "0.86" : "1",
+              }}
+              aria-hidden
+            >
+              <svg viewBox="0 0 16 16" className="size-[14px]" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M8 13V3M3.75 7.25 8 3l4.25 4.25" />
+              </svg>
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* The report it asked for, in the hero's style: drawn at a fixed size
+          and scaled to the panel, rising from the foot and fading away there,
+          and filling in a piece at a time. */}
+      <div
+        className="kit-fade-b absolute inset-x-0 top-[6%] bottom-0 transition-[opacity,translate] duration-[450ms] ease-[cubic-bezier(0.4,0,0.2,1)]"
+        style={{
+          opacity: reportIn && !leaving ? 1 : 0,
+          translate: reportIn && !leaving ? "0 0" : "0 12px",
+        }}
+        aria-hidden={!reportIn}
+      >
+        <div className="mx-auto w-[78%] max-w-[23.5rem]">
+          <Scaled width={560}>
+            <div
+              className="rounded-[14px] border bg-[#fbfbfa] px-[36px] pt-[30px] pb-[40px] shadow-[0_1px_2px_rgba(15,15,15,0.04),0_18px_40px_-16px_rgba(15,15,15,0.16)]"
+              style={{ borderColor: LINE }}
+            >
+              <div className="text-[11.5px]" style={{ color: "#4b5160" }}>
+                Vasco
+              </div>
+              <div className="mt-[8px] h-[28px] text-[26px] leading-none font-semibold tracking-[-0.3px]">
+                {"ICP Analysis".slice(0, at(BUILD.title) ? Math.floor((now - BUILD.title) / 32) : 0)}
+                {at(BUILD.title) && now - BUILD.title < 32 * 12 && (
+                  <span className="prompt-caret ml-px inline-block h-[0.9em] w-[2px] bg-[#1d1d1b]" />
+                )}
+              </div>
+              <Reveal on={at(BUILD.meta)} skel={at(BUILD.title)} className="mt-[16px] h-[40px]">
+                <div className="flex">
+                  <Meta first label="Period" value="Q4 FY 2026" />
+                  <Meta label="Overall score" value="6.4/10" />
+                  <Meta label="Bottleneck" value="Demand Generation" />
+                </div>
+              </Reveal>
+              <Reveal on={at(BUILD.summary)} skel={at(BUILD.meta)} className="mt-[16px] h-[40px]">
+                <p className="text-[13.5px] leading-[1.45]" style={{ color: "#3b4150" }}>
+                  Trailing trend across Q1–Q4 FY2026, reconciled against the Metric Engine, with the trade-offs
+                  for FY27 planning.
+                </p>
+              </Reveal>
+              {/* Each section's title arrives with its first piece. */}
+              <div
+                className="mt-[22px] text-[16px] font-semibold transition-opacity duration-300"
+                style={{ opacity: at(BUILD.kpi[0]!) ? 1 : 0 }}
+              >
+                Revenue Health Scorecard
+              </div>
+              <div className="mt-[10px] flex gap-[10px]">
+                {[
+                  ["Starting ARR", "$688K", "Beginning of FY", false],
+                  ["Ending ARR", "$1.24M", "End of FY", true],
+                  ["Net New ARR", "$512K", "Across 4 quarters", false],
+                ].map(([label, value, note, down], k) => (
+                  <Reveal key={label as string} on={at(BUILD.kpi[k]!)} skel={at(BUILD.summary)} className="min-h-[118px] flex-1">
+                    <Kpi at={0} label={label as string} value={value as string} note={note as string} down={down as boolean} />
+                  </Reveal>
+                ))}
+              </div>
+              <div
+                className="mt-[30px] text-[16px] font-semibold transition-opacity duration-300"
+                style={{ opacity: at(BUILD.chart) ? 1 : 0 }}
+              >
+                Win-rate trend (rolling 90d)
+              </div>
+              <Reveal on={at(BUILD.chart)} skel={at(BUILD.kpi[2]!)} className="h-[226px]">
+                <WinRateChart />
+              </Reveal>
+            </div>
+          </Scaled>
+        </div>
+      </div>
     </div>
   )
 }
@@ -919,11 +1349,13 @@ export const ARTIFACTS_CASE: CaseStudy = {
       title: "A report is only useful if it comes back the same",
       blurb: [
         "Teams wanted reports they could come back to: a weekly pipeline review, a daily check on signups, a monthly look at revenue health. A recurring report is how they share progress with teammates, track their numbers and surface the information they need, on a cadence they choose.",
-        "But an agent left to itself writes a different report every time. Ask for the same weekly review twice and the second can come back with the chart gone, the numbers folded into a paragraph and the sections in a new order. For a report to recur, its output has to be predictable and consistent.",
+        "Before Artifacts, our agents wrote reports freely, and it showed. Ask for the same weekly review twice and the second could come back with the chart gone, the numbers folded into a paragraph and the sections in a new order.",
+        "They had no design system to draw on, either. An agent could invent any component, in any colour or style, with no guardrails, so reports often looked disconnected from the rest of the product and lacked the visual hierarchy that tells a reader what matters. For a report to recur, and to be trusted, its output had to be predictable, consistent and well designed.",
       ],
       media: {
         kind: "demo",
-        caption: "One request, two Mondays, two reports.",
+        caption: "Before Artifacts: one request, two Mondays, two reports.",
+        tag: "Before Artifacts",
         node: <DriftingReports />,
       },
     },
@@ -995,9 +1427,9 @@ export const ARTIFACTS_CASE: CaseStudy = {
       ],
       media: {
         kind: "demo",
-        caption: "A report, built from the kit.",
+        caption: "Ask for a report; get one built from the kit.",
         bleed: true,
-        node: <BuildingReport />,
+        node: <PromptToReport />,
       },
     },
     {

@@ -242,7 +242,9 @@ export function ForecastChart() {
         </>
       }
     >
-      <svg viewBox="0 0 386 220" className="block h-auto w-full" aria-hidden>
+      {/* Cropped to what's drawn (the plot and its last label end near 350),
+          so the card's padding reads the same on every side. */}
+      <svg viewBox="0 4 350 205" className="block h-auto w-full" aria-hidden>
         <AreaFill id="rk-forecast-fill" />
         <Axes
           left={53}

@@ -3,6 +3,36 @@ import { CitationCard, SLOT_HOLDS, SLOT_ORDER } from "./cite/citation-card"
 import { useLayoutEffect, useRef, useState } from "react"
 
 import { citedThenDrifted, pipelineCreated } from "./cite/fixtures"
+import { Scaled } from "./report-kit"
+
+/** Renders its child with whether the window is at least sm (640px) wide. */
+function NarrowAware({ children }: { children: (wide: boolean) => React.ReactNode }) {
+  const [wide, setWide] = useState(() => typeof window === "undefined" || window.matchMedia("(min-width: 640px)").matches)
+  useLayoutEffect(() => {
+    const mq = window.matchMedia("(min-width: 640px)")
+    const on = () => setWide(mq.matches)
+    on()
+    mq.addEventListener("change", on)
+    return () => mq.removeEventListener("change", on)
+  }, [])
+  return <>{children(wide)}</>
+}
+
+/** The card's own width, from the prototype. */
+const CARD_W = 336
+
+/**
+ * A citation card that keeps its proportions in a narrow panel: drawn at its
+ * own width and scaled down to fit when there isn't room (a phone), never
+ * scaled up past its real size.
+ */
+function FitCard({ children, className = "" }: { children: React.ReactNode; className?: string }) {
+  return (
+    <div className={`w-full max-w-[21rem] ${className}`}>
+      <Scaled width={CARD_W}>{children}</Scaled>
+    </div>
+  )
+}
 
 /** How each slot is named in the breakdown. */
 const SLOT_LABEL: Record<(typeof SLOT_ORDER)[number], string> = {
@@ -22,10 +52,10 @@ const SLOT_LABEL: Record<(typeof SLOT_ORDER)[number], string> = {
  */
 function AnatomyBreakdown() {
   return (
-    <div className="grid w-full items-start gap-8 md:grid-cols-[minmax(0,21rem)_1fr] md:gap-10">
-      <div className="justify-self-center">
+    <div className="grid w-full grid-cols-[minmax(0,1fr)] items-start gap-8 md:grid-cols-[minmax(0,21rem)_1fr] md:gap-10">
+      <FitCard className="justify-self-center">
         <CitationCard citation={pipelineCreated} audience="in-app" detail="full" showSlots />
-      </div>
+      </FitCard>
       <ol className="flex flex-col gap-3.5 text-left">
         {SLOT_ORDER.map((slot, i) => (
           <li key={slot} className="grid grid-cols-[1.75rem_1fr] gap-x-2">
@@ -55,10 +85,18 @@ import { ScribbleNote } from "./scribble-note"
  */
 function UncitedReport() {
   return (
-    <div className="relative w-full max-w-[30rem] pt-8 text-left">
+    <div className="relative w-full max-w-[30rem] pt-12 text-left sm:pt-8">
       {/* A reader's note on the printout, arrowed at the first claim. The
           top padding leaves it room inside the panel. */}
-      <ScribbleNote>Is this true??</ScribbleNote>
+      {/* On a phone the figure sits to the right of the note, so an arrow
+          would double back through it: there the figure is circled instead. */}
+      <NarrowAware>
+        {(wide) => (
+          <ScribbleNote key={wide ? "wide" : "narrow"} arrow={wide} ring={!wide}>
+            Is this true??
+          </ScribbleNote>
+        )}
+      </NarrowAware>
       <p className="project-title">Q3 pipeline review: EMEA</p>
       <div className="case-text mt-3 flex flex-col gap-3 !text-[14px]">
         <p>
@@ -106,7 +144,7 @@ function DriftExample() {
   }, [])
 
   return (
-    <div ref={ref} className={`relative w-full max-w-[32rem] pt-8 text-left ${wide ? "pb-14" : "pb-24"}`}>
+    <div ref={ref} className={`relative w-full max-w-[32rem] text-left ${wide ? "pt-8 pb-14" : "pt-12 pb-24"}`}>
       <ScribbleNote target="[data-drift-report]" className="top-0 right-1 sm:-right-4">
         Report says 37…
       </ScribbleNote>
@@ -119,9 +157,11 @@ function DriftExample() {
         in pipeline, up from 29 at the start of the{" "}quarter.
       </p>
       {/* Hung under the mark, the way the card opens from it. */}
-      <div className={`drift-card cited-popover mt-3 w-fit ${wide ? "ml-auto" : ""}`} inert>
-        <CitationCard citation={citedThenDrifted} audience="in-app" detail="simplified" />
-      </div>
+      <FitCard className={`mt-3 ${wide ? "ml-auto" : ""}`}>
+        <div className="drift-card cited-popover w-fit" inert>
+          <CitationCard citation={citedThenDrifted} audience="in-app" detail="simplified" />
+        </div>
+      </FitCard>
       {wide ? (
         <ScribbleNote
           key="wide"

@@ -224,7 +224,7 @@ export function CitedReport({
   floating?: boolean
 } = {}) {
   const [open, setOpen] = useState<KindId | null>(plain ? null : initiallyOpen)
-  const [place, setPlace] = useState<{ left: number; top: number; floor: number } | null>(null)
+  const [place, setPlace] = useState<{ left: number; top: number; floor: number; maxW: number } | null>(null)
   const rootRef = useRef<HTMLDivElement>(null)
   const textRef = useRef<HTMLDivElement>(null)
   const cardRef = useRef<HTMLDivElement>(null)
@@ -258,11 +258,11 @@ export function CitedReport({
       if (floating) {
         // Page coordinates: the card is placed on the page itself, so it
         // isn't clipped by, and doesn't resize, what holds the report.
-        setPlace({ left: left + r.left + window.scrollX, top: top + r.top + window.scrollY, floor: 0 })
+        setPlace({ left: left + r.left + window.scrollX, top: top + r.top + window.scrollY, floor: 0, maxW: root.clientWidth })
         return
       }
       const floor = Math.max(0, top + card.offsetHeight + 8 - text.offsetHeight)
-      setPlace({ left, top, floor })
+      setPlace({ left, top, floor, maxW: root.clientWidth })
     }
     measure()
     const ro = new ResizeObserver(measure)
@@ -372,6 +372,9 @@ export function CitedReport({
               style={{
                 left: place?.left ?? 0,
                 top: place?.top ?? 0,
+                // Never wider than the report: on a phone the card narrows
+                // to fit rather than running off the edge.
+                maxWidth: place?.maxW,
                 visibility: place ? "visible" : "hidden",
               }}
             >

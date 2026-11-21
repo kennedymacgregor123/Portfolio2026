@@ -272,12 +272,15 @@ export function Kpi({
   value,
   note,
   down,
+  change = "+80%",
 }: {
   at: number
   label: string
   value: string
   note: string
   down?: boolean
+  /** The change shown in the badge. */
+  change?: string
 }) {
   return (
     <Build at={at} radius={10} className="flex-1">
@@ -292,7 +295,7 @@ export function Kpi({
           style={down ? { background: "#fbe9e9", color: "#c2453d" } : { background: "#e6f4ec", color: "#2f855a" }}
         >
           {down ? <TrendingDown strokeWidth={2.25} className="size-[10px]" aria-hidden /> : <TrendingUp strokeWidth={2.25} className="size-[10px]" aria-hidden />}
-          +80%
+          {change}
         </span>
       </div>
     </Build>

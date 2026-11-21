@@ -19,6 +19,8 @@ export type Media =
       caption?: string
       /** Shows the "Interactive" tag, for panels a visitor can play with. */
       interactive?: boolean
+      /** A word for the panel's top corner, styled like the Interactive tag. */
+      tag?: string
       /** The demo fills the panel edge to edge and handles its own padding. */
       bleed?: boolean
     }
@@ -48,6 +50,15 @@ export type CaseStudy = {
  * A small tag in a panel's top corner saying it can be played with: a cursor
  * mid-click, which taps when the panel is hovered, and the word.
  */
+/** A plain label in the same corner and style as the Interactive tag. */
+function CornerTag({ children }: { children: React.ReactNode }) {
+  return (
+    <span className="pointer-events-none absolute top-4 right-4 z-40 inline-flex items-center rounded-full border border-white bg-white/70 px-2.5 py-1 text-[11.5px] tracking-[0.2px] text-[#4a4a4a] shadow-[0_1px_2px_rgba(15,15,15,0.05)] backdrop-blur-sm">
+      {children}
+    </span>
+  )
+}
+
 function InteractiveTag() {
   return (
     <span className="interactive-tag pointer-events-none absolute top-4 right-4 z-40 inline-flex items-center gap-1.5 rounded-full border border-white bg-white/70 py-1 pr-2.5 pl-2 text-[11.5px] tracking-[0.2px] text-[#4a4a4a] shadow-[0_1px_2px_rgba(15,15,15,0.05)] backdrop-blur-sm">
@@ -88,7 +99,7 @@ function MediaSlot({ media, figure }: { media: Media; figure: number }) {
           className={`case-media card-tidy group/media relative isolate flex min-h-[18rem] items-center justify-center ${
             media.bleed
               ? "overflow-hidden"
-              : `p-6 sm:p-10 ${media.interactive ? "pt-12 sm:pt-14" : ""}`
+              : `p-6 sm:p-10 ${media.interactive || media.tag ? "pt-[3.75rem] sm:pt-14" : ""}`
           }`}
           onClickCapture={(e) => {
             // A prototype's own placeholder links (#studio, #vasco) would
@@ -98,6 +109,7 @@ function MediaSlot({ media, figure }: { media: Media; figure: number }) {
           }}
         >
           {media.interactive && <InteractiveTag />}
+          {media.tag && !media.interactive && <CornerTag>{media.tag}</CornerTag>}
           {media.node}
         </div>
       )}

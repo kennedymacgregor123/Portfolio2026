@@ -1247,3 +1247,148 @@ main:has(.hero-slide a:focus-visible) .title-chevron,
     stroke-dashoffset: 0;
   }
 }
+
+/* The report kit and templates, shown the way a product gallery shows its
+   pieces: specimens fade out past a panel's edge, over a faint grid that
+   itself fades from the middle. */
+.kit-fade {
+  -webkit-mask-image: linear-gradient(to right, #000 62%, transparent 96%), linear-gradient(to bottom, #000 55%, transparent 92%);
+  -webkit-mask-composite: source-in;
+  mask-image: linear-gradient(to right, #000 62%, transparent 96%), linear-gradient(to bottom, #000 55%, transparent 92%);
+  mask-composite: intersect;
+}
+.kit-fade-r {
+  -webkit-mask-image: linear-gradient(to right, #000 78%, transparent 100%);
+  mask-image: linear-gradient(to right, #000 78%, transparent 100%);
+}
+.kit-fade-b {
+  -webkit-mask-image: linear-gradient(to bottom, #000 70%, transparent 100%);
+  mask-image: linear-gradient(to bottom, #000 70%, transparent 100%);
+}
+.kit-grid {
+  background-image:
+    linear-gradient(#e9e9e7 1px, transparent 1px),
+    linear-gradient(90deg, #e9e9e7 1px, transparent 1px);
+  background-size: 13px 13px;
+  background-position: -1px -1px;
+  -webkit-mask-image: radial-gradient(120% 90% at 40% 40%, #000 30%, transparent 85%);
+  mask-image: radial-gradient(120% 90% at 40% 40%, #000 30%, transparent 85%);
+  opacity: 0.8;
+}
+.kit-card {
+  box-shadow: 0 1px 2px rgba(15, 15, 15, 0.03);
+}
+
+/* The prompt box's caret, blinking while it waits and types. */
+.prompt-caret {
+  animation: prompt-caret 1s steps(1) infinite;
+}
+@keyframes prompt-caret {
+  0%, 50% { opacity: 1; }
+  50.01%, 100% { opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .prompt-caret { animation: none; }
+}
+
+/* The Planned hero's lanyard badge: dropped in, it bounces on the strap,
+   swings from the clip and turns a little, then settles into a slow sway. */
+.lanyard-drop {
+  animation: lanyard-drop 1100ms cubic-bezier(0.25, 1.3, 0.45, 1) both;
+}
+@keyframes lanyard-drop {
+  from { translate: -50% -560px; }
+  to { translate: -50% 0; }
+}
+.lanyard-swing {
+  animation:
+    lanyard-swing 3.2s cubic-bezier(0.3, 0, 0.3, 1) 700ms both,
+    lanyard-sway 6s ease-in-out 3.9s infinite;
+}
+@keyframes lanyard-swing {
+  0% { rotate: 9deg; }
+  18% { rotate: -7deg; }
+  36% { rotate: 4.5deg; }
+  54% { rotate: -2.8deg; }
+  72% { rotate: 1.4deg; }
+  100% { rotate: 0deg; }
+}
+@keyframes lanyard-sway {
+  0%, 100% { rotate: 0deg; }
+  50% { rotate: 1.2deg; }
+}
+.lanyard-turn {
+  animation:
+    lanyard-turn 3.4s cubic-bezier(0.3, 0, 0.3, 1) 700ms both,
+    lanyard-turn-idle 7s ease-in-out 4.1s infinite;
+}
+@keyframes lanyard-turn {
+  0% { transform: rotateY(-28deg); }
+  22% { transform: rotateY(20deg); }
+  44% { transform: rotateY(-11deg); }
+  66% { transform: rotateY(6deg); }
+  100% { transform: rotateY(0deg); }
+}
+@keyframes lanyard-turn-idle {
+  0%, 100% { transform: rotateY(0deg); }
+  50% { transform: rotateY(-8deg); }
+}
+.lanyard-sheen {
+  background: linear-gradient(115deg, transparent 30%, rgba(255,255,255,0.12) 45%, transparent 60%);
+  background-size: 260% 100%;
+  animation: lanyard-sheen 7s ease-in-out 4.1s infinite;
+}
+@keyframes lanyard-sheen {
+  0%, 100% { background-position: 100% 0; }
+  50% { background-position: 0% 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lanyard-drop, .lanyard-swing, .lanyard-turn, .lanyard-sheen { animation: none; }
+}
+
+/* The Planned badge, while its style is being drafted: a pale wash with a
+   light sweeping across it. */
+.badge-shimmer {
+  background:
+    linear-gradient(100deg, rgba(255, 255, 255, 0) 30%, rgba(255, 255, 255, 0.85) 50%, rgba(255, 255, 255, 0) 70%),
+    rgba(247, 247, 245, 0.72);
+  background-size: 260% 100%, 100% 100%;
+  animation: badge-shimmer 1.2s linear infinite;
+}
+@keyframes badge-shimmer {
+  from { background-position: 130% 0, 0 0; }
+  to { background-position: -130% 0, 0 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .badge-shimmer { animation: none; }
+}
+
+/* The Planned preview badge: dropped in once, then a slow sway. */
+.hang-drop {
+  animation: hang-drop 1000ms cubic-bezier(0.25, 1.3, 0.45, 1) both;
+}
+@keyframes hang-drop {
+  from { translate: 0 -260px; }
+  to { translate: 0 0; }
+}
+.hang-sway {
+  animation:
+    lanyard-swing 3s cubic-bezier(0.3, 0, 0.3, 1) 600ms both,
+    lanyard-sway 6s ease-in-out 3.6s infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .hang-drop, .hang-sway { animation: none; }
+}
+
+/* The Planned case study: a soft ring that pulses around the badge's code. */
+.code-pulse {
+  box-shadow: 0 0 0 2px #4F9897, 0 0 0 6px rgba(79, 152, 151, 0.18);
+  animation: code-pulse 2.4s ease-in-out infinite;
+}
+@keyframes code-pulse {
+  0%, 100% { box-shadow: 0 0 0 2px #4F9897, 0 0 0 5px rgba(79, 152, 151, 0.16); }
+  50% { box-shadow: 0 0 0 2px #4F9897, 0 0 0 10px rgba(79, 152, 151, 0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .code-pulse { animation: none; }
+}

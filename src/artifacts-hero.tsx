@@ -1,7 +1,8 @@
-import { RefreshCw, Users } from "lucide-react"
+import { ChartSpline, Lightbulb } from "lucide-react"
 
 import { INK, Kpi, LINE, Meta, WinRateChart } from "./reportui-hero"
 import { Scaled } from "./report-kit"
+import { KitCallout, KitTile, KitTrend } from "./artifacts-case"
 
 /*
  * The Artifacts case study's hero: one report, the ICP Analysis, rising out
@@ -13,21 +14,6 @@ import { Scaled } from "./report-kit"
 const STAGE_W = 1100
 const STAGE_H = 470
 const FONT = "font-['Inter_Variable',Inter,sans-serif]"
-
-/** A small floating label beside the report. */
-function Note({ icon, children, className, delay }: { icon: React.ReactNode; children: React.ReactNode; className: string; delay: number }) {
-  return (
-    <div
-      className={`artifact-hero-in absolute flex items-center gap-2 rounded-full border bg-white px-3.5 py-2 text-[13px] font-medium shadow-[0_1px_2px_rgba(15,15,15,0.04),0_10px_24px_-12px_rgba(15,15,15,0.18)] ${FONT} ${className}`}
-      style={{ borderColor: LINE, color: INK, animationDelay: `${delay}ms` }}
-    >
-      <span className="flex size-6 items-center justify-center rounded-full" style={{ background: "#e9f6ef", color: "#2f855a" }}>
-        {icon}
-      </span>
-      {children}
-    </div>
-  )
-}
 
 export function ArtifactsHero() {
   return (
@@ -62,13 +48,24 @@ export function ArtifactsHero() {
             <WinRateChart />
           </div>
 
-          {/* What makes it an Artifact: it recurs, and a team reads it. */}
-          <Note icon={<RefreshCw strokeWidth={2.25} className="size-[13px]" aria-hidden />} className="top-[150px] left-[92px]" delay={420}>
-            Runs every Monday
-          </Note>
-          <Note icon={<Users strokeWidth={2.25} className="size-[13px]" aria-hidden />} className="top-[300px] right-[92px]" delay={560}>
-            Shared with Sales
-          </Note>
+          {/* Two pieces of the kit the report is built from, floating either
+              side of it: the trend chart and the callout. */}
+          <div
+            className="artifact-hero-in absolute top-[118px] left-[44px] z-10 w-[240px] rounded-[14px] shadow-[0_2px_4px_rgba(15,15,15,0.03),0_22px_44px_-20px_rgba(15,15,15,0.22)]"
+            style={{ animationDelay: "420ms", scale: "0.86", transformOrigin: "top left" }}
+          >
+            <KitTile name="Trend chart" icon={<ChartSpline strokeWidth={2} className="size-[12px]" />}>
+              <KitTrend />
+            </KitTile>
+          </div>
+          <div
+            className="artifact-hero-in absolute top-[250px] right-[44px] z-10 w-[240px] rounded-[14px] shadow-[0_2px_4px_rgba(15,15,15,0.03),0_22px_44px_-20px_rgba(15,15,15,0.22)]"
+            style={{ animationDelay: "560ms", scale: "0.86", transformOrigin: "top right" }}
+          >
+            <KitTile name="Callout" icon={<Lightbulb strokeWidth={2} className="size-[12px]" />}>
+              <KitCallout />
+            </KitTile>
+          </div>
         </div>
       </Scaled>
     </div>

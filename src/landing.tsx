@@ -5,6 +5,7 @@ import { ARTIFACTS_CASE } from "./artifacts-case"
 import { CaseStudyPage, type CaseStudy } from "./case-study"
 import { CITATIONS_CASE } from "./citations-case"
 import { CitationsHero } from "./citations-hero"
+import { PLANNED_CASE, PlannedHero } from "./planned-case"
 import { ReportUIHero } from "./reportui-hero"
 import { ViewSwitch, type View } from "./view-switch"
 
@@ -12,6 +13,7 @@ import { ViewSwitch, type View } from "./view-switch"
 const CASE_STUDIES: Record<string, CaseStudy> = {
   citations: CITATIONS_CASE,
   artifacts: ARTIFACTS_CASE,
+  "planned-badges": PLANNED_CASE,
 }
 
 /** What the URL hash shows: the home carousel, About, or a project's page. */
@@ -99,6 +101,13 @@ const PROJECTS: Project[] = [
     href: "#citations",
     hero: <CitationsHero />,
     preview: <CitationsHero compact />,
+  },
+  {
+    id: "planned-badges",
+    title: "Planned Badges",
+    blurb: "A concept for Planned: AI that turns every event badge into a branded moment, without making the builder any harder.",
+    href: "#planned-badges",
+    hero: <PlannedHero />,
   },
 ]
 

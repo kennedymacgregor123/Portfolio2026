@@ -1,0 +1,1196 @@
+import { useEffect, useId, useRef, useState } from "react"
+import {
+  ArrowLeft,
+  BarChart3,
+  Box,
+  CalendarDays,
+  ChevronDown,
+  ClipboardList,
+  Globe,
+  Home,
+  Image as ImageIcon,
+  Link2,
+  Mail,
+  PanelLeft,
+  Ticket,
+  BedDouble,
+  Users,
+} from "lucide-react"
+
+/*
+ * A concept for Planned's badge builder: the Badges page as it is today, with
+ * a light layer of AI on top. An organiser describes the event's vibe, or
+ * pulls the brand from the event's website, and gets three branded badge
+ * styles to choose from; two simple controls (accent and pattern) let them
+ * make it their own. Everything else (size, template, attendee colours,
+ * content) works as before, and the badge on the right shows every choice
+ * as it's made. The event and people are invented.
+ */
+
+const FONT = "font-['Geist','Inter_Variable',Inter,system-ui,sans-serif]"
+const INK = "#1d1d1b"
+const MUTED = "#6b6b68"
+const LINE = "#e7e7e4"
+const PANEL = "#f7f7f5"
+
+/* ---------- Options ---------- */
+
+type Size = "portrait" | "landscape"
+type Template = "window" | "band" | "big"
+export type Pattern = "none" | "waves" | "dots" | "grid"
+
+const ROLES = [
+  { id: "General", color: "#4B909A" },
+  { id: "VIP", color: "#E39B2D" },
+  { id: "Speaker", color: "#5B6CC4" },
+  { id: "Staff", color: "#4E8F86" },
+  { id: "Supplier", color: "#2F3B3B" },
+] as const
+type Role = (typeof ROLES)[number]["id"]
+
+/** A badge style: how the inner card looks, and the type it uses. */
+export type Style = {
+  id: string
+  name: string
+  blurb: string
+  surface: string
+  ink: string
+  sub: string
+  display: string
+  accent: string
+  pattern: Pattern
+  /** Planned's own artwork behind the card: sky, clouds, paint, grain. */
+  art?: Art
+  /** Ink for the event header, when it sits on a different tone to the name. */
+  headInk?: string
+  /** A soft card behind the name and ID, like the panels on planned.com. */
+  panel?: string
+}
+
+/** Planned's own look, before any AI style is applied. */
+export const PLAIN: Style = {
+  id: "plain",
+  name: "Standard",
+  blurb: "",
+  surface: "#ffffff",
+  ink: INK,
+  sub: "#5c5c59",
+  display: "'Inter Variable', Inter, sans-serif",
+  accent: "#4B909A",
+  pattern: "none",
+}
+
+/*
+ * What the AI drafts for Planned's own event, having read planned.com: the
+ * sunset skies and soft clouds behind its pages, its hand-painted teal
+ * strokes, the fine grain over everything, its slate-teal ink (#21333A) and
+ * its Geist type.
+ */
+const GEIST = "Geist, 'Inter Variable', Inter, sans-serif"
+export const DRAFTS: Style[] = [
+  {
+    id: "golden",
+    name: "Golden hour",
+    blurb: "A hazy evening sky warming to gold.",
+    surface: "linear-gradient(180deg, #9FB3B6 0%, #B3C2BE 18%, #CBD2BF 34%, #E6DDB2 52%, #EDD9AC 74%, #E8CFA4 100%)",
+    ink: "#21333A",
+    sub: "#3F4D4F",
+    display: GEIST,
+    accent: "#4F9897",
+    pattern: "none",
+    art: "sunset",
+  },
+  {
+    id: "cloud",
+    name: "Cloud cover",
+    blurb: "Soft white cloud on a grainy grey sky.",
+    surface: "linear-gradient(180deg, #9C9F9D 0%, #A8AAA7 55%, #B1B2AE 100%)",
+    ink: "#21333A",
+    sub: "#4a5557",
+    display: GEIST,
+    accent: "#21333A",
+    pattern: "none",
+    art: "cloud",
+  },
+  {
+    id: "brush",
+    name: "Brushstroke",
+    blurb: "Planned's feathered mint paint.",
+    surface: "#E3E8E6",
+    ink: "#21333A",
+    sub: "#51605F",
+    display: GEIST,
+    accent: "#4F9897",
+    pattern: "none",
+    art: "paint",
+  },
+]
+
+/** The palette pulled from planned.com. */
+const BRAND = ["#4F9897", "#294B4F", "#21333A", "#E3C97A"]
+
+/* ---------- Planned's artwork ---------- */
+
+export type Art = "sunset" | "cloud" | "paint"
+
+/** Heavy film grain, as laid over planned.com's skies, clouds and paint. */
+const GRAIN =
+  "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='g'><feTurbulence type='fractalNoise' baseFrequency='1.1' numOctaves='2' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/><feComponentTransfer><feFuncA type='linear' slope='0.9'/></feComponentTransfer></filter><rect width='100%' height='100%' filter='url(%23g)'/></svg>\")"
+
+/**
+ * A cumulus bank, built the way real cloud looks: an uneven ridge of towers
+ * and dips, traced by many small billows of different sizes over a solid
+ * body. Seeded, so it's the same cloud every time.
+ */
+const CLOUD = (() => {
+  let seed = 7
+  const rand = () => ((seed = (seed * 16807) % 2147483647) - 1) / 2147483646
+  // The ridge: a low base with a tall tower, a smaller one and a dip between.
+  const towers = [
+    [8, 52, 34],
+    [72, 92, 38],
+    [122, 46, 22],
+    [178, 128, 42],
+    [246, 70, 30],
+  ]
+  const ridge = (x: number) => 280 - towers.reduce((y, [c, a, w]) => y + a! * Math.exp(-(((x - c!) / w!) ** 2)), 0)
+  const billows: [number, number, number][] = []
+  for (let x = -24; x <= 284; x += 5 + rand() * 5) {
+    const r = 7 + rand() * 15
+    billows.push([x + (rand() - 0.5) * 4, ridge(x) + r * 0.7, r])
+    // A second, larger row just inside the edge fills the body out.
+    const r2 = 14 + rand() * 16
+    billows.push([x + (rand() - 0.5) * 8, ridge(x) + r2 + 10, r2])
+  }
+  const body = `M-30 400 L-30 ${ridge(-30) + 20} ${Array.from({ length: 63 }, (_, k) => {
+    const x = -30 + k * 5
+    return `L${x} ${ridge(x) + 22}`
+  }).join(" ")} L290 400 Z`
+  return { billows, body, ridge }
+})()
+
+
+/**
+ * The artwork behind a badge in Planned's visual language. Drawn on a
+ * 260 × 380 canvas and cropped to fit, so it works at any badge size.
+ */
+export function BrandArt({ art, lower = 0 }: { art: Art; lower?: number }) {
+  const id = useId().replace(/[^a-zA-Z0-9]/g, "")
+  return (
+    <span aria-hidden className="pointer-events-none absolute inset-0">
+      <svg viewBox="0 0 260 380" preserveAspectRatio="xMidYMid slice" className="absolute inset-0 h-full w-full">
+        <defs>
+          {/* Cloud edge: broad lumps, then fine crinkle, then a soft blur. */}
+          <filter id={`${id}c`} x="-20%" y="-20%" width="140%" height="140%">
+            <feTurbulence type="fractalNoise" baseFrequency="0.018" numOctaves="2" seed="3" result="coarse" />
+            <feDisplacementMap in="SourceGraphic" in2="coarse" scale="18" xChannelSelector="R" yChannelSelector="G" result="d1" />
+            <feTurbulence type="fractalNoise" baseFrequency="0.11" numOctaves="2" seed="9" result="fine" />
+            <feDisplacementMap in="d1" in2="fine" scale="6" xChannelSelector="R" yChannelSelector="G" result="d2" />
+            <feGaussianBlur in="d2" stdDeviation="1.6" />
+          </filter>
+          {/* Wisps and inner shadows: very soft. */}
+          <filter id={`${id}w`} x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="7" />
+          </filter>
+          {/* Lit from above: bright crowns, greyer bases. */}
+          <linearGradient id={`${id}cg`} x1="0" y1="170" x2="0" y2="380" gradientUnits="userSpaceOnUse">
+            <stop offset="0" stopColor="#F6F6F3" />
+            <stop offset="0.45" stopColor="#ECECE8" />
+            <stop offset="1" stopColor="#DEDFDB" />
+          </linearGradient>
+          {/* Feathered paint: a wavy edge, softly bled. */}
+          <filter id={`${id}p`} x="-20%" y="-30%" width="140%" height="160%">
+            <feTurbulence type="fractalNoise" baseFrequency="0.012 0.04" numOctaves="3" seed="4" result="n" />
+            <feDisplacementMap in="SourceGraphic" in2="n" scale="22" xChannelSelector="R" yChannelSelector="G" result="d" />
+            <feGaussianBlur in="d" stdDeviation="3.2" />
+          </filter>
+          <radialGradient id={`${id}sun`}>
+            <stop offset="0" stopColor="#FFF4DA" stopOpacity="0.85" />
+            <stop offset="0.4" stopColor="#FBE6BC" stopOpacity="0.35" />
+            <stop offset="1" stopColor="#FBE6BC" stopOpacity="0" />
+          </radialGradient>
+          <radialGradient id={`${id}glow`} cx="0.5" cy="1" r="0.8">
+            <stop offset="0" stopColor="#F3DDAE" stopOpacity="0.7" />
+            <stop offset="1" stopColor="#F3DDAE" stopOpacity="0" />
+          </radialGradient>
+        </defs>
+        {art === "sunset" && (
+          /* Just the warm haze low in the sky; the gradient does the rest. */
+          <>
+            <rect x="0" y="180" width="260" height="200" fill={`url(#${id}glow)`} />
+            <circle cx="196" cy="170" r="70" fill={`url(#${id}sun)`} />
+            <circle cx="196" cy="170" r="15" fill="#FFF6E2" opacity="0.7" filter={`url(#${id}w)`} />
+          </>
+        )}
+        {art === "cloud" && (
+          <g transform={`translate(0 ${lower})`}>
+            {/* A few thin wisps drifting above the bank. */}
+            <g filter={`url(#${id}w)`} fill="#E9E9E6" opacity="0.55">
+              <ellipse cx="60" cy="120" rx="46" ry="7" />
+              <ellipse cx="200" cy="96" rx="38" ry="6" />
+              <ellipse cx="150" cy="138" rx="28" ry="5" />
+            </g>
+            <g filter={`url(#${id}c)`} fill={`url(#${id}cg)`}>
+              <path d={CLOUD.body} />
+              {CLOUD.billows.map(([cx, cy, r], k) => (
+                <circle key={k} cx={cx} cy={cy} r={r} />
+              ))}
+            </g>
+            {/* Soft shadows where billows fold into each other. */}
+            <g filter={`url(#${id}w)`} fill="#C9CAC6" opacity="0.45">
+              <ellipse cx="118" cy={CLOUD.ridge(118) + 46} rx="26" ry="10" />
+              <ellipse cx="40" cy={CLOUD.ridge(40) + 40} rx="22" ry="8" />
+              <ellipse cx="216" cy={CLOUD.ridge(216) + 44} rx="24" ry="9" />
+            </g>
+          </g>
+        )}
+        {art === "paint" && (
+          /* Three passes of translucent mint, each a little offset. */
+          <g filter={`url(#${id}p)`}>
+            <path d="M-40 210 C 40 196, 120 160, 190 130 C 230 114, 270 100, 310 92 L 310 190 C 250 200, 190 222, 120 250 C 60 274, 10 292, -40 300 Z" fill="#AFDBD0" opacity="0.95" />
+            <path d="M-40 236 C 50 220, 130 186, 200 156 C 240 140, 280 128, 310 122 L 310 176 C 250 188, 190 212, 120 240 C 60 262, 10 276, -40 282 Z" fill="#9ED2C5" opacity="0.85" />
+            <path d="M-40 258 C 60 244, 140 214, 210 186 C 250 170, 285 160, 310 156 L 310 184 C 250 196, 190 220, 120 246 C 60 266, 10 274, -40 276 Z" fill="#8FCABB" opacity="0.7" />
+          </g>
+        )}
+      </svg>
+      {/* Grain over the whole card, light and dark. */}
+      <span className="absolute inset-0" style={{ backgroundImage: GRAIN, backgroundSize: "180px 180px", mixBlendMode: "soft-light", opacity: 0.95 }} />
+      <span className="absolute inset-0" style={{ backgroundImage: GRAIN, backgroundSize: "180px 180px", mixBlendMode: "multiply", opacity: 0.12 }} />
+    </span>
+  )
+}
+
+/** Planned's mark: one continuous stroke that loops up and curls into a "p". */
+export function PlannedLogo({ size = 20, color = "currentColor" }: { size?: number; color?: string }) {
+  return (
+    <svg viewBox="44 42 104 114" width={size} height={size * (114 / 104)} aria-label="Planned" role="img" className="shrink-0">
+      <path
+        d="M55 100 C 66 88, 76 72, 82 60 C 86 52, 96 51, 99 57 C 101 62, 98 70, 95 76 L 66 131 C 62 140, 66 146, 73 145 C 80 144, 86 135, 89 128 L 103 92 C 108 80, 120 76, 128 79 C 140 84, 140 108, 130 118 C 122 126, 112 129, 106 130"
+        fill="none"
+        stroke={color}
+        strokeWidth="10"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  )
+}
+
+/* ---------- The badge ---------- */
+
+function PatternLayer({ pattern, color }: { pattern: Pattern; color: string }) {
+  if (pattern === "none") return null
+  const style: React.CSSProperties =
+    pattern === "dots"
+      ? { backgroundImage: `radial-gradient(${color} 1.2px, transparent 1.4px)`, backgroundSize: "12px 12px", opacity: 0.35 }
+      : pattern === "grid"
+        ? {
+            backgroundImage: `linear-gradient(${color} 1px, transparent 1px), linear-gradient(90deg, ${color} 1px, transparent 1px)`,
+            backgroundSize: "18px 18px",
+            opacity: 0.3,
+          }
+        : {}
+  return (
+    <span
+      aria-hidden
+      className="pointer-events-none absolute inset-x-0 top-[17%] h-[46%]"
+      style={{
+        WebkitMaskImage: "linear-gradient(transparent, #000 25%, #000 55%, transparent)",
+        maskImage: "linear-gradient(transparent, #000 25%, #000 55%, transparent)",
+      }}
+    >
+      {pattern === "waves" ? (
+        <svg viewBox="0 0 200 80" preserveAspectRatio="none" className="h-full w-full" style={{ opacity: 0.5 }}>
+          {[18, 32, 46, 60].map((y, i) => (
+            <path
+              key={y}
+              d={`M0 ${y} C 25 ${y - 9}, 50 ${y + 9}, 75 ${y} S 125 ${y - 9}, 150 ${y} S 185 ${y + 6}, 200 ${y}`}
+              fill="none"
+              stroke={color}
+              strokeWidth={1.4 - i * 0.2}
+            />
+          ))}
+        </svg>
+      ) : (
+        <span className="absolute inset-0" style={style} />
+      )}
+    </span>
+  )
+}
+
+/** A lighter tint of a colour, mixed toward Planned's warm cream. */
+function tint(hex: string, amount: number) {
+  const c = (i: number) => parseInt(hex.slice(i, i + 2), 16)
+  const cream = [252, 251, 244]
+  return `rgb(${[1, 3, 5].map((i, k) => Math.round(c(i) + (cream[k]! - c(i)) * amount)).join(",")})`
+}
+
+/** The badge's code, drawn like a QR code: three finder squares and seeded modules. */
+const CODE = (() => {
+  let seed = 11
+  const rand = () => ((seed = (seed * 16807) % 2147483647) - 1) / 2147483646
+  const n = 21
+  const finder = (x: number, y: number) => (x < 7 && y < 7) || (x >= n - 7 && y < 7) || (x < 7 && y >= n - 7)
+  const cells: [number, number][] = []
+  for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) if (!finder(x, y) && rand() > 0.52) cells.push([x, y])
+  return { n, cells }
+})()
+
+function CheckInCode({ size, color }: { size: number; color: string }) {
+  const f = (x: number, y: number) => (
+    <g key={`${x}${y}`}>
+      <rect x={x + 0.5} y={y + 0.5} width="6" height="6" rx="1.4" fill="none" stroke={color} strokeWidth="1" />
+      <rect x={x + 2} y={y + 2} width="3" height="3" rx="0.7" fill={color} />
+    </g>
+  )
+  return (
+    <svg viewBox={`0 0 ${CODE.n} ${CODE.n}`} width={size} height={size} aria-hidden>
+      {f(0, 0)}
+      {f(CODE.n - 7, 0)}
+      {f(0, CODE.n - 7)}
+      {CODE.cells.map(([x, y]) => (
+        <rect key={`${x}-${y}`} x={x + 0.1} y={y + 0.1} width="0.8" height="0.8" rx="0.25" fill={color} />
+      ))}
+    </svg>
+  )
+}
+
+/**
+ * The face of an AI-drafted badge: the same content as today's, set with more
+ * care. Editorial type with the name stacked large, a soft glass label for the
+ * attendee type, a hairline above the footer, and the badge's code.
+ */
+function StyledFace({
+  style,
+  role,
+  portrait,
+  big,
+  showName,
+  showCompany,
+  highlightCode = false,
+}: {
+  link?: string
+  highlightCode?: boolean
+  style: Style
+  role: Role
+  portrait: boolean
+  big: boolean
+  showName: boolean
+  showCompany: boolean
+}) {
+  const head = style.headInk ?? style.ink
+  const nameSize = big ? (portrait ? 50 : 40) : portrait ? 42 : 34
+  return (
+    <div className="relative flex h-full flex-col px-[20px] pt-[28px] pb-[16px]">
+      {/* The event: Planned's mark, the name, the dates. */}
+      {/* The event: Planned's mark, then the name, dates and city, each on its own line. */}
+      <div style={{ color: head }}>
+        <PlannedLogo size={20} />
+        <div className="mt-2.5 text-[13px] leading-tight font-semibold tracking-[-0.01em]">Planned Live</div>
+        <div className="mt-[3px] text-[9.5px] leading-[1.45] whitespace-nowrap tabular-nums" style={{ color: style.headInk ? head : style.sub }}>
+          <div>2026-10-06 – 2026-10-08</div>
+          <div>San Francisco</div>
+        </div>
+      </div>
+
+      <div className="mt-auto">
+        {/* The attendee type, on soft frosted glass. */}
+        <span
+          className="inline-flex items-center rounded-full px-2.5 py-[3px] text-[9px] font-semibold tracking-[0.1em] uppercase"
+          style={{
+            color: style.ink,
+            background: "rgba(255,255,255,0.5)",
+            boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.65), 0 1px 2px rgba(33,51,58,0.06)",
+            backdropFilter: "blur(6px)",
+            WebkitBackdropFilter: "blur(6px)",
+          }}
+        >
+          {role}
+        </span>
+        {showName && (
+          <div
+            className="mt-2.5 font-semibold tracking-[-0.035em] transition-[font-size] duration-500"
+            style={{ fontFamily: style.display, fontSize: nameSize, lineHeight: 0.94 }}
+          >
+            Jane
+            {portrait ? <br /> : " "}
+            Smith
+          </div>
+        )}
+        {showCompany && (
+          <div className="mt-2 text-[11.5px] leading-snug" style={{ color: style.sub }}>
+            Head of Events · Northwind Financial
+          </div>
+        )}
+      </div>
+
+      {/* Footer: a hairline, the ID and the badge's code. */}
+      {/* Footer: the ID's label and number line up with the code's top and
+          bottom edges. */}
+      <div className="mt-4 flex items-stretch justify-between gap-3 border-t pt-2.5" style={{ borderColor: `${style.ink}1f` }}>
+        <div className="flex flex-col justify-between py-[3px]">
+          <div className="text-[7.5px] leading-none font-medium tracking-[0.16em] whitespace-nowrap uppercase" style={{ color: style.sub }}>
+            Attendee ID
+          </div>
+          <div className="text-[12px] leading-none font-semibold tracking-[0.02em] tabular-nums">EVNT256</div>
+        </div>
+        <div className="flex items-stretch gap-2">
+          <span className={`rounded-[6px] p-[3px] ${highlightCode ? "code-pulse" : ""}`} style={{ background: "rgba(255,255,255,0.78)", boxShadow: highlightCode ? undefined : "0 1px 2px rgba(33,51,58,0.08)" }}>
+            <CheckInCode size={30} color="#21333A" />
+          </span>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export function Badge({
+  size,
+  template,
+  role,
+  style,
+  accent,
+  pattern,
+  showName,
+  showCompany,
+  loading = false,
+  link,
+  highlightCode = false,
+}: {
+  /** Picks out the code with a soft pulsing ring, for figures. */
+  highlightCode?: boolean
+  loading?: boolean
+  /** Where the badge's code takes anyone who scans it with a phone. */
+  link?: string
+  size: Size
+  template: Template
+  role: Role
+  style: Style
+  accent: string
+  pattern: Pattern
+  showName: boolean
+  showCompany: boolean
+}) {
+  const roleColor = ROLES.find((r) => r.id === role)!.color
+  const portrait = size === "portrait"
+  const big = template === "big"
+  return (
+    <div
+      className="relative rounded-[22px] p-[10px] shadow-[0_24px_50px_-24px_rgba(15,15,15,0.35)] transition-[width,height] duration-500"
+      style={{
+        background: style.art ? `linear-gradient(160deg, ${tint(roleColor, 0.62)}, ${tint(roleColor, 0.48)})` : roleColor,
+        boxShadow: style.art ? "0 24px 50px -24px rgba(15,15,15,0.35), inset 0 1px 0 rgba(255,255,255,0.55), inset 0 0 0 1px rgba(255,255,255,0.18)" : undefined,
+        width: portrait ? 280 : 400,
+        height: portrait ? 400 : 280,
+      }}
+    >
+      {/* The punched slot the clip goes through. */}
+      <span
+        className="absolute top-[12px] left-1/2 z-[2] h-[10px] w-[40px] -translate-x-1/2 rounded-full"
+        style={{ background: "#2b302f", boxShadow: "inset 0 2px 3px rgba(0,0,0,0.6), 0 1px 0 rgba(255,255,255,0.45)" }}
+      />
+      <div
+        className="relative h-full overflow-hidden rounded-[14px] transition-[background] duration-500"
+        style={{ background: style.surface, color: style.ink }}
+      >
+        {style.art && <BrandArt art={style.art} />}
+        <PatternLayer pattern={pattern} color={accent} />
+        {/* While a style is being drafted, a light sweeps across the card. */}
+        {loading && <span aria-hidden className="badge-shimmer pointer-events-none absolute inset-0 z-10" />}
+        {template === "band" && !style.art && <span className="absolute inset-x-0 top-0 h-[68px]" style={{ background: accent }} />}
+        {/* A fine light edge around the printed face. */}
+        {style.art && <span aria-hidden className="pointer-events-none absolute inset-0 z-[1] rounded-[14px]" style={{ boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.45), inset 0 1px 0 rgba(255,255,255,0.6)" }} />}
+        {style.art ? (
+          <StyledFace style={style} role={role} portrait={portrait} big={big} showName={showName} showCompany={showCompany} link={link} highlightCode={highlightCode} />
+        ) : (
+        <div className="relative flex h-full flex-col px-[20px] pt-[30px] pb-[18px]">
+          {/* The event's brand, now part of every badge. */}
+          <div className="flex items-center gap-2" style={{ color: template === "band" ? "#fff" : (style.headInk ?? style.ink) }}>
+            {style.art ? (
+              <PlannedLogo size={19} />
+            ) : (
+              <span className="flex size-[22px] items-center justify-center rounded-[6px]" style={{ background: template === "band" ? "rgba(255,255,255,0.22)" : accent }}>
+                <span className="block h-[8px] w-[12px] rounded-t-full" style={{ background: "#fff" }} />
+              </span>
+            )}
+            <div className="leading-tight">
+              <div className="text-[10.5px] font-bold tracking-[0.12em] uppercase">Planned Live</div>
+              <div className="text-[8.5px] opacity-75">2026-10-06 – 2026-10-08 · San Francisco</div>
+            </div>
+          </div>
+          <div
+            className={style.panel ? `-mx-[8px] -mb-[8px] flex flex-col rounded-[12px] px-[14px] pt-[12px] pb-[12px] ${portrait ? "mt-auto" : "mt-auto"}` : "contents"}
+            style={style.panel ? { background: style.panel, backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)", boxShadow: "inset 0 0 0 1px rgba(252,251,244,0.35)" } : undefined}
+          >
+          <div className={style.panel ? "" : portrait ? "mt-auto" : template === "band" ? "mt-[30px]" : "mt-[18px]"}>
+            <span
+              className="inline-flex items-center gap-1.5 rounded-full px-2 py-[3px] text-[10px] font-semibold"
+              style={{ background: `${roleColor}22`, color: style.ink }}
+            >
+              {/* Today's badge keeps its dot; the AI styles drop it. */}
+              {!style.art && <span className="size-[6px] rounded-full" style={{ background: roleColor }} />}
+              {role}
+            </span>
+            {showName && (
+              <div
+                className="mt-2 leading-[1.02] font-semibold tracking-[-0.02em] transition-[font-size] duration-500"
+                style={{ fontFamily: style.display, fontSize: big ? (portrait ? 46 : 42) : portrait ? 34 : 32 }}
+              >
+                Jane Smith
+              </div>
+            )}
+            {showCompany && (
+              <div className="mt-1.5 text-[12px] leading-snug" style={{ color: style.sub }}>
+                Head of Events, Northwind Financial
+              </div>
+            )}
+          </div>
+          <div className={`flex items-end justify-between ${style.panel ? "mt-4" : portrait ? "mt-5" : "mt-auto"}`}>
+            <div>
+              <div className="text-[8.5px] tracking-[0.1em] uppercase" style={{ color: style.sub }}>
+                ID
+              </div>
+              <div className="text-[13px] font-semibold tabular-nums">EVNT256</div>
+            </div>
+            <span className="h-[3px] w-[44px] rounded-full" style={{ background: accent }} />
+          </div>
+          </div>
+        </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+/** The lanyard above a badge: a woven strap, a metal D-ring, swivel and clip. */
+export function Lanyard({ strap = 70, grow = false }: { strap?: number; grow?: boolean }) {
+  return (
+    <>
+      <span
+        className={`relative block w-[54px] ${grow ? "min-h-[40px] flex-1" : ""}`}
+        style={{
+          height: grow ? undefined : strap,
+          background:
+            "linear-gradient(90deg, rgba(0,0,0,0.35), rgba(255,255,255,0.06) 30%, rgba(255,255,255,0.03) 70%, rgba(0,0,0,0.4)), repeating-linear-gradient(135deg, #1a1a1a 0 2.5px, #262626 2.5px 5px)",
+          clipPath: "polygon(0 0, 100% 0, 100% 84%, 74% 100%, 26% 100%, 0 84%)",
+        }}
+      />
+      <svg viewBox="0 0 60 92" className="relative z-10 -mt-[6px] h-[80px] w-[52px]" aria-hidden>
+        <defs>
+          <linearGradient id="lanyard-metal" x1="0" x2="1" y1="0" y2="0">
+            <stop offset="0" stopColor="#7d8285" />
+            <stop offset="0.35" stopColor="#f4f6f7" />
+            <stop offset="0.6" stopColor="#a9aeb1" />
+            <stop offset="1" stopColor="#5f6467" />
+          </linearGradient>
+        </defs>
+        <path d="M12 4 H48 A10 10 0 0 1 48 24 H12 A10 10 0 0 1 12 4 Z" fill="none" stroke="url(#lanyard-metal)" strokeWidth="4.5" />
+        <rect x="25" y="24" width="10" height="14" rx="3" fill="url(#lanyard-metal)" />
+        <path d="M30 38 C 17 44, 16 68, 26 84 C 29 88, 33 88, 35 84 C 44 68, 43 46, 30 38 Z" fill="none" stroke="url(#lanyard-metal)" strokeWidth="4" />
+        <path d="M37 52 L 41 46" stroke="url(#lanyard-metal)" strokeWidth="3" strokeLinecap="round" />
+      </svg>
+    </>
+  )
+}
+
+/**
+ * The preview badge, as it would be worn: hung on a lanyard, dropped in once,
+ * swaying gently, and tilting in 3D toward the pointer, with a sheen that
+ * moves as it turns and some thickness at its edge.
+ */
+function HangingBadge(props: React.ComponentProps<typeof Badge>) {
+  const ref = useRef<HTMLDivElement>(null)
+  const onMove = (e: React.PointerEvent) => {
+    const el = ref.current
+    if (!el) return
+    const r = el.getBoundingClientRect()
+    const x = (e.clientX - (r.left + r.width / 2)) / (r.width / 2)
+    const y = (e.clientY - (r.top + r.height / 2)) / (r.height / 2)
+    const clamp = (v: number) => Math.max(-1, Math.min(1, v))
+    el.style.setProperty("--ry", `${clamp(x) * 16}deg`)
+    el.style.setProperty("--rx", `${-clamp(y) * 9}deg`)
+    el.style.setProperty("--sheen", `${50 - clamp(x) * 40}%`)
+  }
+  const onLeave = () => {
+    const el = ref.current
+    if (!el) return
+    el.style.setProperty("--ry", "0deg")
+    el.style.setProperty("--rx", "0deg")
+    el.style.setProperty("--sheen", "50%")
+  }
+  return (
+    <div
+      ref={ref}
+      onPointerMove={onMove}
+      onPointerLeave={onLeave}
+      className="hang-drop flex h-full w-full flex-col items-center"
+      style={{ perspective: 1100 }}
+    >
+      {/* The strap fills the space above the card, and an equal space sits
+          below it (plus the clip's height), so the card itself is centred. */}
+      <Lanyard grow />
+      {/* High enough that the clip's loop hangs down into the slot. */}
+      <div className="hang-sway -mt-[22px] flex flex-col items-center" style={{ transformOrigin: "50% 0" }}>
+        <div
+          className="relative transition-transform duration-300 ease-out"
+          style={{ transform: "rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg))", transformStyle: "preserve-3d" }}
+        >
+          {/* The card's thickness, just behind its face. */}
+          <span
+            aria-hidden
+            className="absolute inset-0 rounded-[22px]"
+            style={{ transform: "translateZ(-4px)", background: "#9aa3a1", filter: "brightness(0.8)" }}
+          />
+          <Badge {...props} />
+          {/* A soft sheen that slides as the card turns. */}
+          <span
+            aria-hidden
+            className="pointer-events-none absolute inset-0 rounded-[22px] transition-[background-position] duration-300"
+            style={{
+              background: "linear-gradient(115deg, rgba(255,255,255,0) 35%, rgba(255,255,255,0.22) 50%, rgba(255,255,255,0) 65%)",
+              backgroundSize: "300% 100%",
+              backgroundPosition: "var(--sheen, 50%) 0",
+              mixBlendMode: "screen",
+            }}
+          />
+        </div>
+      </div>
+      <div className="min-h-[40px] flex-1" />
+      <div className="h-[62px] shrink-0" />
+    </div>
+  )
+}
+
+/* ---------- Small pieces of Planned's UI ---------- */
+
+/**
+ * Marks something as made by AI the way Planned does: a small gradient
+ * circle, like the soft teal-mint orb on planned.com. No sparkles, no purple.
+ */
+export function AiLabel({ size = 14 }: { size?: number }) {
+  return (
+    <span
+      role="img"
+      aria-label="AI"
+      title="AI"
+      className="inline-block shrink-0 rounded-full"
+      style={{
+        width: size,
+        height: size,
+        background: "radial-gradient(circle at 34% 30%, #f1faf8 0%, #bfe3df 30%, #6fb3b0 62%, #2f6e6e 100%)",
+        boxShadow: "0 1px 2px rgba(33,51,58,0.25), inset 0 -1px 2px rgba(33,51,58,0.2)",
+      }}
+    />
+  )
+}
+
+function Card({ children, className = "" }: { children: React.ReactNode; className?: string }) {
+  return (
+    <div className={`rounded-[12px] border bg-white ${className}`} style={{ borderColor: LINE }}>
+      {children}
+    </div>
+  )
+}
+
+function Radio({ on }: { on: boolean }) {
+  return (
+    <span
+      className="flex size-[16px] shrink-0 items-center justify-center rounded-full border-[1.5px]"
+      style={{ borderColor: on ? INK : "#cfcfcb" }}
+    >
+      {on && <span className="size-[7px] rounded-full" style={{ background: INK }} />}
+    </span>
+  )
+}
+
+function Toggle({ on, onClick, label }: { on: boolean; onClick: () => void; label: string }) {
+  return (
+    <button type="button" onClick={onClick} className="flex items-center gap-3 text-[13.5px]">
+      <span
+        className="relative h-[20px] w-[34px] rounded-full transition-colors"
+        style={{ background: on ? "#2b2f2f" : "#e2e2df" }}
+      >
+        <span
+          className="absolute top-[2px] size-[16px] rounded-full bg-white shadow transition-[left]"
+          style={{ left: on ? 16 : 2 }}
+        />
+      </span>
+      {label}
+    </button>
+  )
+}
+
+/** A tiny badge, for the template and style cards. */
+function MiniBadge({ style, band, big, window: win }: { style?: Style; band?: boolean; big?: boolean; window?: boolean }) {
+  const s = style ?? PLAIN
+  return (
+    <span
+      className="relative block h-[58px] w-[42px] overflow-hidden rounded-[5px] border shadow-[0_2px_6px_rgba(15,15,15,0.08)]"
+      style={{ background: s.surface, borderColor: "#e3e3e0" }}
+    >
+      {s.art && <BrandArt art={s.art} />}
+      <PatternLayer pattern={s.pattern} color={s.accent} />
+      {/* Print window: the pre-printed colour shows through a window at the top. */}
+      {win && <span className="absolute inset-x-[4px] top-[4px] h-[8px] rounded-[2px]" style={{ background: "#4B909A" }} />}
+      {band && <span className="absolute inset-x-0 top-0 h-[12px]" style={{ background: "#4B909A" }} />}
+      {big && <span className="absolute inset-x-0 bottom-0 h-[12px]" style={{ background: "#4B909A" }} />}
+      <span className="absolute top-[18px] left-[6px] h-[3px] w-[18px] rounded-full" style={{ background: s.ink, opacity: 0.85 }} />
+      <span className="absolute top-[24px] left-[6px] h-[2px] w-[12px] rounded-full" style={{ background: s.ink, opacity: 0.4 }} />
+      {style && <span className="absolute bottom-[6px] left-[6px] h-[2px] w-[14px] rounded-full" style={{ background: s.accent }} />}
+    </span>
+  )
+}
+
+/* ---------- The page ---------- */
+
+const NAV: [React.ComponentType<{ className?: string; strokeWidth?: number }>, string][] = [
+  [Home, "Overview"],
+  [Box, "Event hub"],
+  [Globe, "Website"],
+  [Ticket, "Registration"],
+  [Users, "Attendees"],
+  [BedDouble, "Room blocks"],
+  [CalendarDays, "Agenda"],
+  [Mail, "Campaigns"],
+  [ClipboardList, "Survey"],
+  [BarChart3, "Insights"],
+]
+
+export function PlannedBadge({
+  embedded = false,
+  ai = true,
+}: {
+  /** Shown inside a case study: always the desktop layout, no full-screen height. */
+  embedded?: boolean
+  /** false shows the page as it is today, without the AI card. */
+  ai?: boolean
+} = {}) {
+  const [size, setSize] = useState<Size>("portrait")
+  const [template, setTemplate] = useState<Template>("window")
+  const [role, setRole] = useState<Role>("General")
+  const [showName, setShowName] = useState(true)
+  const [showCompany, setShowCompany] = useState(true)
+  // The badge's code can also open a page of the
+  // organiser's choosing for anyone who scans it with a phone.
+  const [codeLink, setCodeLink] = useState(true)
+  const [codeUrl, setCodeUrl] = useState("planned.com/live")
+
+  // The AI layer: one open field (words, a website, a reference picture)
+  // that becomes the AI's instructions once something is generated.
+  const [brief, setBrief] = useState("")
+  const [brandPulled, setBrandPulled] = useState(false)
+  const [imageRef, setImageRef] = useState(false)
+  const [editing, setEditing] = useState(true)
+  const [phase, setPhase] = useState<"idle" | "thinking" | "done">("idle")
+  const [style, setStyle] = useState<Style>(PLAIN)
+  const [accent, setAccent] = useState(PLAIN.accent)
+  const [pattern, setPattern] = useState<Pattern>("none")
+  const timer = useRef<number | undefined>(undefined)
+  useEffect(() => () => window.clearTimeout(timer.current), [])
+
+  const site = brandPulled || /planned\.com/i.test(brief)
+  const canGenerate = brief.trim().length > 0 || site || imageRef
+  const generate = () => {
+    if (!canGenerate) return
+    setEditing(false)
+    setPhase("thinking")
+    window.clearTimeout(timer.current)
+    timer.current = window.setTimeout(() => setPhase("done"), 1600)
+  }
+  const apply = (s: Style) => {
+    setStyle(s)
+    setAccent(s.accent)
+    setPattern(s.pattern)
+  }
+
+  return (
+    // One window tall: the preview fills the height, and the settings scroll
+    // inside their own column, cut off at the window's foot.
+    <div className={`flex overflow-hidden ${embedded ? "h-[760px]" : "h-screen"} ${FONT}`} style={{ background: "#ffffff", color: INK }}>
+      {/* The sidebar. */}
+      <aside className={`w-[248px] shrink-0 flex-col border-r px-4 py-4 ${embedded ? "flex" : "hidden lg:flex"}`} style={{ borderColor: LINE }}>
+        <div className="flex items-center justify-between px-1">
+          <span className="text-[19px] font-bold tracking-[0.06em]">PLANNED</span>
+          <PanelLeft className="size-[16px] text-[#8a8a87]" strokeWidth={1.8} />
+        </div>
+        <a href="#" className="mt-5 flex items-center gap-2 px-1 text-[13px]" style={{ color: MUTED }}>
+          <ArrowLeft className="size-[14px]" strokeWidth={1.8} />
+          My events
+        </a>
+        <div className="mt-3 flex items-center gap-3 rounded-[12px] border p-2.5" style={{ borderColor: LINE }}>
+          <span className="size-[38px] shrink-0 rounded-[8px]" style={{ background: "linear-gradient(135deg, #e8dcc0, #b9c9b0)" }} />
+          <div className="min-w-0">
+            <div className="truncate text-[13.5px] font-medium">Planned Live</div>
+            <div className="truncate text-[11.5px]" style={{ color: MUTED }}>
+              2026-10-06 · San Francisco
+            </div>
+          </div>
+        </div>
+        <nav className="mt-5 flex flex-col gap-0.5">
+          {NAV.map(([Icon, label]) => (
+            <span
+              key={label}
+              className={`flex items-center gap-3 rounded-[10px] px-2.5 py-2 text-[13.5px] ${label === "Attendees" ? "border bg-white" : ""}`}
+              style={label === "Attendees" ? { borderColor: LINE } : undefined}
+            >
+              <Icon className="size-[16px] text-[#5d5d5a]" strokeWidth={1.7} />
+              {label}
+            </span>
+          ))}
+        </nav>
+      </aside>
+
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+        <header className="flex h-[56px] shrink-0 items-center border-b px-6 text-[13.5px]" style={{ borderColor: LINE }}>
+          <span style={{ color: MUTED }}>Planned Live</span>
+          <span className="mx-2" style={{ color: "#c7c7c3" }}>/</span>
+          <span className="font-medium">Badges</span>
+        </header>
+        <div className="flex shrink-0 gap-6 border-b px-6 text-[13.5px]" style={{ borderColor: LINE }}>
+          {["Overview", "Check-in", "Badges", "Event app"].map((t) => (
+            <span
+              key={t}
+              className={`py-3 ${t === "Badges" ? "border-b-2 font-medium" : ""}`}
+              style={t === "Badges" ? { borderColor: INK } : { color: MUTED }}
+            >
+              {t}
+            </span>
+          ))}
+        </div>
+
+        <div className={`flex min-h-0 flex-1 gap-6 p-6 ${embedded ? "flex-row" : "flex-col overflow-y-auto xl:flex-row xl:overflow-hidden"}`}>
+          {/* The settings, scrolling in their own column. */}
+          <div className={`flex min-w-0 flex-1 flex-col gap-4 ${embedded ? "overflow-y-auto pr-1" : "xl:overflow-y-auto xl:pr-1"}`}>
+            <div className="flex items-center justify-between">
+              <h1 className="text-[22px] font-semibold tracking-[-0.01em]">Badge</h1>
+              <span className="flex items-center gap-2 text-[13px]" style={{ color: MUTED }}>
+                visible to
+                <span className="flex items-center gap-1.5 rounded-[9px] border px-3 py-1.5 text-[13px]" style={{ borderColor: LINE, color: INK }}>
+                  Everyone <ChevronDown className="size-[13px]" strokeWidth={1.8} />
+                </span>
+              </span>
+            </div>
+
+            {/* New, at the top: the badge's style, drafted by AI from one open
+                field. Marked with Planned's own gradient circle. */}
+            {ai && (
+            <div className="rounded-[12px] border bg-white" style={{ borderColor: LINE }}>
+              <div className="p-4">
+                <div className="flex items-center gap-1.5">
+                  <AiLabel size={12} />
+                  {/* Set like the size cards' titles ("4 × 6 in"). */}
+                  <span className="text-[14px] font-medium" style={{ color: INK }}>Badge style</span>
+                </div>
+                <p className="mt-1 text-[12.5px]" style={{ color: MUTED }}>
+                  Make your brand stand out. Your badge is on every attendee, in every photo, all event long. Share your
+                  website, a picture or the look you want, and we&apos;ll draft styles in your brand.
+                </p>
+
+                {editing ? (
+                  /* The open field: words, a website, a reference picture. */
+                  <div className="mt-3 rounded-[12px] border bg-white focus-within:border-[#b5b5b1]" style={{ borderColor: LINE }}>
+                    {(site || imageRef) && (
+                      <div className="flex flex-wrap gap-1.5 px-3 pt-3">
+                        {site && (
+                          <span className="flex items-center gap-1.5 rounded-[8px] border bg-white py-1 pr-1.5 pl-2 text-[12px]" style={{ borderColor: LINE }}>
+                            <Link2 className="size-[12px]" strokeWidth={1.8} />
+                            planned.com
+                            <span className="ml-0.5 flex gap-[3px]">
+                              {BRAND.map((c) => (
+                                <span key={c} className="size-[9px] rounded-full" style={{ background: c }} />
+                              ))}
+                            </span>
+                            <button type="button" aria-label="Remove website" onClick={() => setBrandPulled(false)} className="ml-0.5 px-1" style={{ color: MUTED }}>
+                              ×
+                            </button>
+                          </span>
+                        )}
+                        {imageRef && (
+                          <span className="flex items-center gap-1.5 rounded-[8px] border bg-white py-1 pr-1.5 pl-1 text-[12px]" style={{ borderColor: LINE }}>
+                            <span className="size-[20px] rounded-[5px]" style={{ background: "linear-gradient(135deg, #d6ece9, #f4eccf 60%, #dce8f1)" }} />
+                            last-years-badge.jpg
+                            <button type="button" aria-label="Remove image" onClick={() => setImageRef(false)} className="ml-0.5 px-1" style={{ color: MUTED }}>
+                              ×
+                            </button>
+                          </span>
+                        )}
+                      </div>
+                    )}
+                    <textarea
+                      value={brief}
+                      onChange={(e) => setBrief(e.target.value)}
+                      rows={3}
+                      placeholder="Describe the look you want, paste your website, or add a reference picture…"
+                      className="block w-full resize-none bg-transparent px-3 pt-3 pb-1 text-[13.5px] leading-[1.5] outline-none placeholder:text-[#a3a3a0]"
+                    />
+                    <div className="flex items-center justify-between gap-2 px-2 pb-2">
+                      <div className="flex gap-1">
+                        <button
+                          type="button"
+                          onClick={() => setBrandPulled(true)}
+                          className="flex items-center gap-1.5 rounded-[8px] px-2 py-1 text-[12px] hover:bg-[#f4f4f2]"
+                          style={{ color: MUTED }}
+                        >
+                          <Link2 className="size-[13px]" strokeWidth={1.8} />
+                          Website
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setImageRef(true)}
+                          className="flex items-center gap-1.5 rounded-[8px] px-2 py-1 text-[12px] hover:bg-[#f4f4f2]"
+                          style={{ color: MUTED }}
+                        >
+                          <ImageIcon className="size-[13px]" strokeWidth={1.8} />
+                          Picture
+                        </button>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={generate}
+                        disabled={!canGenerate}
+                        className="rounded-[9px] px-3.5 py-1.5 text-[13px] font-medium text-white transition-colors"
+                        style={{ background: canGenerate ? "#1d1d1b" : "#c9c9c6" }}
+                      >
+                        {phase === "done" ? "Regenerate" : "Generate"}
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  /* Once generated, the field becomes the AI's instructions:
+                     what it took from the brief, shimmering while it works. */
+                  <div className="mt-3 rounded-[12px] border px-3.5 py-3" style={{ borderColor: LINE, background: PANEL }}>
+                    <div className="flex items-center justify-between">
+                      <span className="text-[12px] font-medium" style={{ color: MUTED }}>
+                        {phase === "thinking" ? "Writing instructions…" : "Instructions"}
+                      </span>
+                      {phase === "done" && (
+                        <button type="button" onClick={() => setEditing(true)} className="text-[12px] underline decoration-[#d0d0cc] underline-offset-2" style={{ color: MUTED }}>
+                          Edit
+                        </button>
+                      )}
+                    </div>
+                    {phase === "thinking" ? (
+                      <div className="mt-2.5 flex flex-col gap-2">
+                        {[92, 78, 86, 64].map((w, k) => (
+                          <span key={k} className="relative block h-[10px] overflow-hidden rounded-full" style={{ width: `${w}%` }}>
+                            <span className="rb-skel rb-on" style={{ animationDelay: `${k * 120}ms` }} />
+                          </span>
+                        ))}
+                      </div>
+                    ) : (
+                      <ul className="view-in mt-2 flex flex-col gap-1.5 text-[12.5px] leading-[1.45]">
+                        {[
+                          site && "Use planned.com's look: hazy evening skies, soft grey cloud, feathered mint paint and heavy grain.",
+                          site && "Keep its slate-teal ink (#21333A), warm cream and Geist type.",
+                          imageRef && "Keep the airy, light feel of your reference picture.",
+                          brief.trim() && `Match the brief: “${brief.trim()}”`,
+                          "Keep names large, attendee colours on the frame, and details in black for on-site printing.",
+                        ]
+                          .filter(Boolean)
+                          .map((t) => (
+                            <li key={t as string} className="flex gap-2">
+                              <span className="mt-[7px] size-[5px] shrink-0 rounded-full bg-[#9a9a96]" />
+                              {t}
+                            </li>
+                          ))}
+                      </ul>
+                    )}
+                  </div>
+                )}
+
+                {phase !== "idle" && !editing && (
+                  <div className="mt-4 grid grid-cols-3 gap-2.5">
+                    {DRAFTS.map((d, k) => {
+                      const on = style.id === d.id
+                      return phase === "thinking" ? (
+                        <div key={d.id} className="relative h-[132px] overflow-hidden rounded-[10px]">
+                          <span className="rb-skel rb-on" style={{ animationDelay: `${k * 120}ms` }} />
+                        </div>
+                      ) : (
+                        <button
+                          key={d.id}
+                          type="button"
+                          onClick={() => apply(d)}
+                          className="view-in flex flex-col overflow-hidden rounded-[10px] border text-left transition-colors"
+                          style={{ borderColor: on ? INK : LINE, animationDelay: `${k * 90}ms` }}
+                        >
+                          <span className="flex h-[78px] items-center justify-center" style={{ background: PANEL }}>
+                            <MiniBadge style={d} />
+                          </span>
+                          <span className="px-2.5 py-2">
+                            <span className="flex items-center justify-between text-[12.5px] font-medium">
+                              {d.name}
+                              <Radio on={on} />
+                            </span>
+                            <span className="mt-0.5 block text-[11px] leading-snug" style={{ color: MUTED }}>
+                              {d.blurb}
+                            </span>
+                          </span>
+                        </button>
+                      )
+                    })}
+                  </div>
+                )}
+
+              </div>
+            </div>
+            )}
+
+            <div className="grid grid-cols-2 gap-3">
+              {(
+                [
+                  ["portrait", "4 × 6 in", "Portrait. Fits standard lanyard holders."],
+                  ["landscape", "6 × 4 in", "Landscape. More room for company and role."],
+                ] as const
+              ).map(([id, t, d]) => (
+                <button
+                  key={id}
+                  type="button"
+                  onClick={() => setSize(id)}
+                  className="rounded-[12px] border p-4 text-left transition-colors"
+                  style={{ borderColor: size === id ? INK : LINE }}
+                >
+                  <Radio on={size === id} />
+                  <div className="mt-3 text-[14px] font-medium">{t}</div>
+                  <div className="mt-1 text-[12px]" style={{ color: MUTED }}>{d}</div>
+                </button>
+              ))}
+            </div>
+
+            <Card className="p-4">
+              <div className="text-[13px]" style={{ color: MUTED }}>Badge template</div>
+              <div className="mt-3 grid grid-cols-3 gap-2.5">
+                {(
+                  [
+                    ["window", "Print window", "Pre-printed color stock"],
+                    ["band", "Top band", "Clean, high-contrast"],
+                    ["big", "Big type", "Maximum legibility"],
+                  ] as const
+                ).map(([id, t, d]) => (
+                  <button
+                    key={id}
+                    type="button"
+                    onClick={() => setTemplate(id)}
+                    // Stacked from the top: a button centres its contents by
+                    // default, which left a white strip above the preview.
+                    className="flex flex-col justify-start overflow-hidden rounded-[10px] border text-left"
+                    style={{ borderColor: template === id ? INK : LINE }}
+                  >
+                    <span className="relative flex h-[84px] items-center justify-center" style={{ background: PANEL }}>
+                      <MiniBadge window={id === "window"} band={id === "band"} big={id === "big"} />
+                      <span className="absolute top-2 right-2">
+                        <Radio on={template === id} />
+                      </span>
+                    </span>
+                    <span className="block px-3 py-2.5">
+                      <span className="block text-[13px] font-medium">{t}</span>
+                      <span className="block text-[11.5px]" style={{ color: MUTED }}>{d}</span>
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </Card>
+
+            <Card className="p-4">
+              <div className="text-[13px]" style={{ color: MUTED }}>Attendee colors</div>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {ROLES.map((r) => (
+                  <button
+                    key={r.id}
+                    type="button"
+                    onClick={() => setRole(r.id)}
+                    className="flex items-center gap-2 rounded-[9px] border px-3 py-1.5 text-[13px]"
+                    style={{ borderColor: role === r.id ? INK : LINE, background: role === r.id ? PANEL : "#fff" }}
+                  >
+                    <span className="size-[13px] rounded-[3px]" style={{ background: r.color }} />
+                    {r.id}
+                  </button>
+                ))}
+              </div>
+              <p className="mt-3 text-[12px]" style={{ color: MUTED }}>
+                The color is produced on pre-printed stock. On-site thermal printers add attendee details in black only.
+              </p>
+            </Card>
+
+            <Card className="flex flex-col gap-3 p-4">
+              <div className="text-[13px]" style={{ color: MUTED }}>Badge content</div>
+              <Toggle on={showName} onClick={() => setShowName((v) => !v)} label="Guest's full name" />
+              <Toggle on={showCompany} onClick={() => setShowCompany((v) => !v)} label="Company" />
+            </Card>
+
+            {/* New: the badge's code as a way in. Only in the new version. */}
+            {ai && (
+              <Card className="flex flex-col gap-3 p-4">
+                <div className="flex items-center justify-between">
+                  <div className="text-[13px]" style={{ color: MUTED }}>Badge code</div>
+                  <span className="rounded-full px-2 py-[2px] text-[11px]" style={{ background: "#f1f1ee", color: MUTED }}>New</span>
+                </div>
+                <Toggle on={codeLink} onClick={() => setCodeLink((v) => !v)} label="Code opens a link" />
+                {codeLink && (
+                  <div className="view-in pl-[46px]">
+                    <input
+                      value={codeUrl}
+                      onChange={(e) => setCodeUrl(e.target.value)}
+                      aria-label="Link the code opens"
+                      className="w-full rounded-[9px] border bg-white px-3 py-1.5 text-[13px] outline-none focus:border-[#b5b5b1]"
+                      style={{ borderColor: LINE }}
+                    />
+                    <p className="mt-1.5 text-[12px]" style={{ color: MUTED }}>
+                      Anyone who scans the badge with a phone lands here.
+                    </p>
+                  </div>
+                )}
+              </Card>
+            )}
+          </div>
+
+          {/* The live preview. */}
+          <div className={embedded ? "w-[440px] shrink-0" : "xl:w-[440px] xl:shrink-0 xl:self-stretch"}>
+            {/* The preview fills the page's height; the strap runs in from its
+                top edge and the badge hangs centred in the frame. */}
+            <div
+              className={`relative h-full overflow-hidden rounded-[16px] border ${embedded ? "" : "min-h-[600px]"}`}
+              style={{ borderColor: LINE, background: PANEL }}
+            >
+              <div className="absolute inset-x-4 top-4 z-20 flex items-center justify-between text-[12.5px]" style={{ color: MUTED }}>
+                <span>Preview</span>
+                {style.id !== "plain" && <span className="rounded-full bg-white px-2 py-[2px]">{style.name}</span>}
+              </div>
+              {ai ? (
+                /* The new version: the badge as it's worn, hanging in 3D. */
+                <div className="absolute inset-0 flex justify-center">
+                  <HangingBadge
+                    size={size}
+                    template={template}
+                    role={role}
+                    style={style}
+                    accent={accent}
+                    pattern={pattern}
+                    showName={showName}
+                    showCompany={showCompany}
+                    loading={phase === "thinking"}
+                    link={codeLink && codeUrl.trim() ? codeUrl.trim() : undefined}
+                  />
+                </div>
+              ) : (
+                /* Today's builder: the flat badge, centred, as it is now. */
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <Badge
+                    size={size}
+                    template={template}
+                    role={role}
+                    style={style}
+                    accent={accent}
+                    pattern={pattern}
+                    showName={showName}
+                    showCompany={showCompany}
+                  />
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}

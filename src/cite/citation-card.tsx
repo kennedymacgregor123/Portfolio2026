@@ -56,10 +56,11 @@ import {
   cx,
 } from "./tokens"
 
+/** The slots, top to bottom: the pager, when present, is the card's first band. */
 export const SLOT_ORDER = [
+  "pager",
   "source",
   "header",
-  "pager",
   "description",
   "chips",
   "evidence",
@@ -458,7 +459,7 @@ export function CitationCard({
   /* The pager, when present, is the card's first band, and the anatomy shows
      it there too. With the slots shown, every slot sits the same distance from
      the next: the outlines and labels need that room to read as separate. */
-  const order: Slot[] = ["pager", ...SLOT_ORDER.filter((s) => s !== "pager")]
+  const order: Slot[] = [...SLOT_ORDER]
   if (showSlots) {
     for (const s of SLOT_ORDER) gap[s] = SLOT_GAP
     gap[order[0]!] = 0

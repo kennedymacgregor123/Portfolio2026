@@ -118,12 +118,15 @@ export function CitationsHero({
       }
       const f = { width: frame.offsetWidth, height: frame.offsetHeight }
       const m = { left: x, top: y, right: x + mark.offsetWidth, bottom: y + mark.offsetHeight }
-      // Close to full size everywhere: narrow windows keep a readable card
-      // rather than shrinking it with the frame. As a preview, it scales with
-      // the frame instead, so it fits whole.
+      // Close to full size in a wide frame. In a narrow one (a phone) it
+      // scales down with the frame, so it sits within it and leaves the
+      // writing around it in view. As a preview, it scales with the frame
+      // too, so it fits whole.
       const scale = compact
         ? Math.min(0.62, (f.width * 0.5) / card.offsetWidth, (f.height * 0.82) / card.offsetHeight)
-        : Math.min(0.8, Math.max(0.75, f.width / 1000))
+        : f.width >= 600
+          ? Math.min(0.8, Math.max(0.75, f.width / 1000))
+          : Math.min(0.62, (f.width * 0.62) / card.offsetWidth, (f.height * 0.62) / card.offsetHeight)
       const width = card.offsetWidth * scale
       const height = card.offsetHeight * scale
       // The card rises beside the mark: its left edge just past the figure, and

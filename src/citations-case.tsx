@@ -231,7 +231,7 @@ export const CITATIONS_CASE: CaseStudy = {
       label: "Key decisions",
       title: "One card, seven slots, and a few rules that hold across every type",
       blurb: [
-        "One card for every kind of citation. Rather than design a card per type, I designed a fixed list of seven slots: source, header, pager, description, chips, evidence and call to action. Each kind of citation fills a slot or leaves it empty. A metric lists the accounts behind it; a named account leaves the evidence slot empty, because the thing either exists or it doesn't.",
+        "One card for every kind of citation. Rather than design a card per type, I designed a fixed list of seven slots: pager, source, header, description, chips, evidence and call to action. Each kind of citation fills a slot or leaves it empty. A metric lists the accounts behind it; a named account leaves the evidence slot empty, because the thing either exists or it doesn't.",
         "The figure is the title. A reader opens a card to check the number, so the number leads and its name is read beside it. The card takes one title that names the subject, never the raw query; the query becomes what the link opens.",
         "The card agrees with the report. Because each citation snapshots the accounts behind a number and their values, the figure on the card is the figure in the report, and the list underneath adds up to it. The full, detailed account list is one click away rather than stored in every citation.",
         "Audience is a setting, not a second card. In the app and on a shared link it's the same card: a public reader loses the account names and the deep link, and gets a count instead.",

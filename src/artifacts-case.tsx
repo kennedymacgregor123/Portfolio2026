@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useId, useRef, useState } from "react"
 
 import type { CaseStudy } from "./case-study"
 import { Store, TrendingDown, TrendingUp } from "lucide-react"
@@ -16,12 +16,13 @@ import { ScribbleNote } from "./scribble-note"
 
 const FONT = "font-['Inter_Variable',Inter,sans-serif]"
 
-/** A report page, as the panels show one. */
+/** A report page, as the panels show one: a white sheet with a hairline
+    edge, a faint top highlight and a soft lift off the panel. */
 function Sheet({ children, className = "" }: { children: React.ReactNode; className?: string }) {
   return (
     <div
-      className={`rounded-[12px] border bg-[#fbfbfa] shadow-[0_1px_2px_rgba(15,15,15,0.04),0_10px_30px_-14px_rgba(15,15,15,0.1)] ${FONT} ${className}`}
-      style={{ borderColor: LINE, color: INK }}
+      className={`rounded-[14px] border bg-white shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_1px_2px_rgba(15,15,15,0.04),0_14px_34px_-18px_rgba(15,15,15,0.16)] ${FONT} ${className}`}
+      style={{ borderColor: "#e9e9e6", color: INK }}
     >
       {children}
     </div>
@@ -30,92 +31,170 @@ function Sheet({ children, className = "" }: { children: React.ReactNode; classN
 
 function MiniKpi({ label, value, delta, down }: { label: string; value: string; delta: string; down?: boolean }) {
   return (
-    <div className="min-w-0 flex-1 rounded-[8px] border bg-white px-2.5 py-2" style={{ borderColor: "#e8e8e6" }}>
-      <div className="truncate text-[10px]" style={{ color: MUTED }}>{label}</div>
-      <div className="mt-0.5 text-[15px] leading-tight font-semibold tabular-nums">{value}</div>
+    <div className="min-w-0 flex-1 rounded-[10px] border bg-[#fafaf9] px-2.5 pt-2 pb-2.5" style={{ borderColor: "#efefed" }}>
+      <div className="text-[9.5px] leading-tight whitespace-nowrap" style={{ color: MUTED }}>{label}</div>
+      <div className="mt-1 text-[16px] leading-none font-semibold tracking-[-0.3px] tabular-nums">{value}</div>
       <span
-        className="mt-1 inline-flex items-center gap-1 rounded-[4px] px-1 py-px text-[9px] font-medium tabular-nums"
-        style={down ? { background: "#fbe9e9", color: "#c2453d" } : { background: "#e6f4ec", color: "#2f855a" }}
+        className="mt-2 inline-flex items-center gap-0.5 rounded-full px-1.5 py-px text-[9px] font-medium tabular-nums"
+        style={down ? { background: "#fcecea", color: "#b8433b" } : { background: "#e7f5ed", color: "#2b7a51" }}
       >
-        {down ? <TrendingDown strokeWidth={2.25} className="size-[8px]" aria-hidden /> : <TrendingUp strokeWidth={2.25} className="size-[8px]" aria-hidden />}
+        {down ? <TrendingDown strokeWidth={2.5} className="size-[8px]" aria-hidden /> : <TrendingUp strokeWidth={2.5} className="size-[8px]" aria-hidden />}
         {delta}
       </span>
     </div>
   )
 }
 
-/** A small area chart, from a list of values between 0 and 1. */
+/** A smooth line through evenly spaced points (Catmull-Rom as Béziers). */
+function smoothLine(pts: [number, number][]) {
+  let d = `M${pts[0]![0]} ${pts[0]![1]}`
+  for (let i = 0; i < pts.length - 1; i++) {
+    const p0 = pts[i - 1] ?? pts[i]!
+    const p1 = pts[i]!
+    const p2 = pts[i + 1]!
+    const p3 = pts[i + 2] ?? p2
+    d += ` C ${(p1[0] + (p2[0] - p0[0]) / 6).toFixed(1)} ${(p1[1] + (p2[1] - p0[1]) / 6).toFixed(1)}, ${(p2[0] - (p3[0] - p1[0]) / 6).toFixed(1)} ${(p2[1] - (p3[1] - p1[1]) / 6).toFixed(1)}, ${p2[0].toFixed(1)} ${p2[1].toFixed(1)}`
+  }
+  return d
+}
+
+/** A small area chart, from a list of values between 0 and 1: a smooth line
+    over a fill that fades to nothing, on faint dotted guides. */
 function MiniTrend({ values, className = "h-[56px]" }: { values: number[]; className?: string }) {
+  const id = useId()
   const step = 200 / (values.length - 1)
-  const pts = values.map((v, i) => `${(i * step).toFixed(1)} ${(54 - v * 48).toFixed(1)}`)
-  const line = `M${pts.join(" L")}`
+  const pts = values.map((v, i) => [i * step, 52 - v * 44] as [number, number])
+  const line = smoothLine(pts)
   return (
     <svg viewBox="0 0 200 56" className={`block w-full ${className}`} preserveAspectRatio="none" aria-hidden>
-      {[6, 30, 54].map((y) => (
-        <line key={y} x1="0" x2="200" y1={y} y2={y} stroke="#ececea" strokeDasharray="3 3" />
+      <defs>
+        <linearGradient id={id} x1="0" x2="0" y1="0" y2="1">
+          <stop offset="0" stopColor="#3fae7a" stopOpacity="0.16" />
+          <stop offset="1" stopColor="#3fae7a" stopOpacity="0" />
+        </linearGradient>
+      </defs>
+      {[6, 29, 52].map((y) => (
+        <line key={y} x1="0" x2="200" y1={y} y2={y} stroke="#efefed" strokeDasharray="2 3" vectorEffect="non-scaling-stroke" />
       ))}
-      <path d={`${line} L200 56 L0 56 Z`} fill="#3fae7a" fillOpacity="0.1" />
-      <path d={line} fill="none" stroke="#3fae7a" strokeWidth="1.4" vectorEffect="non-scaling-stroke" />
+      <path d={`${line} L200 56 L0 56 Z`} fill={`url(#${id})`} />
+      <path d={line} fill="none" stroke="#3fae7a" strokeWidth="1.6" strokeLinecap="round" vectorEffect="non-scaling-stroke" />
     </svg>
   )
 }
 
+/** A report's title row: its name, and the day it ran in a quiet pill. */
 function RunHeader({ title, date }: { title: string; date: string }) {
   return (
-    <div className="flex items-baseline justify-between gap-2">
-      <span className="text-[13px] font-semibold">{title}</span>
-      <span className="shrink-0 rounded-[5px] bg-[#efefed] px-1.5 py-0.5 text-[10px] tabular-nums" style={{ color: MUTED }}>
-        {date}
-      </span>
+    <div className="flex items-center justify-between gap-2">
+      <span className="text-[13.5px] font-semibold tracking-[-0.15px]">{title}</span>
+      <RunDate date={date} />
+    </div>
+  )
+}
+
+function RunDate({ date }: { date: string }) {
+  return (
+    <span
+      className="shrink-0 rounded-full border bg-[#fafaf9] px-2 py-[1px] text-[9.5px] font-medium"
+      style={{ borderColor: "#ececea", color: MUTED }}
+    >
+      {date}
+    </span>
+  )
+}
+
+/** A chart card inside a report: a title, an optional figure, the chart. */
+function ChartCard({ title, figure, children }: { title: string; figure?: string; children: React.ReactNode }) {
+  return (
+    <div className="mt-3 rounded-[10px] border bg-[#fafaf9] px-3 pt-2.5 pb-2" style={{ borderColor: "#efefed" }}>
+      <div className="flex items-baseline justify-between">
+        <span className="text-[10px] font-medium">{title}</span>
+        {figure && (
+          <span className="text-[9.5px] tabular-nums" style={{ color: MUTED }}>
+            {figure}
+          </span>
+        )}
+      </div>
+      {children}
     </div>
   )
 }
 
 /* ---------- Problem: the same prompt, two different reports ---------- */
 
+/** Whether the window is at least `px` wide, kept up to date as it resizes. */
+function useMinWidth(px: number) {
+  const query = `(min-width: ${px}px)`
+  const [match, setMatch] = useState(() => typeof window !== "undefined" && window.matchMedia(query).matches)
+  useEffect(() => {
+    const mq = window.matchMedia(query)
+    const on = () => setMatch(mq.matches)
+    on()
+    mq.addEventListener("change", on)
+    return () => mq.removeEventListener("change", on)
+  }, [query])
+  return match
+}
+
 function DriftingReports() {
+  // Side by side, the note sits above both reports and points down at the
+  // second. Stacked (a phone), it moves down to sit just above the second
+  // report, so its arrow doesn't cross the first.
+  const wide = useMinWidth(640)
+  const note = (
+    <ScribbleNote key={wide ? "wide" : "narrow"} target="[data-drift-run]" className={wide ? "top-0 right-6" : "top-0 right-2"}>
+      Same request??
+    </ScribbleNote>
+  )
   return (
-    <div className="relative w-full max-w-[38rem] pt-14">
-      <ScribbleNote target="[data-drift-run]" className="top-0 right-2 sm:right-6">
-        Same request??
-      </ScribbleNote>
+    <div className={`relative w-full max-w-[38rem] ${wide ? "pt-14" : ""}`}>
+      {wide && note}
       <div className="flex flex-col gap-4 sm:flex-row">
-        <Sheet className="flex-1 p-4">
-          <RunHeader title="Weekly pipeline review" date="2026-10-05" />
-          <div className="mt-3 flex gap-2">
-            <MiniKpi label="New pipeline" value="$412K" delta="+12%" />
-            <MiniKpi label="Win rate" value="31%" delta="+2pp" />
-            <MiniKpi label="Cycle" value="38d" delta="+4d" down />
-          </div>
-          <div className="mt-3 rounded-[8px] border bg-white px-2.5 pt-2 pb-1.5" style={{ borderColor: "#e8e8e6" }}>
-            <div className="text-[10px] font-medium">Pipeline created, by week</div>
-            <MiniTrend values={[0.2, 0.35, 0.3, 0.5, 0.45, 0.62, 0.7]} className="mt-1 h-[48px]" />
-          </div>
-        </Sheet>
+        <div className="flex flex-1">
+          <Sheet className="flex-1 p-4">
+            <RunHeader title="Weekly pipeline review" date="2026-10-05" />
+            <div className="mt-3 flex gap-2">
+              <MiniKpi label="New pipeline" value="$412K" delta="+12%" />
+              <MiniKpi label="Win rate" value="31%" delta="+2pp" />
+              <MiniKpi label="Cycle" value="38d" delta="+4d" down />
+            </div>
+            <ChartCard title="Pipeline created, by week" figure="Last 7 weeks">
+              <MiniTrend values={[0.2, 0.35, 0.3, 0.5, 0.45, 0.62, 0.7]} className="mt-1.5 h-[46px]" />
+            </ChartCard>
+          </Sheet>
+        </div>
         {/* The next run of the same request: the chart gone, the KPIs
             folded into prose, the sections in a new order. */}
-        <Sheet className="flex-1 p-4">
-          {/* The note's arrow lands on the title, which is all that's
-              left of the first report's name. */}
-          <div className="flex items-baseline justify-between gap-2">
-            <span data-drift-run className="text-[13px] font-semibold">Pipeline update</span>
-            <span className="shrink-0 rounded-[5px] bg-[#efefed] px-1.5 py-0.5 text-[10px] tabular-nums" style={{ color: MUTED }}>
-              2026-10-12
-            </span>
+        <div className={`relative flex flex-1 flex-col ${wide ? "" : "pt-12"}`}>
+          {!wide && note}
+          <div className="flex flex-1">
+            <Sheet className="flex-1 p-4">
+              {/* The note's arrow lands on the title, which is all that's
+                  left of the first report's name. */}
+              <div className="flex items-center justify-between gap-2">
+                <span data-drift-run className="text-[13.5px] font-semibold tracking-[-0.15px]">Pipeline update</span>
+                <RunDate date="2026-10-12" />
+              </div>
+              <p className="mt-3 text-[11.5px] leading-[1.55]" style={{ color: "#4b5160" }}>
+                This week the team added roughly $390K in new pipeline. Win rate is around 30%, and
+                deals are taking a little longer to close than last week.
+              </p>
+              <div className="mt-3.5 text-[10px] font-medium">Top deals</div>
+              <ul className="mt-1.5 flex flex-col text-[11px]" style={{ color: "#4b5160" }}>
+                {[
+                  ["Northwind renewal", "$84K"],
+                  ["Acme expansion", "$61K"],
+                  ["Globex, new logo", "$47K"],
+                ].map(([deal, amount]) => (
+                  <li key={deal} className="flex justify-between border-t py-1.5" style={{ borderColor: "#f0f0ee" }}>
+                    <span>{deal}</span>
+                    <span className="font-medium tabular-nums" style={{ color: INK }}>{amount}</span>
+                  </li>
+                ))}
+              </ul>
+            </Sheet>
           </div>
-          <p className="mt-3 text-[11.5px] leading-[1.5]" style={{ color: "#3b4150" }}>
-            This week the team added roughly $390K in new pipeline. Win rate is around 30%, and
-            deals are taking a little longer to close than last week.
-          </p>
-          <div className="mt-3 text-[10px] font-semibold tracking-[0.3px] uppercase" style={{ color: MUTED }}>
-            Top deals
-          </div>
-          <ul className="mt-1.5 flex flex-col gap-1 text-[11.5px]" style={{ color: "#3b4150" }}>
-            <li className="flex justify-between"><span>Northwind renewal</span><span className="tabular-nums">$84K</span></li>
-            <li className="flex justify-between"><span>Acme expansion</span><span className="tabular-nums">$61K</span></li>
-            <li className="flex justify-between"><span>Globex, new logo</span><span className="tabular-nums">$47K</span></li>
-          </ul>
-        </Sheet>
+        </div>
       </div>
     </div>
   )
@@ -326,8 +405,12 @@ const SPECS = {
       ["change", "+80% · good when up"],
     ],
     render: (
+      // Laid out at the card's size in the report and scaled up, so its type
+      // grows with the card instead of the card just getting wider.
       <div className="w-full max-w-[15rem]">
-        <Kpi at={0} label="Net New ARR" value="$512K" note="Across 4 quarters" />
+        <Scaled width={200}>
+          <Kpi at={0} label="Net New ARR" value="$512K" note="Across 4 quarters" />
+        </Scaled>
       </div>
     ),
   },
@@ -565,20 +648,19 @@ function SheetShare() {
 
 /** A small column chart, its tallest bar in green, and three figures. */
 function SheetProgress() {
-  const bars = [0.42, 0.58, 0.5, 0.74, 0.62, 1, 0.82]
+  const bars = [0.42, 0.58, 0.5, 0.74, 1, 0.66, 0.82]
   return (
     <>
-      <div className="mt-3.5 rounded-[8px] border px-3 pt-3 pb-2.5" style={{ borderColor: TPL_EDGE }}>
+      <div className="mt-3.5 rounded-[8px] border px-3 py-3" style={{ borderColor: TPL_EDGE }}>
         <div className="flex h-[34px] items-end gap-[5px]">
           {bars.map((v, i) => (
             <span
               key={i}
-              className="flex-1 rounded-t-[2px]"
+              className="flex-1 rounded-t-[3px]"
               style={{ height: `${v * 100}%`, background: v === 1 ? TPL_GREEN : "#d9dcdf" }}
             />
           ))}
         </div>
-        <span className="mt-1 block h-px w-full" style={{ background: TPL_EDGE }} />
       </div>
       <div className="mt-2.5 flex gap-2">
         <SheetKpi value="$400K" change="↗ 12%" />
@@ -700,10 +782,9 @@ function RecurringRuns() {
               />
             ))}
           </div>
-          <div className="mt-3 rounded-[8px] border bg-white px-2.5 pt-2 pb-1.5" style={{ borderColor: "#e8e8e6" }}>
-            <div className="text-[10px] font-medium">Pipeline created, by week</div>
-            <MiniTrend values={run.trend} className="mt-1 h-[56px]" />
-          </div>
+          <ChartCard title="Pipeline created, by week" figure="Last 7 weeks">
+            <MiniTrend values={run.trend} className="mt-1.5 h-[54px]" />
+          </ChartCard>
         </div>
       </Sheet>
     </div>
@@ -723,7 +804,7 @@ const INBOX = [
 
 /** A week's reports side by side: the same shape, the same wall of text. */
 function ReportFatigue() {
-  const line = "h-[4px] rounded-full bg-[#e3e3e1]"
+  const line = "h-[4px] rounded-full bg-[#ebebe9]"
   /* When the panel is narrow the note spans nearly its width, so any arrow
      would cross it: there the note stands alone, centred. */
   const ref = useRef<HTMLDivElement>(null)
@@ -748,7 +829,7 @@ function ReportFatigue() {
       )}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
         {INBOX.map((r, i) => (
-          <Sheet key={i} className="p-3">
+          <Sheet key={i} className="p-3.5">
             {/* The note points at the second card, which is in the top row
                 at every width. Dates give way when the cards are narrow. */}
             <div className="flex items-baseline justify-between gap-2">
@@ -759,13 +840,28 @@ function ReportFatigue() {
                 {r.date.slice(5)}
               </span>
             </div>
-            <div className="mt-2 flex gap-1">
-              {[0, 1, 2].map((j) => (
-                <span key={j} className="h-[18px] flex-1 rounded-[4px] border bg-white" style={{ borderColor: "#e8e8e6" }} />
+            {/* Three KPI tiles, drawn as placeholders: a label line over a
+                darker figure bar, in the report kit's quiet tiles. */}
+            <div className="mt-2.5 flex gap-1">
+              {[60, 45, 55].map((w, j) => (
+                <span
+                  key={j}
+                  className="flex flex-1 flex-col gap-[4px] rounded-[5px] border bg-[#fafaf9] px-1.5 pt-1.5 pb-[7px]"
+                  style={{ borderColor: "#efefed" }}
+                >
+                  <span className="h-[3px] w-[70%] rounded-full bg-[#e6e6e4]" />
+                  <span className="h-[5px] rounded-full bg-[#d4d4d1]" style={{ width: `${w}%` }} />
+                </span>
               ))}
             </div>
-            <div className="mt-2 flex flex-col gap-[5px]">
-              {[100, 92, 97, 85, 95, 70].map((w, j) => (
+            {/* The same wall of text in every one: two paragraphs. */}
+            <div className="mt-2.5 flex flex-col gap-[5px]">
+              {[100, 94, 97, 62].map((w, j) => (
+                <span key={j} className={line} style={{ width: `${w}%` }} />
+              ))}
+            </div>
+            <div className="mt-[9px] flex flex-col gap-[5px]">
+              {[96, 88, 74].map((w, j) => (
                 <span key={j} className={line} style={{ width: `${w}%` }} />
               ))}
             </div>

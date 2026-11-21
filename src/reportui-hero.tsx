@@ -18,7 +18,6 @@ import { ChevronDown, ChevronRight, ArrowRightToLine, FileText, House, MessageSq
 const WIN_W = 1377
 const WIN_H = 820
 /** Where the report sheet's middle sits across the window, for narrow heroes. */
-const REPORT_MID = 935
 
 export const INK = "#2d3340"
 export const MUTED = "#6b7280"
@@ -306,8 +305,20 @@ export function Kpi({
  * real width, so it keeps its shape and an even stroke however wide the chart
  * is laid out, rather than one fixed curve stretched to fit.
  */
-const REPORTED = [114, 106, 108, 96, 99, 86, 80, 84, 70, 62, 65, 52, 44, 34, 26]
-const FORECAST = [112, 106, 100, 94, 88, 82, 76, 70]
+// A steady climb with three waves on it, long, shorter and short, out of
+// step with each other, so the rises and dips vary in size and spacing while every
+// curve stays round. Sampled finely so it stays smooth. (Lower sits higher.)
+const REPORTED = Array.from({ length: 41 }, (_, i) => {
+  const t = i / 40
+  return (
+    84 -
+    66 * t -
+    10 * Math.sin(t * Math.PI * 2 * 2.3) -
+    6 * Math.sin(t * Math.PI * 2 * 5.1 + 1.2) -
+    3 * Math.sin(t * Math.PI * 2 * 8.7 + 0.4)
+  )
+})
+const FORECAST = [96, 90, 84, 78, 72, 66, 60, 54]
 const CHART_H = 124
 
 /** A smooth line through evenly spaced readings (Catmull-Rom as Béziers). */
@@ -500,23 +511,16 @@ export function ReportUIHero() {
   const t = useBuildClock()
 
   /* The whole window sits in the frame, centred, so its padding shows evenly
-     all round. In a narrow frame (a phone) that would leave it tiny, so it's
-     shown larger and cropped at the sides, keeping the report in view. */
+     all round, at every width: on a phone too, it's shown whole rather than
+     cropped, so the chat and the report are both in view. */
   useLayoutEffect(() => {
     const frame = frameRef.current
     if (!frame) return
     const run = () => {
       const w = frame.clientWidth
       const h = frame.clientHeight
-      if (w / h >= 1.2) {
-        const scale = Math.min((w * 0.94) / WIN_W, (h * 0.92) / WIN_H)
-        setFit({ scale, left: (w - WIN_W * scale) / 2, top: (h - WIN_H * scale) / 2, cropped: false })
-      } else {
-        const scale = (h * 0.86) / WIN_H
-        // Centre the report, but never past the window's right edge.
-        const left = Math.max(w / 2 - REPORT_MID * scale, w - WIN_W * scale - w * 0.03)
-        setFit({ scale, left, top: (h - WIN_H * scale) / 2, cropped: true })
-      }
+      const scale = Math.min((w * 0.94) / WIN_W, (h * 0.92) / WIN_H)
+      setFit({ scale, left: (w - WIN_W * scale) / 2, top: (h - WIN_H * scale) / 2, cropped: false })
     }
     run()
     const ro = new ResizeObserver(run)

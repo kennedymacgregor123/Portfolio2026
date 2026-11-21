@@ -131,12 +131,12 @@ export function ScribbleNote({
 
   return (
     <>
-      <span ref={noteRef} className={`scribble-note pointer-events-none absolute ${className}`} aria-hidden>
+      <span ref={noteRef} className={`scribble-note pointer-events-none absolute z-10 ${className}`} aria-hidden>
         {children}
       </span>
       {path && (
         <svg
-          className="scribble-arrow pointer-events-none absolute top-0 left-0 overflow-visible"
+          className="scribble-arrow pointer-events-none absolute top-0 left-0 z-10 overflow-visible"
           width={path.w}
           height={path.h}
           aria-hidden

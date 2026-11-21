@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react"
 
 import { About } from "./about"
 import { ARTIFACTS_CASE } from "./artifacts-case"
@@ -29,6 +29,46 @@ const ARC_MS = 650
 
 /** Shown top left. */
 const NAME = "Kennedy MacGregor"
+
+/**
+ * A hand drawn in pen, for the name's easter egg: an open palm and two
+ * little motion marks, roughened by a turbulence filter so the lines wobble
+ * like ink. It draws itself in, then waves.
+ */
+function WavingHand() {
+  return (
+    <svg viewBox="0 0 30 26" className="h-[19px] w-auto overflow-visible" fill="none">
+      <defs>
+        <filter id="pen-wobble" x="-10%" y="-10%" width="120%" height="120%">
+          <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="3" />
+          <feDisplacementMap in="SourceGraphic" scale="0.9" />
+        </filter>
+      </defs>
+      <g
+        filter="url(#pen-wobble)"
+        stroke="#1d1d1b"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <g className="hand-palm">
+          {/* Fingers, then the palm and thumb, each a stroke of the pen. */}
+          <path className="hand-ink" pathLength={1} d="M18.2 11.4 V6.4 a1.9 1.9 0 0 0 -3.8 0" />
+          <path className="hand-ink" pathLength={1} d="M14.4 10.2 V4.3 a1.9 1.9 0 0 0 -3.8 0 v1.9" />
+          <path className="hand-ink" pathLength={1} d="M10.6 10.6 V6.3 a1.9 1.9 0 0 0 -3.8 0 v7.8" />
+          <path
+            className="hand-ink"
+            pathLength={1}
+            d="M18.2 8.4 a1.9 1.9 0 1 1 3.8 0 v5.8 a7.8 7.8 0 0 1 -7.8 7.8 h-1.9 c-2.7 0 -4.4 -0.8 -5.8 -2.3 l-3.5 -3.5 a1.9 1.9 0 0 1 2.7 -2.7 l1.1 1.2"
+          />
+        </g>
+        {/* Motion marks off the fingertips. */}
+        <path className="hand-ink hand-mark" pathLength={1} d="M24.6 4.2 c1.4 0.9 2.3 2.2 2.6 3.8" />
+        <path className="hand-ink hand-mark" pathLength={1} d="M25 1 c2.2 1.3 3.6 3.3 4 5.8" />
+      </g>
+    </svg>
+  )
+}
 
 type Project = {
   id: string
@@ -144,6 +184,13 @@ export function Landing() {
     window.addEventListener("hashchange", onHash)
     return () => window.removeEventListener("hashchange", onHash)
   }, [])
+  /* Every new page opens at its top, however it was reached: the switch,
+     a project, the next-project tile or the back button. Before paint, so
+     the old scroll position never shows on the new page. */
+  const pageKey = page.kind === "case" ? `case:${page.id}` : page.kind
+  useLayoutEffect(() => {
+    window.scrollTo(0, 0)
+  }, [pageKey])
   // A project page counts as Work in the switch.
   const view: View = page.kind === "about" ? "about" : "work"
   const changeView = (next: View) => {
@@ -184,7 +231,7 @@ export function Landing() {
       {/* A floating white bar holding the name and the switch. Its width is
           the Work row's (hero plus arrows), so it lines up with the content. */}
       <div className="header-shelf sticky top-0 z-20 px-4 pt-4 pb-3 sm:pt-5">
-      <header className="site-bar mx-auto flex w-full max-w-[56rem] items-center justify-between rounded-[16px] border py-2.5 pr-2.5 pl-5">
+      <header className="site-bar mx-auto flex w-full max-w-[64rem] items-center justify-between rounded-[16px] border py-3 pr-3 pl-6">
         {study ? (
           /* On a project page the name gives way to the project's title,
              with a chevron back to the home page. Plain at rest; on hover it
@@ -198,7 +245,7 @@ export function Landing() {
               changeView("work")
             }}
             aria-label="Back to all work"
-            className="view-switch group -ml-2.5 flex items-center gap-1 rounded-[8px] py-1 pr-2.5 pl-1.5 text-[13px] font-medium tracking-[0.2px] text-[#0f0f0f] transition-colors duration-300 hover:bg-[#e6e6e3] focus-visible:bg-[#e6e6e3] focus-visible:outline-none"
+            className="view-switch group -ml-2.5 flex items-center gap-1 rounded-[8px] py-1 pr-2.5 pl-1.5 text-[14px] font-medium tracking-[0.2px] text-[#0f0f0f] transition-colors duration-300 hover:bg-[#e6e6e3] focus-visible:bg-[#e6e6e3] focus-visible:outline-none"
           >
             <svg
               viewBox="0 0 16 16"
@@ -221,9 +268,21 @@ export function Landing() {
               e.preventDefault()
               changeView("work")
             }}
-            className="project-title site-name"
+            className="project-title site-name relative inline-flex items-baseline"
+            aria-label={NAME}
           >
-            {NAME}
+            {/* A little easter egg: on hover the letters hop in a wave, left
+                to right, and a hand pops up beside the name and waves hello. */}
+            <span aria-hidden className="name-wave">
+              {[...NAME].map((ch, i) => (
+                <span key={i} className="name-ch" style={{ "--i": i } as React.CSSProperties}>
+                  {ch === " " ? "\u00a0" : ch}
+                </span>
+              ))}
+            </span>
+            <span aria-hidden className="name-hand">
+              <WavingHand />
+            </span>
           </a>
         )}
         <ViewSwitch view={view} onChange={changeView} />
@@ -235,17 +294,17 @@ export function Landing() {
       ) : page.kind === "about" ? (
         <About />
       ) : (
-      <main className="view-in flex flex-1 flex-col items-center justify-center gap-10 px-4 pt-10 pb-6">
+      <main className="view-in flex flex-1 flex-col items-center justify-center gap-10 px-5 pt-10 pb-6 sm:px-4">
         {/* The row matches the header bar's width; the arrows sit at its ends and
             the hero keeps its own maximum between them. */}
-        <div className="flex w-full max-w-[56rem] items-center justify-between gap-1.5 sm:gap-6">
+        <div className="flex w-full max-w-[64rem] items-center justify-between gap-1.5 sm:gap-6">
           <Arrow direction="left" onClick={() => step(-1)} />
 
           {/* The stage holds the slide in place and, mid-turn, the one leaving.
               Each swings around a pivot far below the hero, so both travel
               the same arc in opposite halves. */}
           <div
-            className={`arc-stage relative aspect-square min-w-0 max-w-[41.5rem] flex-1 sm:aspect-[16/10] ${
+            className={`arc-stage relative aspect-square min-w-0 max-w-[47.5rem] flex-1 sm:aspect-[16/10] ${
               prev !== null ? "turning" : ""
             }`}
           >
@@ -297,7 +356,7 @@ export function Landing() {
           <Arrow direction="right" onClick={() => step(1)} />
         </div>
 
-        <div className="flex flex-col items-center gap-3 text-center">
+        <div className="flex flex-col items-center gap-3 px-3 text-center sm:px-0">
           {/* The caption opens the project too. A chevron beside the title
               appears whenever the project or its caption is hovered, to say
               the whole thing is a link. It sits outside the title's box, so
@@ -320,7 +379,7 @@ export function Landing() {
               </svg>
               </span>
             </h1>
-            <p className="project-blurb mx-auto mt-1 max-w-[30rem] text-balance">
+            <p className="project-blurb mx-auto mt-1 max-w-[34rem] text-balance">
               {project.blurb}
             </p>
           </a>

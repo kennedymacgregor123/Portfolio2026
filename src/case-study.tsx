@@ -279,7 +279,7 @@ function NextProjectTile({ next }: { next: NextProject }) {
     >
       <div className="flex flex-col justify-center gap-2 px-6 pt-6 pb-2 sm:w-[44%] sm:py-8 sm:pr-2 sm:pl-8">
         <span className="case-heading">{next.title}</span>
-        <span className="case-text !text-[14px] text-balance">{next.blurb}</span>
+        <span className="case-text !text-[15px] text-balance">{next.blurb}</span>
         <span className="mt-2 inline-flex items-center gap-1.5 text-[13px] font-medium text-[#0f0f0f]">
           View case study
           <svg
@@ -340,8 +340,8 @@ export function CaseStudyPage({ study, next }: { study: CaseStudy; next?: NextPr
   }, [study.sections])
 
   return (
-    <main className="view-in mx-auto w-full max-w-[56rem] px-4 pt-10 pb-32">
-      <div className="lg:grid lg:grid-cols-[11rem_1fr] lg:gap-12">
+    <main className="view-in mx-auto w-full max-w-[64rem] px-7 pt-10 pb-32 sm:px-4">
+      <div className="lg:grid lg:grid-cols-[12rem_1fr] lg:gap-12">
         {/* Wide screens: the list beside the content. Phones: the dial at the
             foot of the screen. */}
         <aside className="case-legend-wrap sticky top-[108px] z-10 hidden self-start lg:block">
@@ -352,12 +352,12 @@ export function CaseStudyPage({ study, next }: { study: CaseStudy; next?: NextPr
         <article className="flex min-w-0 flex-col gap-24">
           <header className="flex flex-col gap-3">
             <h1 className="case-title">{study.title}</h1>
-            <p className="case-text max-w-[38rem]">{study.summary}</p>
+            <p className="case-text max-w-[42rem]">{study.summary}</p>
             {study.facts.length > 0 && (
               <dl className="mt-4 grid grid-cols-2 gap-x-6 gap-y-3 sm:grid-cols-4">
                 {study.facts.map((f) => (
                   <div key={f.label} className="flex flex-col gap-0.5">
-                    <dt className="project-blurb !text-[12px] !text-[#898889]">{f.label}</dt>
+                    <dt className="project-blurb !text-[13px] !text-[#898889]">{f.label}</dt>
                     <dd className="project-blurb !text-[#0f0f0f]">{f.value}</dd>
                   </div>
                 ))}
@@ -378,14 +378,14 @@ export function CaseStudyPage({ study, next }: { study: CaseStudy; next?: NextPr
               className="case-section flex flex-col gap-6"
             >
               <div className="flex flex-col gap-3">
-                <p className="tabular-nums text-[12px] text-[#a3a3a0]">
+                <p className="tabular-nums text-[13px] text-[#a3a3a0]">
                   {String(i + 1).padStart(2, "0")} / {s.label}
                 </p>
                 <h2 id={`${s.id}-title`} className="case-heading">
                   {s.title}
                 </h2>
                 {s.blurb.map((p) => (
-                  <p key={p} className="case-text max-w-[38rem]">
+                  <p key={p} className="case-text max-w-[42rem]">
                     {p}
                   </p>
                 ))}

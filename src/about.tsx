@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react"
 
+import { AboutFeed } from "./about-feed"
 import { BlurInText, length, type Run } from "./blur-in-text"
 
 /*
@@ -28,26 +29,43 @@ const SIGNATURE = "/signature.mp4"
  * The signature draws itself once, as the bio finishes landing, and then holds
  * on the last frame. The video's white ground is multiplied away so only the
  * ink shows on the page. With reduced motion it shows the finished signature
- * straight away.
+ * straight away. `onDone` is called once it has finished drawing (or, if it
+ * can't play, straight away), so what comes after can wait for it.
  */
-function Signature() {
+function Signature({ onDone }: { onDone: () => void }) {
   const ref = useRef<HTMLVideoElement>(null)
+  const doneRef = useRef(onDone)
+  doneRef.current = onDone
   useEffect(() => {
     const v = ref.current
     if (!v) return
+    let fired = false
+    const done = () => {
+      if (fired) return
+      fired = true
+      doneRef.current()
+    }
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
       const end = () => {
         v.currentTime = Math.max(0, v.duration - 0.05)
       }
       if (v.readyState >= 1) end()
       else v.addEventListener("loadedmetadata", end, { once: true })
+      done()
       return
     }
+    v.addEventListener("ended", done, { once: true })
     const t = window.setTimeout(() => {
       v.currentTime = 0
-      void v.play().catch(() => {})
+      void v.play().catch(done)
     }, 700)
-    return () => window.clearTimeout(t)
+    // In case the video never loads or never reports its end.
+    const fallback = window.setTimeout(done, 9000)
+    return () => {
+      window.clearTimeout(t)
+      window.clearTimeout(fallback)
+      v.removeEventListener("ended", done)
+    }
   }, [])
   return (
     <video
@@ -118,11 +136,13 @@ function EmailDialog({ onClose }: { onClose: () => void }) {
 
 export function About() {
   const [emailOpen, setEmailOpen] = useState(false)
+  // The feed waits for the signature to finish drawing.
+  const [signed, setSigned] = useState(false)
 
   return (
-    <main className="flex flex-1 items-center justify-center px-6 pt-8 pb-[18vh]">
+    <main className="flex flex-1 items-center justify-center px-7 pt-12 pb-[12vh] sm:px-6">
       {/* Sits above centre: the extra space below lifts the column up. */}
-      <div className="about flex w-full max-w-[34rem] flex-col">
+      <div className="about flex w-full max-w-[38rem] flex-col">
         <BlurInText runs={HEADLINE} className="about-text" />
         <BlurInText runs={BIO} start={length(HEADLINE)} className="about-text mt-3" />
 
@@ -132,7 +152,7 @@ export function About() {
 
         <div className="about-foot mt-8 flex items-center justify-between">
           <div className="h-[48px]">
-            <Signature />
+            <Signature onDone={() => setSigned(true)} />
           </div>
           <div className="flex items-center gap-4 text-[#c4c4c4]">
             <a href={LINKEDIN} target="_blank" rel="noreferrer" aria-label="LinkedIn" className="transition-colors hover:text-[#4a4a4a]">
@@ -143,6 +163,10 @@ export function About() {
             </button>
           </div>
         </div>
+
+        {/* A few posts about life outside work, arriving once the
+            signature has finished drawing. */}
+        <AboutFeed start={signed} />
       </div>
       {emailOpen && <EmailDialog onClose={() => setEmailOpen(false)} />}
     </main>

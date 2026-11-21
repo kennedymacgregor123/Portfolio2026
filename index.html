@@ -11,8 +11,76 @@
       rel="stylesheet"
       href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;600&display=swap"
     />
+    <!-- The loader: drawn here, before any script or stylesheet, so it shows
+         the moment the page opens. Three grey dots ride a tilted ring, as if
+         seen from slightly above: each grows and darkens as it swings round
+         the front, and shrinks and fades as it passes behind. Below, the word
+         Loading, its three trailing dots fading in turn. -->
+    <style>
+      html, body { margin: 0; background: #f1f1ef; }
+      #loader {
+        position: fixed; inset: 0; z-index: 100;
+        display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 22px;
+        background: #f1f1ef;
+        transition: opacity 450ms cubic-bezier(0.4, 0, 0.2, 1), visibility 0s linear 450ms;
+      }
+      #loader.done { opacity: 0; visibility: hidden; }
+      #loader .loader-ring { position: relative; width: 48px; height: 28px; }
+      #loader .dot {
+        position: absolute; left: 50%; top: 50%;
+        width: 9px; height: 9px; margin: -4.5px 0 0 -4.5px;
+        border-radius: 50%; background: #2a2a28;
+        animation: ring 1.8s linear infinite;
+      }
+      #loader .dot:nth-child(2) { animation-delay: -0.6s; }
+      #loader .dot:nth-child(3) { animation-delay: -1.2s; }
+      @keyframes ring {
+        0.00% { translate: 18.00px 0.00px; scale: 1.000; opacity: 0.725; z-index: 1; }
+        8.33% { translate: 15.59px 3.50px; scale: 1.160; opacity: 0.863; z-index: 3; }
+        16.67% { translate: 9.00px 6.06px; scale: 1.277; opacity: 0.963; z-index: 3; }
+        25.00% { translate: 0.00px 7.00px; scale: 1.320; opacity: 1.000; z-index: 3; }
+        33.33% { translate: -9.00px 6.06px; scale: 1.277; opacity: 0.963; z-index: 3; }
+        41.67% { translate: -15.59px 3.50px; scale: 1.160; opacity: 0.863; z-index: 3; }
+        50.00% { translate: -18.00px 0.00px; scale: 1.000; opacity: 0.725; z-index: 1; }
+        58.33% { translate: -15.59px -3.50px; scale: 0.840; opacity: 0.588; z-index: 1; }
+        66.67% { translate: -9.00px -6.06px; scale: 0.723; opacity: 0.487; z-index: 1; }
+        75.00% { translate: -0.00px -7.00px; scale: 0.680; opacity: 0.450; z-index: 1; }
+        83.33% { translate: 9.00px -6.06px; scale: 0.723; opacity: 0.487; z-index: 1; }
+        91.67% { translate: 15.59px -3.50px; scale: 0.840; opacity: 0.587; z-index: 1; }
+        100.00% { translate: 18.00px -0.00px; scale: 1.000; opacity: 0.725; z-index: 1; }
+      }
+      #loader .label {
+        font: 500 12.5px/1 "Inter Variable", Inter, system-ui, -apple-system, sans-serif;
+        letter-spacing: 0.3px; color: #8a8a87;
+      }
+      #loader .label i {
+        font-style: normal; opacity: 0;
+        animation: ellipsis 1.4s infinite;
+      }
+      #loader .label i:nth-child(2) { animation-delay: 0.2s; }
+      #loader .label i:nth-child(3) { animation-delay: 0.4s; }
+      @keyframes ellipsis {
+        0%, 15% { opacity: 0; }
+        35%, 70% { opacity: 1; }
+        90%, 100% { opacity: 0; }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        #loader .dot, #loader .label i { animation: none; }
+        #loader .label i { opacity: 1; }
+        #loader .dot:nth-child(1) { translate: -14px 0; }
+        #loader .dot:nth-child(3) { translate: 14px 0; }
+      }
+    </style>
   </head>
   <body>
+    <div id="loader" role="status" aria-label="Loading">
+      <div class="loader-ring">
+        <span class="dot"></span>
+        <span class="dot"></span>
+        <span class="dot"></span>
+      </div>
+      <span class="label" aria-hidden="true">Loading<i>.</i><i>.</i><i>.</i></span>
+    </div>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

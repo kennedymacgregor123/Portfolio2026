@@ -13,7 +13,7 @@ const HEADLINE: Run[] = [{ text: "Senior Product Designer at Vasco." }]
 
 const BIO: Run[] = [
   {
-    text: "Focused on shaping dense data and layered user needs into experiences that feel clear, intuitive, and natural to move through. At Vasco, I design and ship features that support the complexity of GTM teams, creating experiences that blend precision, usability, and craft.",
+    text: "I shape dense data and layered user needs into experiences that feel clear and natural to move through, and I do all of that designing in code. I build a design system that agents can read and understand, which lets me prototype faster without giving up precision, usability, or craft.",
   },
 ]
 

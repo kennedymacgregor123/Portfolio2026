@@ -906,10 +906,10 @@ export const ARTIFACTS_CASE: CaseStudy = {
   summary:
     "Made recurring reporting effortless by generating tailored, template-backed reports users can customize, share, and regenerate on demand.",
   facts: [
+    { label: "Company", value: "Vasco" },
     { label: "Role", value: "Senior Product Designer" },
     { label: "Team", value: "Me and 1 engineer" },
     { label: "Timeline", value: "2026-07" },
-    { label: "Company", value: "Vasco" },
   ],
   hero: <ArtifactsHero />,
   sections: [

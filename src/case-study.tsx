@@ -354,7 +354,7 @@ export function CaseStudyPage({ study, next }: { study: CaseStudy; next?: NextPr
             <h1 className="case-title">{study.title}</h1>
             <p className="case-text max-w-[42rem]">{study.summary}</p>
             {study.facts.length > 0 && (
-              <dl className="mt-4 grid grid-cols-2 gap-x-6 gap-y-3 sm:grid-cols-4">
+              <dl className="mt-4 grid grid-cols-[auto_auto] justify-start gap-x-12 gap-y-4 sm:flex sm:flex-wrap">
                 {study.facts.map((f) => (
                   <div key={f.label} className="flex flex-col gap-0.5">
                     <dt className="project-blurb !text-[13px] !text-[#898889]">{f.label}</dt>

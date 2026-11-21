@@ -162,10 +162,10 @@ export const CITATIONS_CASE: CaseStudy = {
   summary:
     "Enabled transparent verification by adding citation cards to every number, quote, and derived figure.",
   facts: [
+    { label: "Company", value: "Vasco" },
     { label: "Role", value: "Senior Product Designer" },
     { label: "Team", value: "Me and 2 engineers" },
     { label: "Timeline", value: "2026-09" },
-    { label: "Company", value: "Vasco" },
   ],
   hero: <CitationsCascade />,
   sections: [

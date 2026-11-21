@@ -958,7 +958,7 @@ export const ARTIFACTS_CASE: CaseStudy = {
     {
       id: "templates",
       label: "Templates",
-      title: "Templates, for a head start",
+      title: "Templates, so no one starts from a blank page",
       blurb: [
         "On top of the kit, we created a library of templates: complete reports, built from the same components, for the reports teams ask for most. Users can pull one in as it is, use it for inspiration, or customize it whatever way they want.",
       ],
@@ -988,7 +988,7 @@ export const ARTIFACTS_CASE: CaseStudy = {
     {
       id: "outcome",
       label: "Outcome",
-      title: "Our agents’ most-used output",
+      title: "Our agents’ favourite thing to make",
       blurb: [
         "Artifacts became the output our agents produce more than any other, and one of the pillars of the product. It's how much of Vasco's value reaches the people who use it: a report on their own cadence, in the shape they set up, ready to share with their team.",
         "The kit and the templates did what they were built to do. The same report comes back the same way, run after run, so teams can rely on it and build a habit around it.",
@@ -1003,7 +1003,7 @@ export const ARTIFACTS_CASE: CaseStudy = {
     {
       id: "learnings",
       label: "Learnings",
-      title: "Consistency, taken too far, reads as noise",
+      title: "Too consistent for its own good",
       blurb: [
         "Success brought a new problem. Teams now receive so many generated reports that they've started to tune them out: one report looks much like the next, and most of each is text. We're seeing a kind of AI output fatigue, where the outputs are there but no longer read.",
         "If I took this on again, I'd design for distinction as well as consistency. Each report would keep its own structure from run to run, but take more of its shape from its subject: components and layouts suited to what it covers, more room to customize by topic, and less text. Reports that look as different as the questions they answer are easier to tell apart, and more likely to be read.",

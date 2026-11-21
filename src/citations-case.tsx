@@ -172,7 +172,7 @@ export const CITATIONS_CASE: CaseStudy = {
     {
       id: "problem",
       label: "Problem",
-      title: "Reports full of numbers, and nothing to back them up",
+      title: "Plenty of numbers, no receipts",
       blurb: [
         "Vasco generates reports for go-to-market teams: pipeline, win rates, what customers are saying. Before this work, every figure in them arrived on its own. There were no citations, so there was no way to see where a number came from, what it counted, or whether it was right.",
         "That matters more with AI than without it. A language model can produce an answer that is fluent, specific and confidently wrong, and on the page it looks exactly like one that's right. Picture showing your CFO a report you generated, and being asked where a number came from. You have no answer. One unexplained number is enough to make them doubt the rest.",
@@ -214,7 +214,7 @@ export const CITATIONS_CASE: CaseStudy = {
     {
       id: "types",
       label: "Card types",
-      title: "Every kind of citation, one card",
+      title: "Metrics, people, quotes and signals",
       blurb: [
         "Nine kinds of citation, each filling the same seven slots in its own way: a metric lists the accounts behind it, a person leaves the evidence empty, a quote shows the lines around it, a signal lists the conversations it was read from.",
       ],
@@ -229,7 +229,7 @@ export const CITATIONS_CASE: CaseStudy = {
     {
       id: "decisions",
       label: "Key decisions",
-      title: "One card, seven slots, and a few rules that hold across every type",
+      title: "A few rules that hold everywhere",
       blurb: [
         "One card for every kind of citation. Rather than design a card per type, I designed a fixed list of seven slots: pager, source, header, description, chips, evidence and call to action. Each kind of citation fills a slot or leaves it empty. A metric lists the accounts behind it; a named account leaves the evidence slot empty, because the thing either exists or it doesn't.",
         "The figure is the title. A reader opens a card to check the number, so the number leads and its name is read beside it. The card takes one title that names the subject, never the raw query; the query becomes what the link opens.",
@@ -246,7 +246,7 @@ export const CITATIONS_CASE: CaseStudy = {
     {
       id: "outcome",
       label: "Outcome",
-      title: "One anatomy, and the open questions answered",
+      title: "The open questions, answered",
       blurb: [
         "The feature survived its make-or-break moment. The partial snapshot answered the hardest open question, whether a card shows the number as the report cited it or as it is now, in a way Customer Success could stand behind and engineering could build. The prototype also settled what titles a card and what a group of adjacent citations opens, and extended the same seven slots to four new kinds of citation from the context graph (counts, named entities, quotes and signals) without adding a new card for any of them.",
         "The result is a single, documented anatomy, with every decision and its reasoning written down. Every number, quote and derived figure in a report can now point to where it came from, and a reader can check it before they repeat it.",

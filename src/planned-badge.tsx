@@ -385,6 +385,66 @@ function StyledFace({
 }) {
   const head = style.headInk ?? style.ink
   const nameSize = big ? (portrait ? 50 : 40) : portrait ? 42 : 34
+  const pill = (
+    <span
+      className="inline-flex items-center rounded-full px-2.5 py-[3px] text-[9px] font-semibold tracking-[0.1em] uppercase"
+      style={{
+        color: style.ink,
+        background: "rgba(255,255,255,0.5)",
+        boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.65), 0 1px 2px rgba(33,51,58,0.06)",
+        backdropFilter: "blur(6px)",
+        WebkitBackdropFilter: "blur(6px)",
+      }}
+    >
+      {role}
+    </span>
+  )
+  // Landscape: the same footer as portrait (a hairline, the ID and the code),
+  // with a compact header beside the logo so everything fits the short card.
+  if (!portrait) {
+    return (
+      <div className="relative flex h-full flex-col px-[22px] pt-[22px] pb-[16px]">
+        <div className="flex items-center gap-2.5" style={{ color: head }}>
+          <PlannedLogo size={20} />
+          <div className="leading-tight">
+            <div className="text-[13px] font-semibold tracking-[-0.01em]">Planned Live</div>
+            <div className="mt-[2px] text-[9.5px] whitespace-nowrap tabular-nums" style={{ color: style.headInk ? head : style.sub }}>
+              2026-10-06 – 2026-10-08 · San Francisco
+            </div>
+          </div>
+        </div>
+        <div className="mt-auto">
+          {pill}
+          {showName && (
+            <div
+              className="mt-2 font-semibold tracking-[-0.035em] whitespace-nowrap transition-[font-size] duration-500"
+              style={{ fontFamily: style.display, fontSize: nameSize, lineHeight: 0.98 }}
+            >
+              Jane Smith
+            </div>
+          )}
+          {showCompany && (
+            <div className="mt-1.5 text-[11.5px] leading-snug" style={{ color: style.sub }}>
+              Head of Events · Northwind Financial
+            </div>
+          )}
+        </div>
+        <div className="mt-3 flex items-stretch justify-between gap-3 border-t pt-2.5" style={{ borderColor: `${style.ink}1f` }}>
+          <div className="flex min-h-[36px] flex-col justify-between py-[3px]">
+            <div className="text-[7.5px] leading-none font-medium tracking-[0.16em] whitespace-nowrap uppercase" style={{ color: style.sub }}>
+              Attendee ID
+            </div>
+            <div className="text-[12px] leading-none font-semibold tracking-[0.02em] tabular-nums">EVNT256</div>
+          </div>
+          {showCode && (
+            <span className={`view-in rounded-[6px] p-[3px] ${highlightCode ? "code-pulse" : ""}`} style={{ background: "rgba(255,255,255,0.78)", boxShadow: highlightCode ? undefined : "0 1px 2px rgba(33,51,58,0.08)" }}>
+              <CheckInCode size={30} color="#21333A" />
+            </span>
+          )}
+        </div>
+      </div>
+    )
+  }
   return (
     <div className="relative flex h-full flex-col px-[20px] pt-[28px] pb-[16px]">
       {/* The event: Planned's mark, the name, the dates. */}
@@ -495,7 +555,10 @@ export function Badge({
   link,
   highlightCode = false,
   showCode = true,
+  cut,
 }: {
+  /** A real, see-through slot (the new version). Today's badge keeps its own. */
+  cut?: boolean
   /** Whether the badge carries a code at all. */
   showCode?: boolean
   /** Picks out the code with a soft pulsing ring, for figures. */
@@ -515,6 +578,7 @@ export function Badge({
   const roleColor = ROLES.find((r) => r.id === role)!.color
   const portrait = size === "portrait"
   const big = template === "big"
+  const slot = cut ?? !!style.art
   return (
     <div
       className="relative rounded-[22px] shadow-[0_24px_50px_-24px_rgba(15,15,15,0.35)] transition-[width,height] duration-500"
@@ -526,9 +590,16 @@ export function Badge({
         style={{
           background: style.art ? `linear-gradient(160deg, ${tint(roleColor, 0.62)}, ${tint(roleColor, 0.48)})` : roleColor,
           boxShadow: style.art ? "inset 0 1px 0 rgba(255,255,255,0.55), inset 0 0 0 1px rgba(255,255,255,0.18)" : undefined,
-          ...slotMask(40, 10, 12),
+          ...(slot ? slotMask(40, 10, 12) : {}),
         }}
       >
+      {/* Today's badge: its slot, drawn as it was. */}
+      {!slot && (
+        <span
+          className="absolute top-[12px] left-1/2 z-[2] h-[10px] w-[40px] -translate-x-1/2 rounded-full"
+          style={{ background: "#eef0ee", boxShadow: "inset 0 2px 3px rgba(0,0,0,0.35), 0 1px 0 rgba(255,255,255,0.35)" }}
+        />
+      )}
       <div
         className="relative h-full overflow-hidden rounded-[14px] transition-[background] duration-500"
         style={{ background: style.surface, color: style.ink }}
@@ -599,7 +670,7 @@ export function Badge({
         )}
       </div>
       </div>
-      <SlotRim w={40} h={10} top={12} />
+      {slot && <SlotRim w={40} h={10} top={12} />}
     </div>
   )
 }
@@ -714,7 +785,7 @@ function HangingBadge(props: React.ComponentProps<typeof Badge>) {
             className="absolute inset-0 rounded-[22px]"
             style={{ transform: "translateZ(-4px)", background: "#9aa3a1", filter: "brightness(0.8)", ...slotMask(40, 10, 12) }}
           />
-          <Badge {...props} />
+          <Badge {...props} cut />
           {/* A soft sheen that slides as the card turns. */}
           <span
             aria-hidden
@@ -972,9 +1043,11 @@ export function PlannedBadge({
           ))}
         </div>
 
-        <div className={`flex min-h-0 flex-1 gap-6 p-6 ${embedded ? "flex-row" : "flex-col overflow-y-auto xl:flex-row xl:overflow-hidden"}`}>
-          {/* The settings, scrolling in their own column. */}
-          <div className={`flex min-w-0 flex-1 flex-col gap-4 ${embedded ? "overflow-y-auto pr-1" : "xl:overflow-y-auto xl:pr-1"}`}>
+        <div className={`flex min-h-0 flex-1 gap-6 px-6 pt-6 ${embedded ? "flex-row" : "flex-col overflow-y-auto xl:flex-row xl:overflow-hidden"}`}>
+          {/* The settings, scrolling in their own column. They run right to the
+              window's bottom edge and get cut off there; the padding at the end
+              only shows once scrolled to the bottom. */}
+          <div className={`flex min-w-0 flex-1 flex-col gap-4 pb-6 ${embedded ? "overflow-y-auto pr-1" : "xl:overflow-y-auto xl:pr-1"}`}>
             <div className="flex items-center justify-between">
               <h1 className="text-[22px] font-semibold tracking-[-0.01em]">Badge</h1>
               <span className="flex items-center gap-2 text-[13px]" style={{ color: MUTED }}>
@@ -1156,6 +1229,8 @@ export function PlannedBadge({
             </div>
             )}
 
+            {ai ? (
+              <>
             {/* Size, set like the other options: a titled card, a small
                 picture of each shape, and the radio in the top corner. */}
             <Card className="p-4">
@@ -1163,8 +1238,8 @@ export function PlannedBadge({
               <div className="mt-3 grid grid-cols-2 gap-2.5">
                 {(
                   [
-                    ["portrait", "4 × 6 in", "Portrait, fits most holders", 22, 32],
-                    ["landscape", "6 × 4 in", "Landscape, room for more", 32, 22],
+                    ["portrait", "4 × 6 in", "Portrait", 22, 32],
+                    ["landscape", "6 × 4 in", "Landscape", 32, 22],
                   ] as const
                 ).map(([id, t, d, w, h]) => (
                   <button
@@ -1185,7 +1260,7 @@ export function PlannedBadge({
                     </span>
                     <span className="min-w-0 pr-5">
                       <span className="block text-[13px] font-medium">{t}</span>
-                      <span className="block truncate text-[11.5px]" style={{ color: MUTED }}>{d}</span>
+                      <span className="block text-[11.5px]" style={{ color: MUTED }}>{d}</span>
                     </span>
                     <span className="absolute top-2 right-2">
                       <Radio on={size === id} />
@@ -1194,6 +1269,30 @@ export function PlannedBadge({
                 ))}
               </div>
             </Card>
+              </>
+            ) : (
+              /* Today's size cards, unchanged. */
+            <div className="grid grid-cols-2 gap-3">
+              {(
+                [
+                  ["portrait", "4 × 6 in", "Portrait. Fits standard lanyard holders."],
+                  ["landscape", "6 × 4 in", "Landscape. More room for company and role."],
+                ] as const
+              ).map(([id, t, d]) => (
+                <button
+                  key={id}
+                  type="button"
+                  onClick={() => setSize(id)}
+                  className="rounded-[12px] border p-4 text-left transition-colors"
+                  style={{ borderColor: size === id ? INK : LINE }}
+                >
+                  <Radio on={size === id} />
+                  <div className="mt-3 text-[14px] font-medium">{t}</div>
+                  <div className="mt-1 text-[12px]" style={{ color: MUTED }}>{d}</div>
+                </button>
+              ))}
+            </div>
+            )}
 
             <Card className="p-4">
               <div className="text-[13px]" style={{ color: MUTED }}>Badge template</div>
@@ -1283,7 +1382,7 @@ export function PlannedBadge({
           </div>
 
           {/* The live preview. */}
-          <div className={embedded ? "w-[440px] shrink-0" : "xl:w-[440px] xl:shrink-0 xl:self-stretch"}>
+          <div className={embedded ? "w-[440px] shrink-0 pb-6" : "pb-6 xl:w-[440px] xl:shrink-0 xl:self-stretch"}>
             {/* The preview fills the page's height; the strap runs in from its
                 top edge and the badge hangs centred in the frame. */}
             <div

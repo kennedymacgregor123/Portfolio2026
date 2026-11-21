@@ -105,7 +105,7 @@ const PROJECTS: Project[] = [
   {
     id: "planned-badges",
     title: "Planned Badges",
-    blurb: "A concept for Planned: AI that turns every event badge into a branded moment, without making the builder any harder.",
+    blurb: "A concept for Planned: designing for an agentic world, where on-brand badges are drafted before you ask.",
     href: "#planned-badges",
     hero: <PlannedHero />,
   },

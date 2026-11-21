@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react"
-import { ArrowRight, ArrowUpRight, Brush, Handshake, LayoutTemplate, ScanLine, Store, TrendingUp } from "lucide-react"
+import { ArrowRight, ArrowUpRight, Brush, Eye, Handshake, LayoutTemplate, PackageCheck, ScanLine, SlidersHorizontal, Store, TrendingUp, UserCheck } from "lucide-react"
 
 import type { CaseStudy } from "./case-study"
 import { AiLabel, Badge, BrandArt, DRAFTS, LanyardClip, PLAIN, PlannedBadge, PlannedLogo, SlotRim, slotMask, type Pattern, type Style } from "./planned-badge"
@@ -177,7 +177,7 @@ function BadgeFan({ compact = false }: { compact?: boolean }) {
           <span key={showing.id} className="view-in inline-block">
             {showing.name}
           </span>{" "}
-          <span className="text-[#8a8a86]">drafted from planned.com</span>
+          <span className="text-[#8a8a86]">drafted before you asked</span>
         </span>
       </div>
     </div>
@@ -229,11 +229,11 @@ export function PlannedHero() {
 /* ---------- Figures ---------- */
 
 /** The prototype page, drawn at its own width and scaled to the panel. */
-function PageFigure({ ai }: { ai: boolean }) {
+function PageFigure({ ai, known = true }: { ai: boolean; known?: boolean }) {
   return (
     <div className="w-full overflow-hidden rounded-[12px] border border-white shadow-[0_1px_2px_rgba(15,15,15,0.04),0_18px_40px_-20px_rgba(15,15,15,0.2)]">
       <Scaled width={1240}>
-        <PlannedBadge embedded ai={ai} />
+        <PlannedBadge embedded ai={ai} known={known} />
       </Scaled>
     </div>
   )
@@ -284,8 +284,8 @@ const ASSUMPTIONS: { area: string; icon: typeof Store; tint: string; text: strin
     area: "Product",
     icon: LayoutTemplate,
     tint: "linear-gradient(135deg, #d6ece9, #c2e0e1)",
-    text: "The badge page doesn't use AI to customise badges yet.",
-    check: "Confirm with the team that nothing is in flight or planned.",
+    text: "The badge page doesn't use AI yet, and Planned already holds each event's website, brand and photos.",
+    check: "Confirm with the team what's in flight, and what event data the badge page can reach.",
   },
   {
     area: "Business",
@@ -319,8 +319,8 @@ const ASSUMPTIONS: { area: string; icon: typeof Store; tint: string; text: strin
     area: "Trust",
     icon: Handshake,
     tint: "linear-gradient(135deg, #e6e9ec, #d6dce1)",
-    text: "Organisers will trust AI with their brand, as long as they choose the final look.",
-    check: "Put drafts in front of organisers and watch which they pick, edit or reject.",
+    text: "Organisers will welcome an agent that drafts before they ask, as long as they choose the final look.",
+    check: "Put ready-made drafts in front of organisers and watch which they keep, steer or reject.",
   },
 ]
 
@@ -514,12 +514,126 @@ function CodeFigure() {
   )
 }
 
+/** The four rules that keep a proactive agent helpful rather than pushy. */
+const PRINCIPLES: { icon: typeof Eye; title: string; text: string; where: string }[] = [
+  {
+    icon: PackageCheck,
+    title: "Come prepared",
+    text: "Draft before anyone asks, from what Planned already knows about the event.",
+    where: "Three drafts are waiting when Badges opens.",
+  },
+  {
+    icon: Eye,
+    title: "Show the work",
+    text: "Say what each draft took from each source, in plain words, so nothing feels like magic.",
+    where: "How these were drafted",
+  },
+  {
+    icon: SlidersHorizontal,
+    title: "Easy to steer",
+    text: "Asking for a change takes one line, and the agent redrafts.",
+    where: "Ask for changes, in a line",
+  },
+  {
+    icon: UserCheck,
+    title: "Never decide alone",
+    text: "Suggest, never commit. Nothing is applied, printed or ordered without the organiser.",
+    where: "Suggested, not final; the order waits for a click.",
+  },
+]
+
+function PrinciplesFigure() {
+  return (
+    <ol className={`grid w-full gap-3 sm:grid-cols-2 ${FONT}`}>
+      {PRINCIPLES.map((p, k) => {
+        const Icon = p.icon
+        return (
+          <li key={p.title} className="flex flex-col rounded-[16px] border bg-white p-4" style={{ borderColor: "#ebebe9" }}>
+            <div className="flex items-center gap-3">
+              <span
+                className="flex size-[38px] shrink-0 items-center justify-center rounded-[11px] text-[#21333A]"
+                style={{ background: ["linear-gradient(135deg, #d6ece9, #c2e0e1)", "linear-gradient(135deg, #f4eccf, #f3dcae)", "linear-gradient(135deg, #dce8f1, #c9dceb)", "linear-gradient(135deg, #e3eee0, #cfe4d6)"][k], boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.6)" }}
+              >
+                <Icon className="size-[17px]" strokeWidth={1.7} />
+              </span>
+              <div>
+                <div className="text-[14px] font-medium text-[#1d1d1b]">{p.title}</div>
+                <div className="font-mono text-[10.5px] text-[#9a9a96]">{String(k + 1).padStart(2, "0")}</div>
+              </div>
+            </div>
+            <p className="mt-3 text-[13.5px] leading-[1.45] text-[#1d1d1b]">{p.text}</p>
+            <p className="mt-auto pt-3 text-[12.5px] leading-[1.45] text-[#6b6b68]">
+              <span className="font-medium text-[#4a4a48]">On the page: </span>
+              {p.where}
+            </p>
+          </li>
+        )
+      })}
+    </ol>
+  )
+}
+
+/**
+ * The thesis in one picture: the same job done by hand, step by step, beside
+ * an agent that has done the legwork and leaves the organiser one decision.
+ */
+function ManualVsAgent() {
+  const manual = [
+    "Find the brand colours",
+    "Track down the logo and fonts",
+    "Choose a template",
+    "Pick colours for each attendee type",
+    "Lay out the name, role and company",
+    "Check it's readable",
+    "Work out how many to print",
+  ]
+  const agent = ["Open Badges: three on-brand drafts are waiting", "Pick one, or ask for a change"]
+  return (
+    <div className={`grid w-full gap-3 sm:grid-cols-2 ${FONT}`}>
+      <div className="flex flex-col rounded-[16px] border bg-white p-4" style={{ borderColor: "#ebebe9" }}>
+        <div className="flex items-baseline justify-between">
+          <span className="text-[13px] font-medium text-[#1d1d1b]">By hand</span>
+          <span className="text-[11.5px] text-[#9a9a96]">{manual.length} steps</span>
+        </div>
+        <ol className="mt-3 flex flex-col gap-1.5">
+          {manual.map((m, k) => (
+            <li key={m} className="flex items-center gap-2.5 rounded-[9px] px-2.5 py-[6px] text-[12.5px] text-[#4a4a48]" style={{ background: "#f6f6f4" }}>
+              <span className="w-[14px] font-mono text-[10.5px] text-[#a3a3a0]">{k + 1}</span>
+              {m}
+            </li>
+          ))}
+        </ol>
+      </div>
+      <div className="flex flex-col rounded-[16px] border bg-white p-4" style={{ borderColor: "#ebebe9" }}>
+        <div className="flex items-baseline justify-between">
+          <span className="flex items-center gap-1.5 text-[13px] font-medium text-[#1d1d1b]">
+            <AiLabel size={12} />
+            With the agent
+          </span>
+          <span className="text-[11.5px] text-[#9a9a96]">{agent.length} steps</span>
+        </div>
+        <ol className="mt-3 flex flex-col gap-1.5">
+          {agent.map((m, k) => (
+            <li key={m} className="flex items-center gap-2.5 rounded-[9px] px-2.5 py-[6px] text-[12.5px] text-[#21333A]" style={{ background: "linear-gradient(135deg, rgba(214,236,233,0.7), rgba(244,236,207,0.5))" }}>
+              <span className="w-[14px] font-mono text-[10.5px] text-[#7a8786]">{k + 1}</span>
+              {m}
+            </li>
+          ))}
+        </ol>
+        <p className="mt-auto pt-4 text-[12px] leading-[1.5] text-[#6b6b68]">
+          The legwork in between still happens. The agent does it ahead of time, using what the platform already knows, and leaves the organiser the one part that needs their judgement.
+        </p>
+      </div>
+    </div>
+  )
+}
+
 /* ---------- The case study ---------- */
 
 export const PLANNED_CASE: CaseStudy = {
   title: "Planned Badges",
   summary:
-    "A concept for Planned: AI that turns every event badge into a branded moment, without making the badge builder any harder to use.",
+    "A concept for Planned, and a case for interfaces that are ready for an agentic world: less manual work on menial tasks, and an agent that uses context to get there first. Here, on-brand badges are drafted before the organiser asks.",
   facts: [
     { label: "Company", value: "Planned (concept)" },
     { label: "Role", value: "Product Designer" },
@@ -529,12 +643,26 @@ export const PLANNED_CASE: CaseStudy = {
   hero: <PlannedCaseHero />,
   sections: [
     {
+      id: "thesis",
+      label: "Thesis",
+      title: "Interfaces for an agentic world",
+      blurb: [
+        "Software is starting to do more of the work, not just hold it. I think our interfaces need to be ready for that: less manual effort, especially on the menial tasks, and an agent that uses the context it already has to be one step ahead of the person it's helping.",
+        "Event badges are a small, concrete place to show what that looks like. Designing one by hand takes a string of small, menial decisions. With the context a platform like Planned likely already has, an agent can make the first pass, so the organiser only makes the call that needs them.",
+      ],
+      media: {
+        kind: "demo",
+        caption: "The same badge, made by hand or with the agent. The steps are illustrative, not measured.",
+        node: <ManualVsAgent />,
+      },
+    },
+    {
       id: "problem",
       label: "Problem",
       title: "A strong foundation",
       blurb: [
-        "Planned's badge builder already gets the essentials right. Organisers choose a size, a template, a colour per attendee type and what each badge shows. The templates put legibility first, which is exactly what a badge needs to do.",
-        "That foundation leaves room for one more layer: helping each event's badge carry its own brand. Planned already calls itself the AI operating system for events, and the badge felt like a natural next place for that AI to lend a hand.",
+        "Planned's badge builder already gets the essentials right. Organisers choose a size, a template, a colour per attendee type and what each badge shows. From the outside, the templates seem to put legibility first, which is what a badge needs to do.",
+        "That foundation leaves room for one more layer: an agent that does the first draft before anyone asks. Planned already calls itself the AI operating system for events, and I'm assuming it already holds most of what that agent would need: each event's website, brand and photos.",
       ],
       media: {
         kind: "demo",
@@ -563,7 +691,7 @@ export const PLANNED_CASE: CaseStudy = {
       title: "A badge is marketing that walks around",
       blurb: [
         "Having worked events, I've seen how far a badge travels. Every person wears one all day: at the sessions, at lunch, in the lobby, at the dinner afterwards. Everyone who passes them sees the event's brand.",
-        "That makes the badge one of the most seen pieces of an event's identity. Most organisers aren't designers, so a head start in their own brand goes a long way.",
+        "That makes the badge one of the most seen pieces of an event's identity, yet in my experience it's often one of the last jobs on an organiser's list. My guess is that most aren't designers and few have the time, so an agent that has already done the first draft could go a long way.",
       ],
       media: {
         kind: "demo",
@@ -574,29 +702,58 @@ export const PLANNED_CASE: CaseStudy = {
     {
       id: "approach",
       label: "Approach",
-      title: "AI drafts, the organiser chooses",
+      title: "A step ahead of the organiser",
       blurb: [
-        "I added one card to the page. The organiser describes the feel they want, or points it at their website to pull the brand, and AI drafts three styles in that brand. In the prototype, Planned is running its own event, so the AI reads planned.com: its hazy evening skies, soft grey cloud, feathered mint paint and heavy grain, set in its slate-teal ink. Picking one applies it to every badge, with the preview updating as they go.",
-        "AI is marked with Planned's own gradient circle, so it feels native to the product rather than bolted on. Size, template, attendee colours and content all work exactly as they do today. Once the look is set, the printed badges can be ordered from under the preview, sized from the guest list with spares for walk-ins.",
+        "If Planned already knows a lot about each event, as I'm assuming it does (its website, brand colours, photos and type), then the agent doesn't need to wait for a brief. It can arrive prepared. When the organiser opens Badges, three styles are already drafted, with one suggested. In the prototype, Planned is running its own event, so the drafts come from planned.com: its hazy evening skies, soft grey cloud, feathered mint paint and heavy grain, set in its slate-teal ink.",
+        "Everything stays in the organiser's hands. Nothing is applied until they pick a draft, and they don't have to: the standard badge is always there. They can ask for a change in a line, like “warmer”, and a short note shows which sources the drafts drew on.",
+        "The agent is marked with Planned's own gradient circle, so it feels native to the product rather than bolted on. Size, template, attendee colours and content all work exactly as they do today. It even has the order ready: once the look is set, the printed badges are sized from the guest list with spares for walk-ins, waiting for one click. I don't know how Planned handles printing today, so this is my best guess at where ordering would sit.",
       ],
       media: {
         kind: "demo",
-        caption: "The prototype, styling a Planned event from planned.com.",
+        caption: "The prototype: styles already drafted from planned.com when the organiser arrives.",
         interactive: true,
         node: <PageFigure ai />,
       },
     },
     {
+      id: "principles",
+      label: "Principles",
+      title: "Prepared, not presumptuous",
+      blurb: [
+        "My hunch is that a proactive agent is only welcome if it stays out of the way. These four rules aren't specific to badges; they're how I'd approach any agentic interface, and they're among the first things I'd want to test.",
+      ],
+      media: {
+        kind: "demo",
+        caption: "The four rules the agent follows, and where each shows up on the page.",
+        node: <PrinciplesFigure />,
+      },
+    },
+    {
+      id: "empty",
+      label: "No context",
+      title: "When there's nothing to go on yet",
+      blurb: [
+        "I don't know exactly how events get set up in Planned, but I'd expect that not every one starts with a website and a brand kit. When the agent has nothing to go on, it doesn't fall back to an empty prompt. It says the one thing it needs, offers a one-click way to give it, and keeps watching, so the drafts appear on their own once the event's site goes live.",
+        "Nothing is blocked while it waits: today's templates and colours all still work, so the organiser can carry on and come back to the style later.",
+      ],
+      media: {
+        kind: "demo",
+        caption: "The same page with nothing to go on yet. Try “Use the event website”.",
+        interactive: true,
+        node: <PageFigure ai known={false} />,
+      },
+    },
+    {
       id: "skills",
       label: "Skills",
-      title: "Five skills behind one field",
+      title: "Five skills behind one card",
       blurb: [
-        "The field looks simple because the work behind it is split into skills, each with one job. Three read what the organiser gives them: their words, their website and any picture. One composes the drafts with a sense of taste. The last checks every draft for accessibility before anyone sees it.",
+        "The agent can be a step ahead because its work is split into skills that run in the background, each with one job. Two read what I'm assuming Planned already knows, the event's website and its photos, long before anyone opens Badges. One reads any note the organiser adds. One composes the drafts with a sense of taste, and the last checks every draft for accessibility before anyone sees it.",
         "Splitting it up means each skill can be written, tested and improved on its own, and the accessibility check can't be skipped. A draft that fails is sent back, not shown.",
       ],
       media: {
         kind: "demo",
-        caption: "The skills behind the Badge style field, and what each found for Planned Live.",
+        caption: "The skills behind the Badge style card, and what each found for Planned Live.",
         interactive: true,
         node: <SkillsFigure />,
       },
@@ -604,9 +761,9 @@ export const PLANNED_CASE: CaseStudy = {
     {
       id: "control",
       label: "Control",
-      title: "Pick one, no design tool needed",
+      title: "Steer it, don't build it",
       blurb: [
-        "Once the drafts are in, there's nothing more to set. The organiser picks the one that feels right, and if none do, they edit the brief and generate again. Every draft keeps the badge as legible as the templates it builds on.",
+        "The drafts are a starting point, not a decision. The organiser picks the one that feels right, and if none do, they steer: ask for a change in a line, and the agent redrafts. There's no design tool to learn, and every draft keeps the badge as legible as the templates it builds on.",
         "Names, roles and IDs keep their place and size in every style, so the badge still does its first job at a glance.",
       ],
       media: {
@@ -620,8 +777,8 @@ export const PLANNED_CASE: CaseStudy = {
       label: "Code",
       title: "Every badge, a way in",
       blurb: [
-        "Every badge already carries a code next to the attendee's ID. It could also open a page the organiser chooses for anyone who scans it with a phone: the agenda, the event app, a sponsor's offer or a sign-up for next year.",
-        "That turns hundreds of badges into hundreds of ways in, and every scan is a moment the organiser can see and count. Setting it up is one toggle and a link, next to the rest of the badge's content.",
+        "Event badges often carry a code next to the attendee's ID, and I'm assuming Planned's could too. It could also open a page the organiser chooses for anyone who scans it with a phone: the agenda, the event app, a sponsor's offer or a sign-up for next year.",
+        "That could turn hundreds of badges into hundreds of ways in, and every scan would be a moment the organiser can see and count. Here too the agent comes prepared: it points the code at the agenda during the event, and could suggest switching it to the feedback survey once the event is over.",
       ],
       media: {
         kind: "demo",
@@ -634,8 +791,8 @@ export const PLANNED_CASE: CaseStudy = {
       label: "What's next",
       title: "What I'd test next",
       blurb: [
-        "On-site printers often print attendee details in black only, so styles would need to live on the pre-printed stock while names stay crisp in black. I'd also check contrast for every drafted style, and make sure attendee colours still read clearly once a brand is in play.",
-        "Beyond that, the same brief could carry across the event: the agenda, the event app and the signage, so the brand holds together everywhere attendees look.",
+        "First, whether the agent earns its place: how often organisers keep the suggested draft, how often they steer it, and whether arriving prepared feels helpful or presumptuous. Then the practical side: on-site printers often print attendee details in black only, so styles would need to live on the pre-printed stock while names stay crisp in black.",
+        "Beyond badges, the same pattern could take on other menial parts of running an event: drafting the agenda layout, the event app and the signage from the same brand, so organisers spend their time on decisions, not set-up.",
       ],
       media: {
         kind: "demo",

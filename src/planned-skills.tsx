@@ -30,13 +30,13 @@ const SKILLS: Skill[] = [
   {
     id: "brief",
     stage: "Understand",
-    name: "Read the brief",
-    file: "read-brief",
+    name: "Read the note",
+    file: "read-note",
     icon: FileText,
-    runs: "When the organiser types into the field.",
-    does: "Turns the organiser's words into direction: the mood, who the event is for, how formal it is, and anything that has to stay.",
+    runs: "When the organiser asks for a change.",
+    does: "Turns a short note into direction for the next round of drafts: the mood, how formal it is, and anything that has to stay.",
     found: [
-      { label: "Brief", value: "“Warm and optimistic, like a launch at golden hour.”" },
+      { label: "Note", value: "“Warmer, like a launch at golden hour.”" },
       { label: "Mood", value: "Warm, optimistic, calm" },
       { label: "Audience", value: "Event and marketing leaders" },
       { label: "Must keep", value: "Event name, date and city" },
@@ -48,7 +48,7 @@ const SKILLS: Skill[] = [
     name: "Comb the website",
     file: "comb-website",
     icon: Globe,
-    runs: "When a website is added or pasted.",
+    runs: "As soon as the event has a website, before anyone opens Badges.",
     does: "Reads a site's pages and styles to find its motifs, themes, colours, patterns and type, and how often each one appears.",
     found: [
       { label: "Motifs", value: "Hazy evening skies, soft grey cloud" },
@@ -64,7 +64,7 @@ const SKILLS: Skill[] = [
     name: "Read images",
     file: "read-image",
     icon: ImageIcon,
-    runs: "When a reference picture is added.",
+    runs: "As event photos and brand images are added to Planned.",
     does: "Looks at a picture for its palette, texture, composition and mood, so a photo or last year's badge can steer the look.",
     found: [
       { label: "Picture", value: "last-years-badge.jpg" },
@@ -79,7 +79,7 @@ const SKILLS: Skill[] = [
     name: "Design taste",
     file: "design-taste",
     icon: Palette,
-    runs: "Once the reading skills are done.",
+    runs: "Ahead of time, and again after every change.",
     does: "Composes the drafts from everything the other skills found, with rules for what makes a badge look good, not just on-brand.",
     found: [
       { label: "One idea each", value: "One motif per badge, never all of them at once" },

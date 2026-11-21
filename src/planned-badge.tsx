@@ -1,6 +1,7 @@
 import { useEffect, useId, useRef, useState } from "react"
 import {
   ArrowLeft,
+  ArrowUp,
   BarChart3,
   Box,
   CalendarDays,
@@ -8,8 +9,6 @@ import {
   ClipboardList,
   Globe,
   Home,
-  Image as ImageIcon,
-  Link2,
   Mail,
   PanelLeft,
   Ticket,
@@ -17,15 +16,22 @@ import {
   Check,
   Pencil,
   Printer,
+  FileText,
+  Image as ImageIcon,
+  Link2,
+  Paperclip,
+  Plus,
+  Upload,
   Users,
+  X,
 } from "lucide-react"
 
 /*
  * A concept for Planned's badge builder: the Badges page as it is today, with
- * a light layer of AI on top. An organiser describes the event's vibe, or
- * pulls the brand from the event's website, and gets three branded badge
- * styles to choose from; two simple controls (accent and pattern) let them
- * make it their own. Everything else (size, template, attendee colours,
+ * a proactive layer of AI on top. Planned already knows the event's website,
+ * brand colours, photos and type, so three branded styles are drafted before
+ * the organiser arrives. They pick one, switch a source off, or ask for a
+ * change in a line. Everything else (size, template, attendee colours,
  * content) works as before, and the badge on the right shows every choice
  * as it's made. The event and people are invented.
  */
@@ -848,6 +854,46 @@ function Radio({ on }: { on: boolean }) {
   )
 }
 
+/** What each kind of added context is called in the prototype. */
+const EXTRA_NAMES = {
+  link: "planned.com/live/speakers",
+  images: "Venue photos (8)",
+  file: "Brand guidelines.pdf",
+} as const
+
+/** A small × for taking a source out of the list. */
+function RemoveButton({ label, onClick }: { label: string; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      title="Remove"
+      onClick={onClick}
+      className="flex size-[24px] shrink-0 items-center justify-center rounded-[7px] transition-colors hover:bg-[#f1f1ee]"
+      style={{ color: MUTED }}
+    >
+      <X className="size-[13px]" strokeWidth={1.8} />
+    </button>
+  )
+}
+
+/** A compact on/off switch, for the source list. */
+function MiniSwitch({ on, onClick, label }: { on: boolean; onClick: () => void; label: string }) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={on}
+      aria-label={label}
+      onClick={onClick}
+      className="relative h-[18px] w-[30px] shrink-0 rounded-full transition-colors"
+      style={{ background: on ? "#2b2f2f" : "#e2e2df" }}
+    >
+      <span className="absolute top-[2px] size-[14px] rounded-full bg-white shadow transition-[left]" style={{ left: on ? 14 : 2 }} />
+    </button>
+  )
+}
+
 function Toggle({ on, onClick, label }: { on: boolean; onClick: () => void; label: string }) {
   return (
     <button type="button" onClick={onClick} className="flex items-center gap-3 text-[13.5px]">
@@ -944,7 +990,10 @@ const NAV: [React.ComponentType<{ className?: string; strokeWidth?: number }>, s
 export function PlannedBadge({
   embedded = false,
   ai = true,
+  known: knownAtStart = true,
 }: {
+  /** false starts with nothing to go on: no website, brand or photos yet. */
+  known?: boolean
   /** Shown inside a case study: always the desktop layout, no full-screen height. */
   embedded?: boolean
   /** false shows the page as it is today, without the AI card. */
@@ -962,26 +1011,82 @@ export function PlannedBadge({
 
   // The AI layer: one open field (words, a website, a reference picture)
   // that becomes the AI's instructions once something is generated.
-  const [brief, setBrief] = useState("")
-  const [brandPulled, setBrandPulled] = useState(false)
-  const [imageRef, setImageRef] = useState(false)
-  const [editing, setEditing] = useState(true)
-  const [phase, setPhase] = useState<"idle" | "thinking" | "done">("idle")
+  // The agent comes prepared: Planned already knows the event's website,
+  // brand colours, photos and type, so styles are drafted before the
+  // organiser asks. Each source can be switched off, and a short note refines.
+  const [known, setKnown] = useState(knownAtStart)
+  const [ask, setAsk] = useState("")
+  const [asked, setAsked] = useState("")
+  const [why, setWhy] = useState(false)
+  const [asking, setAsking] = useState(false)
+  // Extra context the organiser adds to the sources, waiting to be used
+  // until they regenerate; and files attached to a refine note.
+  const [extras, setExtras] = useState<{ kind: "link" | "images" | "file"; name: string; fresh: boolean }[]>([])
+  const [attached, setAttached] = useState<string[]>([])
+  const [off, setOff] = useState<Record<string, boolean>>({})
+  // Sources taken out of the list entirely; the last one can be undone.
+  const [removed, setRemoved] = useState<string[]>([])
+  const [lastRemoved, setLastRemoved] = useState<{ key: string; name: string } | null>(null)
+  const removeSource = (key: string, name: string) => {
+    if (extras.some((e) => e.kind === key)) setExtras((v) => v.filter((e) => e.kind !== key))
+    else setRemoved((v) => [...v, key])
+    setLastRemoved({ key, name })
+    redraft()
+  }
+  const undoRemove = () => {
+    if (!lastRemoved) return
+    const { key } = lastRemoved
+    if (key in EXTRA_NAMES) setExtras((v) => [...v, { kind: key as "link" | "images" | "file", name: EXTRA_NAMES[key as keyof typeof EXTRA_NAMES], fresh: false }])
+    else setRemoved((v) => v.filter((k) => k !== key))
+    setLastRemoved(null)
+    redraft()
+  }
+  const toggle = (key: string) => {
+    setOff((v) => ({ ...v, [key]: !v[key] }))
+    redraft()
+  }
+  const [askedFiles, setAskedFiles] = useState<string[]>([])
+  const [phase, setPhase] = useState<"thinking" | "done">("done")
+  // Nothing is applied until the organiser picks a draft; choosing one is optional.
   const [style, setStyle] = useState<Style>(PLAIN)
   const [accent, setAccent] = useState(PLAIN.accent)
   const [pattern, setPattern] = useState<Pattern>("none")
   const timer = useRef<number | undefined>(undefined)
   useEffect(() => () => window.clearTimeout(timer.current), [])
 
-  const site = brandPulled || /planned\.com/i.test(brief)
-  const canGenerate = brief.trim().length > 0 || site || imageRef
-  const generate = () => {
-    if (!canGenerate) return
-    setEditing(false)
+  const redraft = () => {
+    setPhase("thinking")
+    window.clearTimeout(timer.current)
+    timer.current = window.setTimeout(() => setPhase("done"), 1400)
+  }
+  // With nothing to go on, one click gives the agent what it needs; it then
+  // drafts and applies its suggestion, as it would have done ahead of time.
+  const learn = () => {
+    setKnown(true)
     setPhase("thinking")
     window.clearTimeout(timer.current)
     timer.current = window.setTimeout(() => setPhase("done"), 1600)
   }
+  const refine = () => {
+    if (!ask.trim() && attached.length === 0) return
+    setAsked(ask.trim())
+    setAskedFiles(attached)
+    setAsk("")
+    setAttached([])
+    redraft()
+  }
+  const EXTRA = EXTRA_NAMES
+  const addExtra = (kind: keyof typeof EXTRA) => {
+    if (extras.some((e) => e.kind === kind)) return
+    setExtras((v) => [...v, { kind, name: EXTRA[kind], fresh: true }])
+  }
+  const useExtras = () => {
+    setExtras((v) => v.map((e) => ({ ...e, fresh: false })))
+    redraft()
+  }
+  const fresh = extras.some((e) => e.fresh)
+  const sourceCount =
+    ["site", "colours", "photos", "type"].filter((k) => !off[k] && !removed.includes(k)).length + extras.filter((e) => !e.fresh && !off[e.kind]).length
   const apply = (s: Style) => {
     setStyle(s)
     setAccent(s.accent)
@@ -1058,173 +1163,414 @@ export function PlannedBadge({
               </span>
             </div>
 
-            {/* New, at the top: the badge's style, drafted by AI from one open
-                field. Marked with Planned's own gradient circle. */}
-            {ai && (
+            {/* New, at the top: the badge's style, already drafted. The agent
+                is a step ahead, working from what Planned knows about the
+                event; the organiser picks, switches sources off, or asks for
+                changes. Marked with Planned's own gradient circle. */}
+            {ai && !known && (
+            /* Nothing to go on yet: no website, brand or photos. The agent
+               doesn't leave a blank field; it says the one thing it needs,
+               offers a one-click way to give it, and keeps watching. */
             <div className="rounded-[12px] border bg-white" style={{ borderColor: LINE }}>
               <div className="p-4">
-                <div className="flex items-center gap-1.5">
-                  <AiLabel size={12} />
-                  {/* Set like the size cards' titles ("4 × 6 in"). */}
-                  <span className="text-[14px] font-medium" style={{ color: INK }}>Badge style</span>
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-1.5">
+                    <AiLabel size={12} />
+                    <span className="text-[14px] font-medium" style={{ color: INK }}>Badge style</span>
+                  </div>
+                  <span className="text-[11.5px]" style={{ color: MUTED }}>Waiting for your brand</span>
+                </div>
+                <div className="mt-3 rounded-[10px] px-3.5 py-3" style={{ background: PANEL }}>
+                  <div className="text-[13px] font-medium">I don&apos;t know this event&apos;s brand yet</div>
+                  <p className="mt-0.5 text-[12px] leading-snug" style={{ color: MUTED }}>
+                    Point me to your website or add a logo, and I&apos;ll have three styles ready. I&apos;ll also pick it up on my own once your event site is live.
+                  </p>
+                  <div className="mt-2.5 flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={learn}
+                      className="flex items-center gap-1.5 rounded-[8px] px-3 py-1.5 text-[12.5px] font-medium text-white"
+                      style={{ background: "#1d1d1b" }}
+                    >
+                      <Globe className="size-[13px]" strokeWidth={1.8} />
+                      Use the event website
+                    </button>
+                    <button
+                      type="button"
+                      onClick={learn}
+                      className="flex items-center gap-1.5 rounded-[8px] border bg-white px-3 py-1.5 text-[12.5px] font-medium transition-colors hover:bg-[#f4f4f2]"
+                      style={{ borderColor: LINE }}
+                    >
+                      <Upload className="size-[13px]" strokeWidth={1.8} />
+                      Upload a logo
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            )}
+
+            {ai && known && (
+            <div className="rounded-[12px] border bg-white" style={{ borderColor: LINE }}>
+              <div className="p-4">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-1.5">
+                    <AiLabel size={12} />
+                    <span className="text-[14px] font-medium" style={{ color: INK }}>Badge style</span>
+                  </div>
+                  {/* A quiet way to steer, up in the header. */}
+                  {phase === "thinking" ? (
+                    <span className="text-[11.5px]" style={{ color: MUTED }}>Redrafting…</span>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setAsking(true)}
+                      className="-my-1 flex items-center gap-1.5 rounded-[8px] border bg-white px-2.5 py-[4px] text-[12px] transition-colors hover:bg-[#fafaf8]"
+                      style={{ borderColor: LINE, color: INK }}
+                    >
+                      <Pencil className="size-[11px]" strokeWidth={1.8} style={{ color: MUTED }} />
+                      Refine
+                    </button>
+                  )}
                 </div>
                 <p className="mt-1 text-[12.5px]" style={{ color: MUTED }}>
-                  Make your brand stand out on every attendee. Share your site, a picture or a look, and we&apos;ll draft styles.
+                  Three styles in your event&apos;s brand, ready before you got here. Pick one, or ask for changes.
                 </p>
 
-                {editing ? (
-                  /* The open field: words, a website, a reference picture. */
-                  <div className="mt-3 rounded-[12px] border bg-white focus-within:border-[#b5b5b1]" style={{ borderColor: LINE }}>
-                    {(site || imageRef) && (
-                      <div className="flex flex-wrap gap-1.5 px-3 pt-3">
-                        {site && (
-                          <span className="flex items-center gap-1.5 rounded-[8px] border bg-white py-1 pr-1.5 pl-2 text-[12px]" style={{ borderColor: LINE }}>
-                            <Link2 className="size-[12px]" strokeWidth={1.8} />
-                            planned.com
-                            <span className="ml-0.5 flex gap-[3px]">
-                              {BRAND.map((c) => (
-                                <span key={c} className="size-[9px] rounded-full" style={{ background: c }} />
-                              ))}
-                            </span>
-                            <button type="button" aria-label="Remove website" onClick={() => setBrandPulled(false)} className="ml-0.5 px-1" style={{ color: MUTED }}>
-                              ×
-                            </button>
-                          </span>
-                        )}
-                        {imageRef && (
-                          <span className="flex items-center gap-1.5 rounded-[8px] border bg-white py-1 pr-1.5 pl-1 text-[12px]" style={{ borderColor: LINE }}>
-                            <span className="size-[20px] rounded-[5px]" style={{ background: "linear-gradient(135deg, #d6ece9, #f4eccf 60%, #dce8f1)" }} />
-                            last-years-badge.jpg
-                            <button type="button" aria-label="Remove image" onClick={() => setImageRef(false)} className="ml-0.5 px-1" style={{ color: MUTED }}>
-                              ×
-                            </button>
-                          </span>
-                        )}
+                {/* The drafts, ready before anyone asked. */}
+                <div className="mt-3 grid grid-cols-3 gap-2.5">
+                  {DRAFTS.map((d, k) => {
+                    const on = style.id === d.id
+                    return phase === "thinking" ? (
+                      <div key={d.id} className="relative h-[143px] overflow-hidden rounded-[10px]">
+                        <span className="rb-skel rb-on" style={{ animationDelay: `${k * 120}ms` }} />
                       </div>
-                    )}
-                    <textarea
-                      value={brief}
-                      onChange={(e) => setBrief(e.target.value)}
-                      rows={3}
-                      placeholder="Describe the look you want, paste your website, or add a reference picture…"
-                      className="block w-full resize-none bg-transparent px-3 pt-3 pb-1 text-[13.5px] leading-[1.5] outline-none placeholder:text-[#a3a3a0]"
-                    />
-                    <div className="flex items-center justify-between gap-2 px-2 pb-2">
-                      <div className="flex gap-1">
-                        <button
-                          type="button"
-                          onClick={() => setBrandPulled(true)}
-                          className="flex items-center gap-1.5 rounded-[8px] px-2 py-1 text-[12px] hover:bg-[#f4f4f2]"
-                          style={{ color: MUTED }}
-                        >
-                          <Link2 className="size-[13px]" strokeWidth={1.8} />
-                          Website
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setImageRef(true)}
-                          className="flex items-center gap-1.5 rounded-[8px] px-2 py-1 text-[12px] hover:bg-[#f4f4f2]"
-                          style={{ color: MUTED }}
-                        >
-                          <ImageIcon className="size-[13px]" strokeWidth={1.8} />
-                          Picture
-                        </button>
-                      </div>
+                    ) : (
                       <button
+                        key={d.id}
                         type="button"
-                        onClick={generate}
-                        disabled={!canGenerate}
-                        className="rounded-[9px] px-3.5 py-1.5 text-[13px] font-medium text-white transition-colors"
-                        style={{ background: canGenerate ? "#1d1d1b" : "#c9c9c6" }}
+                        // Picking is optional: clicking the chosen draft again
+                        // goes back to the standard badge.
+                        onClick={() => apply(on ? PLAIN : d)}
+                        aria-pressed={on}
+                        // Built exactly like the Badge template cards below.
+                        className="view-in flex flex-col justify-start overflow-hidden rounded-[10px] border text-left transition-colors"
+                        style={{ borderColor: on ? INK : LINE, animationDelay: `${k * 90}ms` }}
                       >
-                        {phase === "done" ? "Regenerate" : "Generate"}
+                        <span className="relative flex h-[84px] items-center justify-center" style={{ background: PANEL }}>
+                          <MiniBadge style={d} />
+                          <span className="absolute top-2 right-2">
+                            <Radio on={on} />
+                          </span>
+                          {k === 0 && (
+                            <span className="absolute top-2 left-2 rounded-full bg-white px-1.5 py-[1px] text-[10px] font-medium" style={{ color: MUTED }}>
+                              Suggested
+                            </span>
+                          )}
+                        </span>
+                        <span className="block px-3 py-2.5">
+                          <span className="block text-[13px] font-medium">{d.name}</span>
+                          <span className="block text-[11.5px]" style={{ color: MUTED }}>
+                            {d.blurb}
+                          </span>
+                        </span>
                       </button>
-                    </div>
-                  </div>
-                ) : (
-                  /* Once generated, the field becomes the AI's instructions:
-                     what it took from the brief, shimmering while it works. */
-                  <div className="mt-3 rounded-[12px] border px-3.5 py-3" style={{ borderColor: LINE, background: PANEL }}>
-                    <div className="flex items-center justify-between">
-                      <span className="text-[12px] font-medium" style={{ color: MUTED }}>
-                        {phase === "thinking" ? "Writing instructions…" : "Instructions"}
-                      </span>
-                      {phase === "done" && (
-                        <button
-                          type="button"
-                          onClick={() => setEditing(true)}
-                          className="-my-1 flex items-center gap-1.5 rounded-[8px] border bg-white px-2.5 py-[5px] text-[12px] font-medium shadow-[0_1px_2px_rgba(15,15,15,0.05)] transition-colors hover:bg-[#f4f4f2]"
-                          style={{ borderColor: LINE, color: INK }}
-                        >
-                          <Pencil className="size-[12px]" strokeWidth={1.8} />
-                          Edit
-                        </button>
-                      )}
-                    </div>
-                    {phase === "thinking" ? (
-                      <div className="mt-2.5 flex flex-col gap-2">
-                        {[92, 78, 86, 64].map((w, k) => (
-                          <span key={k} className="relative block h-[10px] overflow-hidden rounded-full" style={{ width: `${w}%` }}>
-                            <span className="rb-skel rb-on" style={{ animationDelay: `${k * 120}ms` }} />
+                    )
+                  })}
+                </div>
+
+                {/* One quiet line under the drafts: where they came from, and a
+                    way to ask for changes. Neither takes space until it's used. */}
+                {asking ? (
+                  <form
+                    onSubmit={(e) => {
+                      e.preventDefault()
+                      refine()
+                      setAsking(false)
+                    }}
+                    className="view-in mt-3 rounded-[10px] border bg-white focus-within:border-[#b5b5b1]"
+                    style={{ borderColor: LINE }}
+                  >
+                    {/* Anything attached: pictures, files, links. */}
+                    {attached.length > 0 && (
+                      <div className="flex flex-wrap gap-1.5 px-2.5 pt-2.5">
+                        {attached.map((f) => (
+                          <span key={f} className="flex items-center gap-1.5 rounded-[8px] border py-[3px] pr-1 pl-1 text-[11.5px]" style={{ borderColor: LINE, background: PANEL }}>
+                            <span className="size-[18px] rounded-[4px]" style={{ background: f.endsWith(".pdf") ? "#e9ecea" : "linear-gradient(135deg,#9FB3B6,#E6DDB2 55%,#AFDBD0)" }} />
+                            {f}
+                            <button type="button" aria-label={`Remove ${f}`} onClick={() => setAttached((v) => v.filter((x) => x !== f))} className="flex size-[16px] items-center justify-center rounded-[4px] hover:bg-white" style={{ color: MUTED }}>
+                              <X className="size-[11px]" strokeWidth={2} />
+                            </button>
                           </span>
                         ))}
                       </div>
-                    ) : (
-                      <ul className="view-in mt-2 flex flex-col gap-1.5 text-[12.5px] leading-[1.45]">
-                        {[
-                          site && "Use planned.com's look: hazy evening skies, soft grey cloud, feathered mint paint and heavy grain.",
-                          site && "Keep its slate-teal ink (#21333A), warm cream and Geist type.",
-                          imageRef && "Keep the airy, light feel of your reference picture.",
-                          brief.trim() && `Match the brief: “${brief.trim()}”`,
-                          "Keep names large, attendee colours on the frame, and details in black for on-site printing.",
-                        ]
-                          .filter(Boolean)
-                          .map((t) => (
-                            <li key={t as string} className="flex gap-2">
-                              <span className="mt-[7px] size-[5px] shrink-0 rounded-full bg-[#9a9a96]" />
-                              {t}
-                            </li>
-                          ))}
-                      </ul>
                     )}
+                    {/* Attach on the left; Refine and close on the right, evenly spaced. */}
+                    <div className="flex items-center gap-1 py-1 pr-1 pl-1">
+                      <button
+                        type="button"
+                        aria-label="Attach a picture or file"
+                        title="Attach a picture or file"
+                        onClick={() => {
+                          const next = ["reference.jpg", "moodboard.png", "sponsor-logos.pdf"].find((f) => !attached.includes(f))
+                          if (next) setAttached((v) => [...v, next])
+                        }}
+                        className="flex size-[28px] shrink-0 items-center justify-center rounded-[8px] hover:bg-[#f4f4f2]"
+                        style={{ color: MUTED }}
+                      >
+                        <Paperclip className="size-[14px]" strokeWidth={1.8} />
+                      </button>
+                      <input
+                        autoFocus
+                        value={ask}
+                        onChange={(e) => setAsk(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Escape") setAsking(false)
+                        }}
+                        placeholder="Like “warmer”, or attach a picture"
+                        aria-label="Ask for changes"
+                        className="min-w-0 flex-1 bg-transparent py-1 pl-0.5 text-[13px] outline-none placeholder:text-[#a3a3a0]"
+                      />
+                      {/* Send, chat-style: a small square with an arrow. */}
+                      <button
+                        type="submit"
+                        aria-label="Refine"
+                        title="Refine"
+                        disabled={!ask.trim() && attached.length === 0}
+                        className="flex size-[26px] shrink-0 items-center justify-center rounded-[8px] text-white transition-colors"
+                        style={{ background: ask.trim() || attached.length ? "#1d1d1b" : "#c9c9c6" }}
+                      >
+                        <ArrowUp className="size-[14px]" strokeWidth={2.2} />
+                      </button>
+                      <button
+                        type="button"
+                        aria-label="Close"
+                        onClick={() => setAsking(false)}
+                        className="flex size-[28px] shrink-0 items-center justify-center rounded-[8px] hover:bg-[#f4f4f2]"
+                        style={{ color: MUTED }}
+                      >
+                        <X className="size-[14px]" strokeWidth={1.8} />
+                      </button>
+                    </div>
+                  </form>
+                ) : (
+                  <div className="mt-3 flex items-center">
+                    <button
+                      type="button"
+                      onClick={() => setWhy((v) => !v)}
+                      aria-expanded={why}
+                      className="flex items-center gap-2 text-[12px] transition-colors hover:text-[#1d1d1b]"
+                      style={{ color: MUTED }}
+                    >
+                      {/* The sources, as a little overlapping stack of discs. */}
+                      <span className="flex -space-x-[5px] pl-[2px]">
+                        {[
+                          <Globe key="g" className="size-[11px]" strokeWidth={1.8} style={{ color: INK }} />,
+                          null,
+                          null,
+                          <span key="t" className="text-[8.5px] font-semibold tracking-[-0.02em]" style={{ color: INK }}>Aa</span>,
+                        ].map((inner, k) => (
+                          <span
+                            key={k}
+                            className="relative flex size-[20px] items-center justify-center rounded-full"
+                            style={{
+                              zIndex: 4 - k,
+                              // A crisp white outline with a soft drop shadow around it,
+                              // and shading inside like a small glossy orb.
+                              boxShadow:
+                                "0 0 0 2px #fff, 0 3px 7px -1px rgba(15,15,15,0.22), 0 1px 2px rgba(15,15,15,0.1), inset 0 -2px 3px rgba(15,15,15,0.14), inset 0 1px 1px rgba(255,255,255,0.7)",
+                              background:
+                                k === 1
+                                  ? `conic-gradient(${BRAND[0]} 0 25%, ${BRAND[1]} 0 50%, ${BRAND[2]} 0 75%, ${BRAND[3]} 0)`
+                                  : k === 2
+                                    ? "linear-gradient(135deg,#9FB3B6,#E6DDB2 55%,#AFDBD0)"
+                                    : "#f3f3f0",
+                            }}
+                          >
+                            {inner}
+                            <span
+                              aria-hidden
+                              className="pointer-events-none absolute inset-0 rounded-full"
+                              style={{ background: "radial-gradient(circle at 32% 26%, rgba(255,255,255,0.75), rgba(255,255,255,0) 52%)" }}
+                            />
+                          </span>
+                        ))}
+                      </span>
+                      Drafted from {sourceCount} sources
+                      <ChevronDown className={`size-[13px] transition-transform ${why ? "rotate-180" : ""}`} strokeWidth={1.8} />
+                    </button>
                   </div>
                 )}
-
-                {phase !== "idle" && !editing && (
-                  <div className="mt-4 grid grid-cols-3 gap-2.5">
-                    {DRAFTS.map((d, k) => {
-                      const on = style.id === d.id
-                      return phase === "thinking" ? (
-                        <div key={d.id} className="relative h-[143px] overflow-hidden rounded-[10px]">
-                          <span className="rb-skel rb-on" style={{ animationDelay: `${k * 120}ms` }} />
-                        </div>
-                      ) : (
-                        <button
-                          key={d.id}
-                          type="button"
-                          onClick={() => apply(d)}
-                          // Built exactly like the Badge template cards below.
-                          className="view-in flex flex-col justify-start overflow-hidden rounded-[10px] border text-left transition-colors"
-                          style={{ borderColor: on ? INK : LINE, animationDelay: `${k * 90}ms` }}
-                        >
-                          <span className="relative flex h-[84px] items-center justify-center" style={{ background: PANEL }}>
-                            <MiniBadge style={d} />
-                            <span className="absolute top-2 right-2">
-                              <Radio on={on} />
-                            </span>
+                {why && (
+                  <div className="view-in mt-2 overflow-hidden rounded-[10px] border" style={{ borderColor: LINE }}>
+                      {(
+                        [
+                          ["site", "planned.com/live", "Hazy skies, soft cloud, mint paint and grain", <Globe key="i" className="size-[14px]" strokeWidth={1.7} />],
+                          [
+                            "colours",
+                            "Brand colours",
+                            "Slate-teal ink and warm cream",
+                            <span key="i" className="grid grid-cols-2 gap-[2px]">
+                              {BRAND.map((c) => (
+                                <span key={c} className="size-[6px] rounded-full" style={{ background: c }} />
+                              ))}
+                            </span>,
+                          ],
+                          [
+                            "photos",
+                            "12 event photos",
+                            "The soft, airy light",
+                            <span key="i" className="size-[18px] rounded-[4px]" style={{ background: "linear-gradient(135deg,#9FB3B6,#E6DDB2 55%,#AFDBD0)" }} />,
+                          ],
+                          ["type", "Geist", "The brand's type, for names", <span key="i" className="text-[11px] font-semibold">Aa</span>],
+                        ] as const
+                      ).filter(([k]) => !removed.includes(k)).map(([k, name, took, icon]) => (
+                        <div key={k} className="flex items-center gap-3 px-3 py-2.5">
+                          <span className="flex size-[28px] shrink-0 items-center justify-center rounded-[8px]" style={{ background: PANEL, opacity: off[k] ? 0.45 : 1 }}>
+                            {icon}
                           </span>
-                          <span className="block px-3 py-2.5">
-                            <span className="block text-[13px] font-medium">{d.name}</span>
+                          <span className="min-w-0 flex-1 leading-tight" style={{ opacity: off[k] ? 0.55 : 1 }}>
+                            <span className="block text-[12.5px] font-medium">{name}</span>
                             <span className="block text-[11.5px]" style={{ color: MUTED }}>
-                              {d.blurb}
+                              {off[k] ? "Not used" : took}
                             </span>
                           </span>
+                          <span className="flex items-center gap-1.5">
+                            <MiniSwitch on={!off[k]} onClick={() => toggle(k)} label={`Use ${name}`} />
+                            <RemoveButton label={`Remove ${name}`} onClick={() => removeSource(k, name)} />
+                          </span>
+                        </div>
+                      ))}
+                      {/* Context the organiser added. */}
+                      {extras.map((e) => {
+                        const Icon = e.kind === "link" ? Link2 : e.kind === "images" ? ImageIcon : FileText
+                        return (
+                          <div key={e.kind} className="view-in flex items-center gap-3 px-3 py-2.5">
+                            <span className="flex size-[28px] shrink-0 items-center justify-center rounded-[8px]" style={{ background: PANEL }}>
+                              <Icon className="size-[14px]" strokeWidth={1.7} />
+                            </span>
+                            <span className="min-w-0 flex-1 leading-tight">
+                              <span className="block text-[12.5px] font-medium">{e.name}</span>
+                              <span className="block text-[11.5px]" style={{ color: MUTED }}>
+                                {e.fresh ? "Added by you, not used yet" : "Added by you"}
+                              </span>
+                            </span>
+                            {e.fresh && (
+                              <span className="rounded-full px-1.5 py-[1px] text-[10px] font-medium" style={{ background: "#e3f0ed", color: "#294B4F" }}>
+                                New
+                              </span>
+                            )}
+                            <span className="flex items-center gap-1.5">
+                              <MiniSwitch on={!off[e.kind]} onClick={() => setOff((v) => ({ ...v, [e.kind]: !v[e.kind] }))} label={`Use ${e.name}`} />
+                              <RemoveButton label={`Remove ${e.name}`} onClick={() => removeSource(e.kind, e.name)} />
+                            </span>
+                          </div>
+                        )
+                      })}
+
+                      {(asked || askedFiles.length > 0) && (
+                        <div className="flex items-center gap-3 px-3 py-2.5">
+                          <span className="flex size-[28px] shrink-0 items-center justify-center rounded-[8px]" style={{ background: PANEL }}>
+                            <Pencil className="size-[13px]" strokeWidth={1.8} />
+                          </span>
+                          <span className="min-w-0 flex-1 leading-tight">
+                            <span className="block text-[12.5px] font-medium">Your note</span>
+                            <span className="block truncate text-[11.5px]" style={{ color: MUTED }}>
+                              {[asked && `“${asked}”`, ...askedFiles].filter(Boolean).join(" + ")}
+                            </span>
+                          </span>
+                          {/* Edit reopens the field with the note in it; remove drops it and redrafts. */}
+                          <span className="flex items-center gap-0.5">
+                            <button
+                              type="button"
+                              aria-label="Edit your note"
+                              title="Edit"
+                              onClick={() => {
+                                setAsk(asked)
+                                setAttached(askedFiles)
+                                setAsking(true)
+                              }}
+                              className="flex size-[24px] shrink-0 items-center justify-center rounded-[7px] transition-colors hover:bg-[#f1f1ee]"
+                              style={{ color: MUTED }}
+                            >
+                              <Pencil className="size-[12px]" strokeWidth={1.8} />
+                            </button>
+                            <RemoveButton
+                              label="Remove your note"
+                              onClick={() => {
+                                setAsked("")
+                                setAskedFiles([])
+                                redraft()
+                              }}
+                            />
+                          </span>
+                        </div>
+                      )}
+
+                      {lastRemoved && (
+                        <div className="view-in flex items-center justify-between px-3 py-2 text-[11.5px]" style={{ color: MUTED }}>
+                          Removed {lastRemoved.name}
+                          <button type="button" onClick={undoRemove} className="rounded-[6px] px-1.5 py-[2px] font-medium hover:bg-[#f1f1ee]" style={{ color: INK }}>
+                            Undo
+                          </button>
+                        </div>
+                      )}
+
+                      {/* Add more context, then regenerate. */}
+                      <div className="flex flex-wrap items-center gap-1.5 border-t px-3 py-2.5" style={{ borderColor: LINE }}>
+                        {(
+                          [
+                            ["link", "Link", Link2],
+                            ["images", "Images", ImageIcon],
+                            ["file", "Brand guidelines", FileText],
+                          ] as const
+                        ).map(([kind, label, Icon]) => {
+                          const added = extras.some((e) => e.kind === kind)
+                          return (
+                            <button
+                              key={kind}
+                              type="button"
+                              disabled={added}
+                              onClick={() => addExtra(kind)}
+                              className="flex items-center gap-1 rounded-full border bg-white py-[3px] pr-2.5 pl-2 text-[11.5px] font-medium transition-colors hover:bg-[#fafaf8] disabled:opacity-40"
+                              style={{ borderColor: LINE, color: INK }}
+                            >
+                              <Plus className="size-[11px]" strokeWidth={2} style={{ color: MUTED }} />
+                              <Icon className="size-[11px]" strokeWidth={1.8} style={{ color: MUTED }} />
+                              {label}
+                            </button>
+                          )
+                        })}
+                        {/* A note goes in the same place as Refine; an existing note opens to edit. */}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setAsk(asked)
+                            setAttached(askedFiles)
+                            setAsking(true)
+                          }}
+                          className="flex items-center gap-1 rounded-full border bg-white py-[3px] pr-2.5 pl-2 text-[11.5px] font-medium transition-colors hover:bg-[#fafaf8]"
+                          style={{ borderColor: LINE, color: INK }}
+                        >
+                          <Plus className="size-[11px]" strokeWidth={2} style={{ color: MUTED }} />
+                          <Pencil className="size-[11px]" strokeWidth={1.8} style={{ color: MUTED }} />
+                          Note
                         </button>
-                      )
-                    })}
+                        {fresh && (
+                          <button
+                            type="button"
+                            onClick={useExtras}
+                            className="view-in ml-auto rounded-[8px] px-3 py-1 text-[12px] font-medium text-white"
+                            style={{ background: "#1d1d1b" }}
+                          >
+                            Regenerate
+                          </button>
+                        )}
+                      </div>
+
+
                   </div>
                 )}
-
               </div>
             </div>
             )}

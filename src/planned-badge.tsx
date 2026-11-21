@@ -14,6 +14,9 @@ import {
   PanelLeft,
   Ticket,
   BedDouble,
+  Check,
+  Pencil,
+  Printer,
   Users,
 } from "lucide-react"
 
@@ -91,7 +94,7 @@ export const DRAFTS: Style[] = [
   {
     id: "golden",
     name: "Golden hour",
-    blurb: "A hazy evening sky warming to gold.",
+    blurb: "Hazy evening sky",
     surface: "linear-gradient(180deg, #9FB3B6 0%, #B3C2BE 18%, #CBD2BF 34%, #E6DDB2 52%, #EDD9AC 74%, #E8CFA4 100%)",
     ink: "#21333A",
     sub: "#3F4D4F",
@@ -103,7 +106,7 @@ export const DRAFTS: Style[] = [
   {
     id: "cloud",
     name: "Cloud cover",
-    blurb: "Soft white cloud on a grainy grey sky.",
+    blurb: "Soft cloud, grainy sky",
     surface: "linear-gradient(180deg, #9C9F9D 0%, #A8AAA7 55%, #B1B2AE 100%)",
     ink: "#21333A",
     sub: "#4a5557",
@@ -115,7 +118,7 @@ export const DRAFTS: Style[] = [
   {
     id: "brush",
     name: "Brushstroke",
-    blurb: "Planned's feathered mint paint.",
+    blurb: "Feathered mint paint",
     surface: "#E3E8E6",
     ink: "#21333A",
     sub: "#51605F",
@@ -368,9 +371,11 @@ function StyledFace({
   showName,
   showCompany,
   highlightCode = false,
+  showCode = true,
 }: {
   link?: string
   highlightCode?: boolean
+  showCode?: boolean
   style: Style
   role: Role
   portrait: boolean
@@ -428,19 +433,52 @@ function StyledFace({
       {/* Footer: the ID's label and number line up with the code's top and
           bottom edges. */}
       <div className="mt-4 flex items-stretch justify-between gap-3 border-t pt-2.5" style={{ borderColor: `${style.ink}1f` }}>
-        <div className="flex flex-col justify-between py-[3px]">
+        <div className="flex min-h-[36px] flex-col justify-between py-[3px]">
           <div className="text-[7.5px] leading-none font-medium tracking-[0.16em] whitespace-nowrap uppercase" style={{ color: style.sub }}>
             Attendee ID
           </div>
           <div className="text-[12px] leading-none font-semibold tracking-[0.02em] tabular-nums">EVNT256</div>
         </div>
         <div className="flex items-stretch gap-2">
-          <span className={`rounded-[6px] p-[3px] ${highlightCode ? "code-pulse" : ""}`} style={{ background: "rgba(255,255,255,0.78)", boxShadow: highlightCode ? undefined : "0 1px 2px rgba(33,51,58,0.08)" }}>
+          {showCode && <span className={`view-in rounded-[6px] p-[3px] ${highlightCode ? "code-pulse" : ""}`} style={{ background: "rgba(255,255,255,0.78)", boxShadow: highlightCode ? undefined : "0 1px 2px rgba(33,51,58,0.08)" }}>
             <CheckInCode size={30} color="#21333A" />
-          </span>
+          </span>}
         </div>
       </div>
     </div>
+  )
+}
+
+/**
+ * Cuts a real, see-through slot into a card: a rounded hole of the given size,
+ * centred, a set distance from the top. Everything under the mask (the card,
+ * its art, its frame) gets the same hole, so the page shows through it.
+ */
+export function slotMask(w: number, h: number, top: number): React.CSSProperties {
+  const hole = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='${w}' height='${h}'%3E%3Crect width='${w}' height='${h}' rx='${h / 2}'/%3E%3C/svg%3E")`
+  const all = "linear-gradient(#000, #000)"
+  return {
+    WebkitMaskImage: `${hole}, ${all}`,
+    maskImage: `${hole}, ${all}`,
+    WebkitMaskSize: `${w}px ${h}px, 100% 100%`,
+    maskSize: `${w}px ${h}px, 100% 100%`,
+    WebkitMaskPosition: `center ${top}px, 0 0`,
+    maskPosition: `center ${top}px, 0 0`,
+    WebkitMaskRepeat: "no-repeat",
+    maskRepeat: "no-repeat",
+    WebkitMaskComposite: "xor",
+    maskComposite: "exclude",
+  }
+}
+
+/** The cut edge of a slot: a faint rim, drawn over the hole without filling it. */
+export function SlotRim({ w, h, top }: { w: number; h: number; top: number }) {
+  return (
+    <span
+      aria-hidden
+      className="pointer-events-none absolute left-1/2 z-[3] -translate-x-1/2 rounded-full"
+      style={{ top, width: w, height: h, boxShadow: "inset 0 1px 1.5px rgba(0,0,0,0.28), 0 1px 0 rgba(255,255,255,0.5)" }}
+    />
   )
 }
 
@@ -456,7 +494,10 @@ export function Badge({
   loading = false,
   link,
   highlightCode = false,
+  showCode = true,
 }: {
+  /** Whether the badge carries a code at all. */
+  showCode?: boolean
   /** Picks out the code with a soft pulsing ring, for figures. */
   highlightCode?: boolean
   loading?: boolean
@@ -476,19 +517,18 @@ export function Badge({
   const big = template === "big"
   return (
     <div
-      className="relative rounded-[22px] p-[10px] shadow-[0_24px_50px_-24px_rgba(15,15,15,0.35)] transition-[width,height] duration-500"
-      style={{
-        background: style.art ? `linear-gradient(160deg, ${tint(roleColor, 0.62)}, ${tint(roleColor, 0.48)})` : roleColor,
-        boxShadow: style.art ? "0 24px 50px -24px rgba(15,15,15,0.35), inset 0 1px 0 rgba(255,255,255,0.55), inset 0 0 0 1px rgba(255,255,255,0.18)" : undefined,
-        width: portrait ? 280 : 400,
-        height: portrait ? 400 : 280,
-      }}
+      className="relative rounded-[22px] shadow-[0_24px_50px_-24px_rgba(15,15,15,0.35)] transition-[width,height] duration-500"
+      style={{ width: portrait ? 280 : 400, height: portrait ? 400 : 280 }}
     >
-      {/* The punched slot the clip goes through. */}
-      <span
-        className="absolute top-[12px] left-1/2 z-[2] h-[10px] w-[40px] -translate-x-1/2 rounded-full"
-        style={{ background: "#2b302f", boxShadow: "inset 0 2px 3px rgba(0,0,0,0.6), 0 1px 0 rgba(255,255,255,0.45)" }}
-      />
+      {/* The frame and card, with a real slot punched through both. */}
+      <div
+        className="absolute inset-0 rounded-[22px] p-[10px]"
+        style={{
+          background: style.art ? `linear-gradient(160deg, ${tint(roleColor, 0.62)}, ${tint(roleColor, 0.48)})` : roleColor,
+          boxShadow: style.art ? "inset 0 1px 0 rgba(255,255,255,0.55), inset 0 0 0 1px rgba(255,255,255,0.18)" : undefined,
+          ...slotMask(40, 10, 12),
+        }}
+      >
       <div
         className="relative h-full overflow-hidden rounded-[14px] transition-[background] duration-500"
         style={{ background: style.surface, color: style.ink }}
@@ -501,7 +541,7 @@ export function Badge({
         {/* A fine light edge around the printed face. */}
         {style.art && <span aria-hidden className="pointer-events-none absolute inset-0 z-[1] rounded-[14px]" style={{ boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.45), inset 0 1px 0 rgba(255,255,255,0.6)" }} />}
         {style.art ? (
-          <StyledFace style={style} role={role} portrait={portrait} big={big} showName={showName} showCompany={showCompany} link={link} highlightCode={highlightCode} />
+          <StyledFace style={style} role={role} portrait={portrait} big={big} showName={showName} showCompany={showCompany} link={link} highlightCode={highlightCode} showCode={showCode} />
         ) : (
         <div className="relative flex h-full flex-col px-[20px] pt-[30px] pb-[18px]">
           {/* The event's brand, now part of every badge. */}
@@ -558,7 +598,53 @@ export function Badge({
         </div>
         )}
       </div>
+      </div>
+      <SlotRim w={40} h={10} top={12} />
     </div>
+  )
+}
+
+/**
+ * The lanyard's metal: D-ring, swivel and a clip whose hook passes through the
+ * badge's slot. Drawn on a 60 × 92 canvas. The hook's front strand comes down
+ * in front of the card into the slot; its back strand goes behind the card, so
+ * it's hidden below the card's top edge except where it shows through the slot.
+ */
+export function LanyardClip({
+  className,
+  cardTop,
+  slot,
+}: {
+  className?: string
+  /** Where the card's top edge falls, in the clip's 60 × 92 units. */
+  cardTop: number
+  /** The slot, in the same units. */
+  slot: { x: number; y: number; w: number; h: number }
+}) {
+  const id = useId().replace(/[^a-zA-Z0-9]/g, "")
+  return (
+    <svg viewBox="0 0 60 92" className={className} aria-hidden>
+      <defs>
+        <linearGradient id={`${id}m`} x1="0" x2="1" y1="0" y2="0">
+          <stop offset="0" stopColor="#7d8285" />
+          <stop offset="0.35" stopColor="#f4f6f7" />
+          <stop offset="0.6" stopColor="#a9aeb1" />
+          <stop offset="1" stopColor="#5f6467" />
+        </linearGradient>
+        {/* Visible: everything above the card, the front strand, and the slot. */}
+        <mask id={`${id}k`} maskUnits="userSpaceOnUse" x="0" y="0" width="60" height="92">
+          <rect x="0" y="0" width="60" height={cardTop} fill="#fff" />
+          <rect x="0" y="0" width="30.5" height="92" fill="#fff" />
+          <rect x={slot.x} y={slot.y} width={slot.w} height={slot.h} rx={slot.h / 2} fill="#fff" />
+        </mask>
+      </defs>
+      <path d="M12 4 H48 A10 10 0 0 1 48 24 H12 A10 10 0 0 1 12 4 Z" fill="none" stroke={`url(#${id}m)`} strokeWidth="4.5" />
+      <rect x="25" y="24" width="10" height="14" rx="3" fill={`url(#${id}m)`} />
+      <g mask={`url(#${id}k)`}>
+        <path d="M30 38 C 17 44, 16 68, 26 84 C 29 89, 33 89, 35 84 C 44 68, 43 46, 30 38 Z" fill="none" stroke={`url(#${id}m)`} strokeWidth="4" />
+      </g>
+      <path d="M37 52 L 41 46" stroke={`url(#${id}m)`} strokeWidth="3" strokeLinecap="round" />
+    </svg>
   )
 }
 
@@ -575,20 +661,7 @@ export function Lanyard({ strap = 70, grow = false }: { strap?: number; grow?: b
           clipPath: "polygon(0 0, 100% 0, 100% 84%, 74% 100%, 26% 100%, 0 84%)",
         }}
       />
-      <svg viewBox="0 0 60 92" className="relative z-10 -mt-[6px] h-[80px] w-[52px]" aria-hidden>
-        <defs>
-          <linearGradient id="lanyard-metal" x1="0" x2="1" y1="0" y2="0">
-            <stop offset="0" stopColor="#7d8285" />
-            <stop offset="0.35" stopColor="#f4f6f7" />
-            <stop offset="0.6" stopColor="#a9aeb1" />
-            <stop offset="1" stopColor="#5f6467" />
-          </linearGradient>
-        </defs>
-        <path d="M12 4 H48 A10 10 0 0 1 48 24 H12 A10 10 0 0 1 12 4 Z" fill="none" stroke="url(#lanyard-metal)" strokeWidth="4.5" />
-        <rect x="25" y="24" width="10" height="14" rx="3" fill="url(#lanyard-metal)" />
-        <path d="M30 38 C 17 44, 16 68, 26 84 C 29 88, 33 88, 35 84 C 44 68, 43 46, 30 38 Z" fill="none" stroke="url(#lanyard-metal)" strokeWidth="4" />
-        <path d="M37 52 L 41 46" stroke="url(#lanyard-metal)" strokeWidth="3" strokeLinecap="round" />
-      </svg>
+      <LanyardClip className="relative z-10 -mt-[6px] h-[80px] w-[52px]" cardTop={66.9} slot={{ x: 7, y: 80.7, w: 46, h: 11.5 }} />
     </>
   )
 }
@@ -639,7 +712,7 @@ function HangingBadge(props: React.ComponentProps<typeof Badge>) {
           <span
             aria-hidden
             className="absolute inset-0 rounded-[22px]"
-            style={{ transform: "translateZ(-4px)", background: "#9aa3a1", filter: "brightness(0.8)" }}
+            style={{ transform: "translateZ(-4px)", background: "#9aa3a1", filter: "brightness(0.8)", ...slotMask(40, 10, 12) }}
           />
           <Badge {...props} />
           {/* A soft sheen that slides as the card turns. */}
@@ -651,6 +724,7 @@ function HangingBadge(props: React.ComponentProps<typeof Badge>) {
               backgroundSize: "300% 100%",
               backgroundPosition: "var(--sheen, 50%) 0",
               mixBlendMode: "screen",
+              ...slotMask(40, 10, 12),
             }}
           />
         </div>
@@ -738,6 +812,46 @@ function MiniBadge({ style, band, big, window: win }: { style?: Style; band?: bo
       <span className="absolute top-[24px] left-[6px] h-[2px] w-[12px] rounded-full" style={{ background: s.ink, opacity: 0.4 }} />
       {style && <span className="absolute bottom-[6px] left-[6px] h-[2px] w-[14px] rounded-full" style={{ background: s.accent }} />}
     </span>
+  )
+}
+
+/**
+ * Ordering the printed badges, right under the preview: the stock the style
+ * is pre-printed on, sized from the guest list with spares for walk-ins.
+ */
+function OrderCard({ styleName, size }: { styleName?: string; size: Size }) {
+  const [ordered, setOrdered] = useState(false)
+  const guests = 248
+  const total = Math.ceil((guests * 1.3) / 10) * 10
+  return (
+    // One slim row, so it sits under the badge without covering it.
+    <div
+      className="absolute inset-x-3 bottom-3 z-20 flex items-center gap-2.5 rounded-[12px] border bg-white/90 py-2 pr-2 pl-2.5 shadow-[0_8px_24px_-14px_rgba(15,15,15,0.25)] backdrop-blur-md"
+      style={{ borderColor: LINE }}
+      title={`${size === "portrait" ? "4 × 6 in" : "6 × 4 in"}, pre-printed on matte stock. ${guests} guests plus 30% spare for walk-ins.`}
+    >
+      <span className="flex size-[26px] shrink-0 items-center justify-center rounded-[8px]" style={{ background: "#f1f1ee" }}>
+        <Printer className="size-[13px]" strokeWidth={1.7} />
+      </span>
+      <div className="min-w-0 flex-1 leading-tight">
+        <div className="truncate text-[12.5px] font-medium">
+          {total} badges{styleName ? ` · ${styleName}` : ""}
+        </div>
+        <div className="text-[11px] tabular-nums" style={{ color: MUTED }}>
+          {ordered ? "Arriving by" : "Delivered by"} 2026-09-29
+        </div>
+      </div>
+      {ordered ? (
+        <span className="view-in flex items-center gap-1 rounded-[8px] px-2.5 py-1 text-[12px] font-medium" style={{ background: "#e3f0ed", color: "#294B4F" }}>
+          <Check className="size-[13px]" strokeWidth={2.2} />
+          Ordered
+        </span>
+      ) : (
+        <button type="button" onClick={() => setOrdered(true)} className="rounded-[8px] px-3 py-1 text-[12px] font-medium text-white" style={{ background: "#1d1d1b" }}>
+          Order
+        </button>
+      )}
+    </div>
   )
 }
 
@@ -882,8 +996,7 @@ export function PlannedBadge({
                   <span className="text-[14px] font-medium" style={{ color: INK }}>Badge style</span>
                 </div>
                 <p className="mt-1 text-[12.5px]" style={{ color: MUTED }}>
-                  Make your brand stand out. Your badge is on every attendee, in every photo, all event long. Share your
-                  website, a picture or the look you want, and we&apos;ll draft styles in your brand.
+                  Make your brand stand out on every attendee. Share your site, a picture or a look, and we&apos;ll draft styles.
                 </p>
 
                 {editing ? (
@@ -964,7 +1077,13 @@ export function PlannedBadge({
                         {phase === "thinking" ? "Writing instructions…" : "Instructions"}
                       </span>
                       {phase === "done" && (
-                        <button type="button" onClick={() => setEditing(true)} className="text-[12px] underline decoration-[#d0d0cc] underline-offset-2" style={{ color: MUTED }}>
+                        <button
+                          type="button"
+                          onClick={() => setEditing(true)}
+                          className="-my-1 flex items-center gap-1.5 rounded-[8px] border bg-white px-2.5 py-[5px] text-[12px] font-medium shadow-[0_1px_2px_rgba(15,15,15,0.05)] transition-colors hover:bg-[#f4f4f2]"
+                          style={{ borderColor: LINE, color: INK }}
+                        >
+                          <Pencil className="size-[12px]" strokeWidth={1.8} />
                           Edit
                         </button>
                       )}
@@ -1003,7 +1122,7 @@ export function PlannedBadge({
                     {DRAFTS.map((d, k) => {
                       const on = style.id === d.id
                       return phase === "thinking" ? (
-                        <div key={d.id} className="relative h-[132px] overflow-hidden rounded-[10px]">
+                        <div key={d.id} className="relative h-[143px] overflow-hidden rounded-[10px]">
                           <span className="rb-skel rb-on" style={{ animationDelay: `${k * 120}ms` }} />
                         </div>
                       ) : (
@@ -1011,18 +1130,19 @@ export function PlannedBadge({
                           key={d.id}
                           type="button"
                           onClick={() => apply(d)}
-                          className="view-in flex flex-col overflow-hidden rounded-[10px] border text-left transition-colors"
+                          // Built exactly like the Badge template cards below.
+                          className="view-in flex flex-col justify-start overflow-hidden rounded-[10px] border text-left transition-colors"
                           style={{ borderColor: on ? INK : LINE, animationDelay: `${k * 90}ms` }}
                         >
-                          <span className="flex h-[78px] items-center justify-center" style={{ background: PANEL }}>
+                          <span className="relative flex h-[84px] items-center justify-center" style={{ background: PANEL }}>
                             <MiniBadge style={d} />
-                          </span>
-                          <span className="px-2.5 py-2">
-                            <span className="flex items-center justify-between text-[12.5px] font-medium">
-                              {d.name}
+                            <span className="absolute top-2 right-2">
                               <Radio on={on} />
                             </span>
-                            <span className="mt-0.5 block text-[11px] leading-snug" style={{ color: MUTED }}>
+                          </span>
+                          <span className="block px-3 py-2.5">
+                            <span className="block text-[13px] font-medium">{d.name}</span>
+                            <span className="block text-[11.5px]" style={{ color: MUTED }}>
                               {d.blurb}
                             </span>
                           </span>
@@ -1036,26 +1156,44 @@ export function PlannedBadge({
             </div>
             )}
 
-            <div className="grid grid-cols-2 gap-3">
-              {(
-                [
-                  ["portrait", "4 × 6 in", "Portrait. Fits standard lanyard holders."],
-                  ["landscape", "6 × 4 in", "Landscape. More room for company and role."],
-                ] as const
-              ).map(([id, t, d]) => (
-                <button
-                  key={id}
-                  type="button"
-                  onClick={() => setSize(id)}
-                  className="rounded-[12px] border p-4 text-left transition-colors"
-                  style={{ borderColor: size === id ? INK : LINE }}
-                >
-                  <Radio on={size === id} />
-                  <div className="mt-3 text-[14px] font-medium">{t}</div>
-                  <div className="mt-1 text-[12px]" style={{ color: MUTED }}>{d}</div>
-                </button>
-              ))}
-            </div>
+            {/* Size, set like the other options: a titled card, a small
+                picture of each shape, and the radio in the top corner. */}
+            <Card className="p-4">
+              <div className="text-[13px]" style={{ color: MUTED }}>Badge size</div>
+              <div className="mt-3 grid grid-cols-2 gap-2.5">
+                {(
+                  [
+                    ["portrait", "4 × 6 in", "Portrait, fits most holders", 22, 32],
+                    ["landscape", "6 × 4 in", "Landscape, room for more", 32, 22],
+                  ] as const
+                ).map(([id, t, d, w, h]) => (
+                  <button
+                    key={id}
+                    type="button"
+                    onClick={() => setSize(id)}
+                    className="relative flex items-center gap-3 rounded-[10px] border p-2.5 text-left transition-colors"
+                    style={{ borderColor: size === id ? INK : LINE }}
+                  >
+                    <span className="flex size-[48px] shrink-0 items-center justify-center rounded-[8px]" style={{ background: PANEL }}>
+                      {/* The badge's shape, with its slot. */}
+                      <span
+                        className="relative rounded-[3px] border bg-white shadow-[0_1px_2px_rgba(15,15,15,0.06)]"
+                        style={{ width: w, height: h, borderColor: "#d9d9d5" }}
+                      >
+                        <span className="absolute top-[3px] left-1/2 h-[2px] w-[7px] -translate-x-1/2 rounded-full bg-[#cfcfcb]" />
+                      </span>
+                    </span>
+                    <span className="min-w-0 pr-5">
+                      <span className="block text-[13px] font-medium">{t}</span>
+                      <span className="block truncate text-[11.5px]" style={{ color: MUTED }}>{d}</span>
+                    </span>
+                    <span className="absolute top-2 right-2">
+                      <Radio on={size === id} />
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </Card>
 
             <Card className="p-4">
               <div className="text-[13px]" style={{ color: MUTED }}>Badge template</div>
@@ -1125,7 +1263,7 @@ export function PlannedBadge({
                   <div className="text-[13px]" style={{ color: MUTED }}>Badge code</div>
                   <span className="rounded-full px-2 py-[2px] text-[11px]" style={{ background: "#f1f1ee", color: MUTED }}>New</span>
                 </div>
-                <Toggle on={codeLink} onClick={() => setCodeLink((v) => !v)} label="Code opens a link" />
+                <Toggle on={codeLink} onClick={() => setCodeLink((v) => !v)} label="Code on badge, opens a link" />
                 {codeLink && (
                   <div className="view-in pl-[46px]">
                     <input
@@ -1170,6 +1308,7 @@ export function PlannedBadge({
                     showCompany={showCompany}
                     loading={phase === "thinking"}
                     link={codeLink && codeUrl.trim() ? codeUrl.trim() : undefined}
+                    showCode={codeLink}
                   />
                 </div>
               ) : (
@@ -1187,6 +1326,8 @@ export function PlannedBadge({
                   />
                 </div>
               )}
+              {/* New: order the printed badges without leaving the page. */}
+              {ai && <OrderCard styleName={style.id !== "plain" ? style.name : undefined} size={size} />}
             </div>
           </div>
         </div>

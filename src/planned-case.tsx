@@ -2,7 +2,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react"
 import { ArrowRight, ArrowUpRight, Brush, Handshake, LayoutTemplate, ScanLine, Store, TrendingUp } from "lucide-react"
 
 import type { CaseStudy } from "./case-study"
-import { AiLabel, Badge, BrandArt, DRAFTS, PLAIN, PlannedBadge, PlannedLogo, type Pattern, type Style } from "./planned-badge"
+import { AiLabel, Badge, BrandArt, DRAFTS, LanyardClip, PLAIN, PlannedBadge, PlannedLogo, SlotRim, slotMask, type Pattern, type Style } from "./planned-badge"
 import { Scaled } from "./report-kit"
 import { SkillsFigure } from "./planned-skills"
 
@@ -36,20 +36,26 @@ function HeroFace({ style, flipped = false, hidden = false }: { style: Style; fl
   const head = style.headInk ?? style.ink
   return (
     <div
+      className="absolute inset-0 rounded-[16px]"
+      style={{
+        visibility: hidden ? "hidden" : "visible",
+        transform: flipped ? "rotateY(180deg)" : undefined,
+        boxShadow: "0 30px 60px -24px rgba(15,25,30,0.55), 0 8px 16px -8px rgba(15,25,30,0.3)",
+      }}
+    >
+    {/* The card itself, with a real slot cut through it. */}
+    <div
       className={`absolute inset-0 overflow-hidden rounded-[16px] ${FONT}`}
       style={{
         background: style.surface,
         color: style.ink,
-        visibility: hidden ? "hidden" : "visible",
-        transform: flipped ? "rotateY(180deg)" : undefined,
-        boxShadow: "0 30px 60px -24px rgba(15,25,30,0.55), 0 8px 16px -8px rgba(15,25,30,0.3), inset 0 0 0 1px rgba(255,255,255,0.4)",
+        boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.4)",
         fontFamily: "Geist, 'Inter Variable', Inter, sans-serif",
+        ...slotMask(30, 12, 10),
       }}
     >
       {/* The cloud sits a little lower here, so it rises behind the name, not the dates. */}
       {style.art && <BrandArt art={style.art} lower={style.art === "cloud" ? 40 : 0} />}
-      {/* The punched hole the clip goes through. */}
-      <span className="absolute top-[10px] left-1/2 h-[12px] w-[30px] -translate-x-1/2 rounded-full" style={{ background: "#2b302f", boxShadow: "inset 0 2px 3px rgba(0,0,0,0.6), 0 1px 0 rgba(255,255,255,0.45)" }} />
       <div className="relative flex h-full flex-col px-[18px] pt-[38px] pb-[14px]">
         <div style={{ color: head }}>
           <PlannedLogo size={24} />
@@ -79,6 +85,8 @@ function HeroFace({ style, flipped = false, hidden = false }: { style: Style; fl
       </div>
       {/* A soft sheen that catches the light as the card turns. */}
       <span className="lanyard-sheen pointer-events-none absolute inset-0" />
+    </div>
+    <SlotRim w={30} h={12} top={10} />
     </div>
   )
 }
@@ -136,23 +144,7 @@ function LanyardBadge({ turn, front, back, face }: { turn: number; front: Style;
       />
       {/* The swinging part: clip and card, pivoting at the D-ring. */}
       <div className="lanyard-swing -mt-[8px] flex flex-col items-center" style={{ transformOrigin: "50% 0" }}>
-        <svg viewBox="0 0 60 92" className="relative z-10 h-[92px] w-[60px]" aria-hidden>
-          <defs>
-            <linearGradient id="metal" x1="0" x2="1" y1="0" y2="0">
-              <stop offset="0" stopColor="#7d8285" />
-              <stop offset="0.35" stopColor="#f4f6f7" />
-              <stop offset="0.6" stopColor="#a9aeb1" />
-              <stop offset="1" stopColor="#5f6467" />
-            </linearGradient>
-          </defs>
-          {/* The D-ring. */}
-          <path d="M12 4 H48 A10 10 0 0 1 48 24 H12 A10 10 0 0 1 12 4 Z" fill="none" stroke="url(#metal)" strokeWidth="4.5" />
-          {/* The swivel. */}
-          <rect x="25" y="24" width="10" height="14" rx="3" fill="url(#metal)" />
-          {/* The clip. */}
-          <path d="M30 38 C 17 44, 16 68, 26 84 C 29 88, 33 88, 35 84 C 44 68, 43 46, 30 38 Z" fill="none" stroke="url(#metal)" strokeWidth="4" />
-          <path d="M37 52 L 41 46" stroke="url(#metal)" strokeWidth="3" strokeLinecap="round" />
-        </svg>
+        <LanyardClip className="relative z-10 h-[92px] w-[60px]" cardTop={70} slot={{ x: 15, y: 80, w: 30, h: 12 }} />
         {/* The card sits high enough that the clip's loop hangs down into its hole. */}
         <div className="lanyard-turn -mt-[22px]" style={{ transformStyle: "preserve-3d" }}>
           {/* Two sides, so the card can spin on its lanyard. */}
@@ -180,10 +172,13 @@ function BadgeFan({ compact = false }: { compact?: boolean }) {
         style={{ borderColor: "#ebebe9", color: "#1d1d1b", animationDelay: "1400ms" }}
       >
         <AiLabel />
-        <span key={showing.id} className="view-in">
-          {showing.name}
+        {/* One phrase, with an ordinary word space between the style and its source. */}
+        <span className="whitespace-nowrap">
+          <span key={showing.id} className="view-in inline-block">
+            {showing.name}
+          </span>{" "}
+          <span className="text-[#8a8a86]">drafted from planned.com</span>
         </span>
-        <span className="text-[#8a8a86]">· drafted from planned.com</span>
       </div>
     </div>
   )
@@ -365,20 +360,20 @@ function AssumptionsFigure() {
 /** Status-bar glyphs: signal, wi-fi and battery. */
 function StatusIcons() {
   return (
-    <span className="flex items-center gap-[4px] text-[#1d1d1b]">
-      <svg width="15" height="9" viewBox="0 0 15 9" aria-hidden>
+    <span className="flex items-center gap-[3px] text-[#1d1d1b]">
+      <svg width="11" height="7" viewBox="0 0 15 9" aria-hidden>
         {[0, 1, 2, 3].map((k) => (
           <rect key={k} x={k * 4} y={6 - k * 2} width="3" height={3 + k * 2} rx="0.8" fill="currentColor" />
         ))}
       </svg>
-      <svg width="13" height="9" viewBox="0 0 13 9" aria-hidden fill="currentColor">
+      <svg width="10" height="7" viewBox="0 0 13 9" aria-hidden fill="currentColor">
         <path d="M6.5 8.6 4.6 6.6a2.7 2.7 0 0 1 3.8 0Z" />
         <path d="M2.9 4.9a5.1 5.1 0 0 1 7.2 0l-1 1a3.7 3.7 0 0 0-5.2 0Z" />
         <path d="M1.1 3.1a7.7 7.7 0 0 1 10.8 0l-1 1a6.3 6.3 0 0 0-8.8 0Z" />
       </svg>
-      <span className="relative flex h-[9px] w-[19px] items-center rounded-[3px] border border-current/40 p-[1px]">
-        <span className="h-full w-[75%] rounded-[1.5px] bg-current" />
-        <span className="absolute -right-[2.5px] h-[3px] w-[1.5px] rounded-r-full bg-current/40" />
+      <span className="relative flex h-[7px] w-[14px] items-center rounded-[2px] border border-current/40 p-[1px]">
+        <span className="h-full w-[75%] rounded-[1px] bg-current" />
+        <span className="absolute -right-[2px] h-[2.5px] w-[1px] rounded-r-full bg-current/40" />
       </span>
     </span>
   )
@@ -408,11 +403,11 @@ function EventPhone({ style: s }: { style: Style }) {
         <div className="h-full w-full rounded-[35px] bg-[#0d0d0c] p-[6px]">
           <div className="relative h-full w-full overflow-hidden rounded-[30px] bg-white" style={{ fontFamily: "Geist, 'Inter Variable', Inter, sans-serif" }}>
             {/* Status bar and the Dynamic Island. */}
-            <div className="absolute inset-x-0 top-0 z-20 flex h-[34px] items-center justify-between px-[16px] pt-[2px]">
-              <span className="text-[10.5px] font-semibold text-[#1d1d1b] tabular-nums">9:41</span>
+            <div className="absolute inset-x-0 top-0 z-20 flex h-[33px] items-center justify-between px-[20px] pt-[1px]">
+              <span className="text-[9px] font-semibold text-[#1d1d1b] tabular-nums">9:41</span>
               <StatusIcons />
             </div>
-            <span className="absolute top-[8px] left-1/2 z-30 h-[19px] w-[52px] -translate-x-1/2 rounded-full bg-black" />
+            <span className="absolute top-[8px] left-1/2 z-30 h-[17px] w-[46px] -translate-x-1/2 rounded-full bg-black" />
 
             {/* The website. */}
             <div className="view-in absolute inset-0 overflow-hidden" style={{ animationDelay: "400ms" }}>
@@ -582,7 +577,7 @@ export const PLANNED_CASE: CaseStudy = {
       title: "AI drafts, the organiser chooses",
       blurb: [
         "I added one card to the page. The organiser describes the feel they want, or points it at their website to pull the brand, and AI drafts three styles in that brand. In the prototype, Planned is running its own event, so the AI reads planned.com: its hazy evening skies, soft grey cloud, feathered mint paint and heavy grain, set in its slate-teal ink. Picking one applies it to every badge, with the preview updating as they go.",
-        "AI is marked with Planned's own gradient circle, so it feels native to the product rather than bolted on. Size, template, attendee colours and content all work exactly as they do today.",
+        "AI is marked with Planned's own gradient circle, so it feels native to the product rather than bolted on. Size, template, attendee colours and content all work exactly as they do today. Once the look is set, the printed badges can be ordered from under the preview, sized from the guest list with spares for walk-ins.",
       ],
       media: {
         kind: "demo",

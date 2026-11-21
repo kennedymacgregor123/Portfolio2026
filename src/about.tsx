@@ -54,13 +54,25 @@ function Signature({ onDone }: { onDone: () => void }) {
       done()
       return
     }
+    // If the video can't play (Safari or Low Power Mode can block it), show
+    // the finished signature rather than its blank first frame.
+    const showFinished = () => {
+      const end = () => {
+        if (Number.isFinite(v.duration)) v.currentTime = Math.max(0, v.duration - 0.05)
+      }
+      if (v.readyState >= 1) end()
+      else v.addEventListener("loadedmetadata", end, { once: true })
+      done()
+    }
     v.addEventListener("ended", done, { once: true })
     const t = window.setTimeout(() => {
       v.currentTime = 0
-      void v.play().catch(done)
+      void v.play().catch(showFinished)
     }, 700)
     // In case the video never loads or never reports its end.
-    const fallback = window.setTimeout(done, 9000)
+    const fallback = window.setTimeout(() => {
+      if (!v.ended) showFinished()
+    }, 9000)
     return () => {
       window.clearTimeout(t)
       window.clearTimeout(fallback)

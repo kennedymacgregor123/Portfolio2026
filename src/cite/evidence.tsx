@@ -12,11 +12,12 @@ import {
   FileText,
   Mail,
   Phone,
-  Quote as QuoteGlyph,
   StickyNote,
   Video,
   type LucideIcon,
 } from "lucide-react"
+
+import { QuoteMark } from "./quote-mark"
 
 import type {
   BreakdownRow,
@@ -138,7 +139,7 @@ export function CountedList({ rows }: { rows: CountedRow[] }) {
               className="inline-flex size-[18px] shrink-0 items-center justify-center rounded-[4px]"
               style={{ background: HAIRLINE, color: MUTED }}
             >
-              <QuoteGlyph size={9} strokeWidth={2.25} />
+              <QuoteMark style={{ width: 9, height: 9 }} />
             </span>
           )}
           <span className="min-w-0 flex-1 truncate" style={{ color: INK }}>

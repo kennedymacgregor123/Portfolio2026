@@ -1,7 +1,8 @@
 import { createContext, useContext, useEffect, useLayoutEffect, useRef, useState } from "react"
 
 import { createPortal } from "react-dom"
-import { Quote, User, type LucideIcon } from "lucide-react"
+
+import { PersonMark, QuoteMark } from "./cite/quote-mark"
 
 import type { Citation } from "./cite/citation"
 import { CitationGroup } from "./cite/citation-group"
@@ -105,7 +106,7 @@ function Mark({
   figure?: boolean
   /** An account's domain, for its logo. */
   logo?: string
-  glyph?: LucideIcon
+  glyph?: React.ComponentType<{ className?: string; style?: React.CSSProperties }>
   children: React.ReactNode
 }) {
   const on = kind === open
@@ -143,10 +144,8 @@ function Mark({
           const Glyph = glyph
           return (
             <Glyph
-              aria-hidden
-              strokeWidth={2.75}
-              className="mr-[0.35em] inline-block text-[#a3a3a0]"
-              style={{ height: "0.8em", width: "0.8em", verticalAlign: "-0.06em" }}
+              className="mr-[0.3em] inline-block text-[#b4b8bd]"
+              style={{ height: "0.78em", width: "0.78em", verticalAlign: "-0.08em" }}
             />
           )
         })()
@@ -198,8 +197,7 @@ function QuoteClaim({ kind, open, onToggle, children }: MarkProps & { children: 
           onBlur={() => setHot(false)}
           className={`cite-quote ${on ? "is-on" : ""}`}
         >
-          {/* Solid, like a printed quotation mark, rather than an outline. */}
-          <Quote aria-hidden fill="currentColor" strokeWidth={1.5} style={{ height: "0.6em", width: "0.6em" }} />
+          <QuoteMark style={{ height: "0.55em", width: "0.55em" }} />
         </span>
       </span>
     </span>
@@ -334,7 +332,7 @@ export function CitedReport({
               Northwind Logistics
             </Mark>
             , where their CFO,{" "}
-            <Mark kind="person" glyph={User} {...shared}>
+            <Mark kind="person" glyph={PersonMark} {...shared}>
               Dana Whitfield
             </Mark>
             ,{" "}

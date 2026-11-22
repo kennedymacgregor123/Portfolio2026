@@ -185,6 +185,27 @@ export function Landing() {
     [goTo, index, count],
   )
 
+  /* A thumb swipe across the hero turns it, like the arrows: left for the
+     next project, right for the last. Only a mostly sideways stroke counts,
+     so scrolling the page up or down never turns it. */
+  const swipe = useRef<{ x: number; y: number } | null>(null)
+  const onTouchStart = (e: React.TouchEvent) => {
+    const t = e.touches[0]
+    swipe.current = e.touches.length === 1 && t ? { x: t.clientX, y: t.clientY } : null
+  }
+  const onTouchEnd = (e: React.TouchEvent) => {
+    const start = swipe.current
+    const t = e.changedTouches[0]
+    swipe.current = null
+    if (!start || !t) return
+    const dx = t.clientX - start.x
+    const dy = t.clientY - start.y
+    if (Math.abs(dx) < 40 || Math.abs(dx) < Math.abs(dy) * 1.5) return
+    // The stroke was a swipe, not a tap: don't let it open the project.
+    if (e.cancelable) e.preventDefault()
+    step(dx < 0 ? 1 : -1)
+  }
+
   /* Which page shows, kept in the URL hash so #about and #citations can be
      linked to and the browser's back button moves between them. */
   const [page, setPage] = useState<Page>(pageFromHash)
@@ -316,6 +337,10 @@ export function Landing() {
             className={`arc-stage relative aspect-square min-w-0 max-w-[47.5rem] flex-1 sm:aspect-[16/10] ${
               prev !== null ? "turning" : ""
             }`}
+            style={{ touchAction: "pan-y" }}
+            onTouchStart={onTouchStart}
+            onTouchEnd={onTouchEnd}
+            onTouchCancel={() => (swipe.current = null)}
           >
             {/* Keyed by project, so the slide that was showing stays the same
                 element as it leaves and swings out exactly as it looked. */}

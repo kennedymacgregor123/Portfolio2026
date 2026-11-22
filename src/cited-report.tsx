@@ -198,7 +198,8 @@ function QuoteClaim({ kind, open, onToggle, children }: MarkProps & { children: 
           onBlur={() => setHot(false)}
           className={`cite-quote ${on ? "is-on" : ""}`}
         >
-          <Quote aria-hidden strokeWidth={3} style={{ height: "0.6em", width: "0.6em" }} />
+          {/* Solid, like a printed quotation mark, rather than an outline. */}
+          <Quote aria-hidden fill="currentColor" strokeWidth={1.5} style={{ height: "0.6em", width: "0.6em" }} />
         </span>
       </span>
     </span>

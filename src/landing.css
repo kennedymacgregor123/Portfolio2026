@@ -298,8 +298,14 @@ body {
 }
 /* The card floats over the report text, so it carries a shadow like the
    hero's card. */
-.cited-popover {
-  filter: drop-shadow(0 18px 40px rgba(15, 15, 15, 0.16));
+.cited-popover > * {
+  /* A box-shadow on the card, not a drop-shadow filter on the popover:
+     browsers clip a filter on an animated layer to a rectangle, which left
+     hard edges in the shadow. The card is one rounded box, so the two match. */
+  box-shadow:
+    0 1px 2px 0 rgba(16, 24, 40, 0.04),
+    0 8px 24px -8px rgba(16, 24, 40, 0.14),
+    0 18px 40px rgba(15, 15, 15, 0.16) !important; /* over the card's inline shadow */
 }
 @keyframes cited-card-in {
   from {

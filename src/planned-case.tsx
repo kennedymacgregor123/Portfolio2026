@@ -573,9 +573,8 @@ export const PLANNED_CASE: CaseStudy = {
       label: "Approach",
       title: "A step ahead of the organiser",
       blurb: [
-        "If Planned already knows a lot about each event, as I'm assuming it does (its website, brand colours, photos and type), then the agent doesn't need to wait for a brief. It can arrive prepared. When the organiser opens Badges, three styles are already drafted, with one suggested. In the prototype, Planned is running its own event, so the drafts come from planned.com: its hazy evening skies, soft grey cloud, feathered mint paint and heavy grain, set in its slate-teal ink.",
-        "Everything stays in the organiser's hands. Nothing is applied until they pick a draft, and they don't have to: the standard badge is always there. They can ask for a change in a line, like “warmer”, and names, roles and IDs keep their place in every draft, so the badge still reads at a glance.",
-        "The agent is marked with Planned's own pink AI sparkle, so it feels native to the product rather than bolted on. Size, template, attendee colours and content all work exactly as they do today. It even has the order ready: once the look is set, the printed badges are sized from the guest list with spares for walk-ins, ready for the organiser to review. I don't know how Planned handles printing today, or whether it does, so this is my best guess at where ordering would sit. A code on each badge can also open the event's agenda for anyone who scans it, and the agent can suggest switching it to the feedback survey once the event is over.",
+        "If Planned already knows each event's website, brand and photos, as I'm assuming it does, the agent doesn't need a brief. When the organiser opens Badges, three styles are already drafted, one suggested. In the prototype, they come from planned.com.",
+        "The organiser stays in control: nothing is applied until they pick a draft, a change is one line away, and names and IDs never move. Everything else works as it does today. The agent also has a print order ready, sized from the guest list, though I don't know how Planned handles printing, so that part is my best guess.",
       ],
       media: {
         kind: "demo",
@@ -644,7 +643,6 @@ export const PLANNED_CASE: CaseStudy = {
       blurb: [
         "I wouldn't ship this all at once. The first step is just the drafts, then steering, and each one should earn the next.",
         "To know whether it's working, I'd watch whether organisers keep the suggested drafts, how long it takes to reach a finished badge, how often they steer, and how many print orders come through Planned rather than outside vendors. Each ties back to one of the assumptions.",
-        "Two practical checks early on: on-site printers often print attendee details in black only, so styles would need to live on pre-printed stock; and whether the same agent could prepare signage, the agenda and the event app in the same way.",
         "The biggest open question for me is whether organisers actually want an agent this proactive, or would rather start from a blank template and stay in full control. That's the first thing I'd want to learn, and the answer would shape everything above.",
       ],
       media: {

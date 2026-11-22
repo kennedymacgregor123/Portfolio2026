@@ -372,8 +372,8 @@ function KitHeader() {
 
 export function KitKpi() {
   return (
-    // In the single column the tile is wide; keep the card card-sized there.
-    <KitSheet fit className="max-sm:right-auto max-sm:w-[12rem]">
+    // In the single column the tile is wide; keep the card card-sized and centred there.
+    <KitSheet fit className="max-sm:right-auto max-sm:left-1/2 max-sm:w-[12rem] max-sm:-translate-x-1/2">
       <div className="px-3 pt-2.5 pb-4">
         <KitLabel>Net New ARR</KitLabel>
         <div className="mt-1.5 text-[20px] leading-none font-semibold tracking-[-0.4px] tabular-nums">$512K</div>

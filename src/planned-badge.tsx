@@ -1285,15 +1285,18 @@ export function PlannedBadge({
   // can flip back to drafts they liked; each says what made it.
   // Each round keeps its own set of drafts (n), so deleting one never
   // reshuffles the others.
-  const [rounds, setRounds] = useState<{ list: { note: string; n: number }[]; shown: number; next: number }>({
+  // Drafts the organiser deleted are kept as "round:id" keys in gone.
+  const [rounds, setRounds] = useState<{ list: { note: string; n: number }[]; shown: number; next: number; gone: string[] }>({
     list: [{ note: "", n: 0 }],
     shown: 0,
     next: 1,
+    gone: [],
   })
+  const kept = (n: number) => draftsFor(n).filter((d) => !rounds.gone.includes(`${n}:${d.id}`))
   const round = rounds.list[rounds.shown]!
   const redraft = (note?: string) => {
     if (note)
-      setRounds((r) => ({ list: [...r.list, { note, n: r.next }], shown: r.list.length, next: r.next + 1 }))
+      setRounds((r) => ({ ...r, list: [...r.list, { note, n: r.next }], shown: r.list.length, next: r.next + 1 }))
     setPhase("thinking")
     window.clearTimeout(timer.current)
     timer.current = window.setTimeout(() => setPhase("done"), 1400)
@@ -1314,20 +1317,23 @@ export function PlannedBadge({
       document.removeEventListener("keydown", close)
     }
   }, [roundMenu])
-  // Managing rounds: the drafts give way to a list of every round, to tick
-  // and delete in bulk. A round holding the style in use can't be deleted,
-  // and at least one round always stays.
+  // Managing drafts: the field opens out to every round, a row of three
+  // each, and the organiser ticks the drafts to delete. The draft in use
+  // can't be deleted, and at least one draft always stays. A round left
+  // with no drafts goes.
   const [managing, setManaging] = useState(false)
-  const [picked, setPicked] = useState<number[]>([])
-  const inUse = (n: number) => style.id !== PLAIN.id && draftsFor(n).some((d) => d.id === style.id)
+  const [picked, setPicked] = useState<string[]>([])
+  const totalDrafts = rounds.list.reduce((t, r) => t + kept(r.n).length, 0)
   const deletePicked = () => {
     setRounds((r) => {
-      const list = r.list.filter((x) => !picked.includes(x.n))
+      const gone = [...r.gone, ...picked]
+      const left = (n: number) => draftsFor(n).some((d) => !gone.includes(`${n}:${d.id}`))
+      const list = r.list.filter((x) => left(x.n))
       if (list.length === 0) return r
       // Stay on the round being viewed, or the nearest one after it.
-      const after = r.list.slice(r.shown).find((x) => !picked.includes(x.n))
+      const after = r.list.slice(r.shown).find((x) => left(x.n))
       const shown = after ? list.indexOf(after) : list.length - 1
-      return { ...r, list, shown }
+      return { ...r, list, shown, gone }
     })
     setPicked([])
   }
@@ -1586,7 +1592,7 @@ export function PlannedBadge({
                                   }}
                                   className="rounded-[7px] px-2.5 py-1.5 text-left transition-colors hover:bg-[#f4f4f2]"
                                 >
-                                  Manage rounds…
+                                  Manage drafts…
                                 </button>
                               </>
                             )}
@@ -1599,69 +1605,77 @@ export function PlannedBadge({
                 </div>
                 <p className="mt-1 truncate text-[12.5px]" style={{ color: MUTED }}>
                   {managing
-                    ? "Select the rounds you no longer need."
+                    ? "Select the drafts you no longer need."
                     : round.n === 0
                     ? "Three styles drafted from your event’s brand. Pick one, or ask for changes."
                     : `Redrafted ${round.note}. Pick one, or ask for changes.`}
                 </p>
 
                 {managing ? (
-                  <div className="view-in mt-3 overflow-hidden rounded-[10px] border" style={{ borderColor: LINE }}>
-                    <div className="max-h-[232px] overflow-y-auto">
-                      {rounds.list.map((r, i) => {
-                        const locked = inUse(r.n)
-                        const on = picked.includes(r.n)
-                        const note = r.n === 0 ? "First drafts, from your brand" : r.note.charAt(0).toUpperCase() + r.note.slice(1)
-                        return (
-                          <label
-                            key={r.n}
-                            className={`flex items-center gap-3 px-3 py-2 ${i > 0 ? "border-t" : ""} ${locked ? "" : "cursor-pointer hover:bg-[#fafaf8]"}`}
-                            style={{ borderColor: LINE }}
-                          >
-                            <input
-                              type="checkbox"
-                              checked={on}
-                              disabled={locked}
-                              onChange={() => setPicked((v) => (on ? v.filter((x) => x !== r.n) : [...v, r.n]))}
-                              aria-label={`Select round ${i + 1}`}
-                              className="size-[14px] shrink-0 accent-[#1d1d1b] disabled:opacity-40"
-                            />
-                            {/* The round's three drafts, small. */}
-                            <span className="flex shrink-0 gap-1" aria-hidden>
-                              {draftsFor(r.n).map((d) => (
-                                <span key={d.id} className="flex h-[34px] w-[28px] items-center justify-center overflow-hidden rounded-[5px]" style={{ background: PANEL }}>
-                                  <span className="block origin-center scale-[0.46]">
-                                    <MiniBadge style={d} />
+                  <div className="view-in mt-3">
+                    {/* Every round, newest first: its note, then its drafts. */}
+                    <div className="-mr-1 flex max-h-[330px] flex-col gap-3 overflow-y-auto pr-1">
+                      {[...rounds.list].reverse().map((r) => (
+                        <div key={r.n}>
+                          <div className="mb-1.5 truncate text-[11.5px]" style={{ color: MUTED }}>
+                            {r.n === 0 ? "First drafts, from your brand" : r.note.charAt(0).toUpperCase() + r.note.slice(1)}
+                          </div>
+                          <div className="grid grid-cols-3 gap-2">
+                            {kept(r.n).map((d) => {
+                              const key = `${r.n}:${d.id}`
+                              const locked = style.id === d.id
+                              const on = picked.includes(key)
+                              return (
+                                <button
+                                  key={key}
+                                  type="button"
+                                  disabled={locked}
+                                  aria-pressed={on}
+                                  aria-label={locked ? `${d.name}, in use` : `Select ${d.name}`}
+                                  onClick={() => setPicked((v) => (on ? v.filter((x) => x !== key) : [...v, key]))}
+                                  className="flex flex-col overflow-hidden rounded-[10px] border text-left transition-colors disabled:cursor-default"
+                                  style={{ borderColor: on ? "#b8433b" : LINE }}
+                                >
+                                  <span className="relative flex h-[64px] items-center justify-center" style={{ background: PANEL }}>
+                                    <span className="block scale-[0.8]">
+                                      <MiniBadge style={d} />
+                                    </span>
+                                    <span className="absolute top-1.5 right-1.5">
+                                      {locked ? (
+                                        <span className="rounded-full bg-white px-1.5 py-[1px] text-[10px] font-medium shadow-[0_1px_2px_rgba(15,15,15,0.06)]" style={{ color: MUTED }}>
+                                          In use
+                                        </span>
+                                      ) : (
+                                        <span
+                                          className="flex size-[15px] items-center justify-center rounded-[4px] border bg-white"
+                                          style={on ? { background: "#b8433b", borderColor: "#b8433b" } : { borderColor: "#c9c9c6" }}
+                                        >
+                                          {on && <Check className="size-[10px] text-white" strokeWidth={3} />}
+                                        </span>
+                                      )}
+                                    </span>
                                   </span>
-                                </span>
-                              ))}
-                            </span>
-                            <span className="min-w-0 flex-1 leading-tight">
-                              <span className="block text-[11px] tabular-nums" style={{ color: MUTED }}>Round {i + 1}</span>
-                              <span className="block truncate text-[12.5px]">{note}</span>
-                            </span>
-                            {locked && (
-                              <span className="shrink-0 rounded-full px-1.5 py-[1px] text-[10.5px] font-medium" style={{ background: PANEL, color: MUTED }}>
-                                In use
-                              </span>
-                            )}
-                          </label>
-                        )
-                      })}
+                                  <span className="block truncate px-2.5 py-1.5 text-[12px] font-medium">{d.name}</span>
+                                </button>
+                              )
+                            })}
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                    <div className="flex items-center justify-between gap-2 border-t py-1.5 pr-1.5 pl-3" style={{ borderColor: LINE }}>
+                    <div className="mt-3 flex items-center justify-between gap-2">
                       <span className="text-[12px]" style={{ color: MUTED }} aria-live="polite">
                         {picked.length === 0
-                          ? `${rounds.list.length} rounds`
-                          : picked.length >= rounds.list.length
-                            ? "Keep at least one round"
+                          ? `${totalDrafts} drafts`
+                          : picked.length >= totalDrafts
+                            ? "Keep at least one draft"
                             : `${picked.length} selected`}
                       </span>
                       <span className="flex items-center gap-1.5">
                         <button
                           type="button"
                           onClick={deletePicked}
-                          disabled={picked.length === 0 || picked.length >= rounds.list.length}
+                          disabled={picked.length === 0 || picked.length >= totalDrafts}
                           className="rounded-[7px] border bg-white px-2.5 py-1 text-[12px] font-medium transition-colors hover:bg-[#f4f4f2] disabled:pointer-events-none disabled:opacity-40"
                           style={{ borderColor: LINE, color: "#b8433b" }}
                         >
@@ -1682,7 +1696,7 @@ export function PlannedBadge({
                   <>
                 {/* The drafts, ready before anyone asked. */}
                 <div className="mt-3 grid grid-cols-3 gap-2.5">
-                  {draftsFor(round.n).map((d, k) => {
+                  {kept(round.n).map((d, k) => {
                     const on = style.id === d.id
                     return phase === "thinking" ? (
                       /* Shaped like the card that's coming: a preview with a
@@ -1719,7 +1733,7 @@ export function PlannedBadge({
                           <span className="absolute top-2 right-2">
                             <Radio on={on} />
                           </span>
-                          {k === 0 && (
+                          {d.id === draftsFor(round.n)[0]!.id && (
                             <span className="absolute top-2 left-2 flex items-center gap-1 rounded-full bg-white py-[2px] pr-2 pl-1.5 text-[10.5px] font-medium shadow-[0_1px_2px_rgba(15,15,15,0.06)]" style={{ color: INK }}>
                               <AiLabel size={10} />
                               Suggested

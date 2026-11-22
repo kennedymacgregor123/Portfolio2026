@@ -198,7 +198,9 @@ body {
   left: 50%;
   bottom: max(14px, env(safe-area-inset-bottom));
   z-index: 30;
-  width: min(calc(100% - 32px), 26rem);
+  /* Wide enough for the current section and a glimpse of its neighbours,
+     which is all the fade at either end ever shows. */
+  width: min(calc(100% - 32px), 17rem);
   translate: -50% 0;
   border: 1px solid #fff;
   border-radius: 14px;
@@ -216,8 +218,8 @@ body {
   padding-inline: calc(50% - 3.5rem);
   scroll-snap-type: x mandatory;
   scrollbar-width: none;
-  -webkit-mask-image: linear-gradient(to right, transparent, #000 24%, #000 76%, transparent);
-  mask-image: linear-gradient(to right, transparent, #000 24%, #000 76%, transparent);
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 20%, #000 80%, transparent);
+  mask-image: linear-gradient(to right, transparent, #000 20%, #000 80%, transparent);
 }
 .section-dial-track::-webkit-scrollbar {
   display: none;

@@ -144,7 +144,7 @@ function Mark({
           const Glyph = glyph
           return (
             <Glyph
-              className="mr-[0.3em] inline-block text-[#b4b8bd]"
+              className="mr-[0.3em] inline-block text-[#a6aab0]"
               style={{ height: "0.78em", width: "0.78em", verticalAlign: "-0.08em" }}
             />
           )

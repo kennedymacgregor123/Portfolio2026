@@ -284,7 +284,7 @@ body {
   border: 1px solid var(--border);
   background: #fff;
   /* Lighter than the muted text grey, so the mark sits back until hovered. */
-  color: #a9adb3;
+  color: #9ea2a8;
   cursor: pointer;
   transition:
     border-color 150ms ease,

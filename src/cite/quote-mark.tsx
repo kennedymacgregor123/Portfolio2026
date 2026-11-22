@@ -8,7 +8,9 @@ export function QuoteMark({ className, style }: { className?: string; style?: Re
   // down into a tapering tail that ends below and left of the head.
   const drop = "M3.5 8.5a3.5 3.5 0 1 1 7 0c0 4.6-2.6 7.9-6.1 9.2l-.7-1.3c1.9-1 3-2.5 3.3-4.4A3.5 3.5 0 0 1 3.5 8.5z"
   return (
-    <svg viewBox="2 3 21 17" fill="currentColor" aria-hidden className={className} style={style}>
+    // Framed on the mark's visual centre (the heavy heads, not the tails'
+    // tips), so it sits in the middle of a circle rather than high in it.
+    <svg viewBox="2 1.5 21 17" fill="currentColor" aria-hidden className={className} style={style}>
       <path d={drop} />
       <path d={drop} transform="translate(10 0)" />
     </svg>

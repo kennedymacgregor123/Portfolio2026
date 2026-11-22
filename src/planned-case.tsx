@@ -211,7 +211,7 @@ export function PlannedHero() {
       if (w < 480) {
         // Phones: fit to the badge and its chip only, and centre it in the frame.
         const tall = 430
-        const scale = Math.min(w / 450, h / tall) * 0.96
+        const scale = Math.min(w / 580, h / tall) * 0.96
         setFit({ scale, left: w / 2 - 580 * scale, top: (h - tall * scale) / 2 - crop * scale })
         return
       }

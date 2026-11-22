@@ -1613,13 +1613,10 @@ export function PlannedBadge({
 
                 {managing ? (
                   <div className="view-in mt-3">
-                    {/* Every round, newest first: its note, then its drafts. */}
-                    <div className="-mr-1 flex max-h-[330px] flex-col gap-3 overflow-y-auto pr-1">
+                    {/* Every round, newest first, a row of drafts each. */}
+                    <div className="-mr-1 flex max-h-[330px] flex-col gap-2 overflow-y-auto pr-1">
                       {[...rounds.list].reverse().map((r) => (
                         <div key={r.n}>
-                          <div className="mb-1.5 truncate text-[11.5px]" style={{ color: MUTED }}>
-                            {r.n === 0 ? "First drafts, from your brand" : r.note.charAt(0).toUpperCase() + r.note.slice(1)}
-                          </div>
                           <div className="grid grid-cols-3 gap-2">
                             {kept(r.n).map((d) => {
                               const key = `${r.n}:${d.id}`

@@ -64,6 +64,25 @@ export function CardGallery() {
   }
   const step = (d: 1 | -1) => goTo((index + d + count) % count, d)
 
+  /* A thumb swipe across the card turns the wheel, like the arrows: left
+     for the next card, right for the last. Only a mostly sideways stroke
+     counts, so scrolling the page never turns it. */
+  const swipe = useRef<{ x: number; y: number } | null>(null)
+  const onTouchStart = (e: React.TouchEvent) => {
+    const t = e.touches[0]
+    swipe.current = e.touches.length === 1 && t ? { x: t.clientX, y: t.clientY } : null
+  }
+  const onTouchEnd = (e: React.TouchEvent) => {
+    const start = swipe.current
+    const t = e.changedTouches[0]
+    swipe.current = null
+    if (!start || !t) return
+    const dx = t.clientX - start.x
+    const dy = t.clientY - start.y
+    if (Math.abs(dx) < 40 || Math.abs(dx) < Math.abs(dy) * 1.5) return
+    step(dx < 0 ? 1 : -1)
+  }
+
   /* The stage is as tall as the tallest card, so the arrows and the label
      stay put as cards of different heights come and go. */
   const measureRef = useRef<HTMLDivElement>(null)
@@ -93,7 +112,13 @@ export function CardGallery() {
       <div className="flex w-full items-center justify-between gap-2">
         {/* Beside the card on wider screens; on a phone they move down by the label. */}
         <Arrow direction="left" onClick={() => step(-1)} className="hidden sm:flex" />
-        <div className="relative flex-1" style={{ height: stageH }}>
+        <div
+          className="relative flex-1"
+          style={{ height: stageH, touchAction: "pan-y" }}
+          onTouchStart={onTouchStart}
+          onTouchEnd={onTouchEnd}
+          onTouchCancel={() => (swipe.current = null)}
+        >
           {(prev === null ? [index] : [prev, index]).map((i) => {
             const leaving = i !== index
             const motion =

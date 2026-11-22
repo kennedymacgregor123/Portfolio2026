@@ -1634,7 +1634,7 @@ export function PlannedBadge({
                                   aria-label={locked ? `${d.name}, in use` : `Select ${d.name}`}
                                   onClick={() => setPicked((v) => (on ? v.filter((x) => x !== key) : [...v, key]))}
                                   className="flex flex-col overflow-hidden rounded-[10px] border text-left transition-colors disabled:cursor-default"
-                                  style={{ borderColor: on ? "#b8433b" : LINE }}
+                                  style={{ borderColor: on ? SELECT : LINE }}
                                 >
                                   <span className="relative flex h-[64px] items-center justify-center" style={{ background: PANEL }}>
                                     <span className="block scale-[0.8]">
@@ -1648,7 +1648,7 @@ export function PlannedBadge({
                                       ) : (
                                         <span
                                           className="flex size-[15px] items-center justify-center rounded-[4px] border bg-white"
-                                          style={on ? { background: "#b8433b", borderColor: "#b8433b" } : { borderColor: "#c9c9c6" }}
+                                          style={on ? { background: SELECT, borderColor: SELECT } : { borderColor: "#c9c9c6" }}
                                         >
                                           {on && <Check className="size-[10px] text-white" strokeWidth={3} />}
                                         </span>
@@ -1665,11 +1665,7 @@ export function PlannedBadge({
                     </div>
                     <div className="mt-3 flex items-center justify-between gap-2">
                       <span className="text-[12px]" style={{ color: MUTED }} aria-live="polite">
-                        {picked.length === 0
-                          ? `${totalDrafts} drafts`
-                          : picked.length >= totalDrafts
-                            ? "Keep at least one draft"
-                            : `${picked.length} selected`}
+                        {picked.length > 0 && picked.length >= totalDrafts ? "Keep at least one draft" : `${totalDrafts} drafts`}
                       </span>
                       <span className="flex items-center gap-1.5">
                         <button
@@ -1679,7 +1675,7 @@ export function PlannedBadge({
                           className="rounded-[7px] border bg-white px-2.5 py-1 text-[12px] font-medium transition-colors hover:bg-[#f4f4f2] disabled:pointer-events-none disabled:opacity-40"
                           style={{ borderColor: LINE, color: "#b8433b" }}
                         >
-                          Delete selected
+                          {picked.length > 0 ? `Delete ${picked.length} selected` : "Delete selected"}
                         </button>
                         <button
                           type="button"

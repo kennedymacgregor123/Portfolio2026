@@ -274,10 +274,10 @@ function SectionDial({ sections, active }: { sections: Section[]; active: string
                 aria-current={on ? "true" : undefined}
                 onClick={() => scrollToSection(s.id)}
                 className={`flex items-center gap-2 rounded-[8px] px-2.5 py-1.5 whitespace-nowrap transition-colors duration-200 ${
-                  on ? "bg-[#e6e6e3] text-[#0f0f0f]" : "text-[#7a7a77]"
+                  on ? "bg-[#e6e6e3] text-[#0f0f0f]" : "text-[#62625f]"
                 }`}
               >
-                <span className="tabular-nums text-[11px] text-[#a3a3a0]">{String(i + 1).padStart(2, "0")}</span>
+                <span className="tabular-nums text-[11px] text-[#82827f]">{String(i + 1).padStart(2, "0")}</span>
                 <span className={on ? "font-medium" : ""}>{s.label}</span>
               </button>
             </li>

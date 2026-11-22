@@ -127,12 +127,14 @@ body {
 /* Solid where the blur isn't available, or for anyone who has asked their
    system for less transparency. */
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-  .site-bar {
+  .site-bar,
+  .section-dial {
     background: var(--bar);
   }
 }
 @media (prefers-reduced-transparency: reduce) {
-  .site-bar {
+  .site-bar,
+  .section-dial {
     background: var(--bar);
     -webkit-backdrop-filter: none;
     backdrop-filter: none;
@@ -200,7 +202,10 @@ body {
   translate: -50% 0;
   border: 1px solid #fff;
   border-radius: 14px;
-  background: var(--bar);
+  /* The same frosted glass as the header bar. */
+  background: color-mix(in oklab, var(--bar) 50%, transparent);
+  -webkit-backdrop-filter: blur(10px) saturate(180%) brightness(1.04);
+  backdrop-filter: blur(10px) saturate(180%) brightness(1.04);
   box-shadow:
     0 1px 2px rgba(15, 15, 15, 0.04),
     0 10px 28px -10px rgba(15, 15, 15, 0.22);

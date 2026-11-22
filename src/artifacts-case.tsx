@@ -302,7 +302,7 @@ export function KitTile({ name, icon, children }: { name: string; icon: React.Re
       <div className="flex items-center gap-2 px-1 pt-1">
         <span
           className="flex size-[22px] shrink-0 items-center justify-center rounded-[6px] border bg-white"
-          style={{ borderColor: "#ececea", color: KIT_GREEN }}
+          style={{ borderColor: "#ececea", color: "#4b5160" }}
           aria-hidden
         >
           {icon}

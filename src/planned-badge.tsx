@@ -24,6 +24,19 @@ import {
   Upload,
   Users,
   X,
+  House,
+  MessageSquare,
+  Store,
+  UsersRound,
+  Columns3,
+  FilePenLine,
+  Receipt,
+  MapPinned,
+  ListChecks,
+  LayoutGrid,
+  Mails,
+  Palette,
+  Inbox,
 } from "lucide-react"
 
 /*
@@ -39,8 +52,15 @@ import {
 const FONT = "font-['Geist','Inter_Variable',Inter,system-ui,sans-serif]"
 const INK = "#1d1d1b"
 const MUTED = "#6b6b68"
-const LINE = "#e7e7e4"
-const PANEL = "#f7f7f5"
+// Outlines follow a CSS variable: the new version sets a cool blue-grey,
+// today's falls back to the original warm grey.
+const LINE = "var(--line, #e7e7e4)"
+// Fills follow variables too: cool blue-grey in the new version, warm today.
+const PANEL = "var(--panel, #f7f7f5)"
+// Selected states: blue in the new version, Planned's black today.
+const SELECT = "var(--select, #1d1d1b)"
+const SWITCH = "var(--select, #2b2f2f)"
+const SELECT_BG = "var(--select-bg, #f7f7f5)"
 
 /* ---------- Options ---------- */
 
@@ -412,9 +432,10 @@ function StyledFace({
   showName: boolean
   showCompany: boolean
 }) {
-  // On the band, the event header turns white.
-  const head = band ? "#ffffff" : style.headInk ?? style.ink
-  const metaColor = band ? "rgba(255,255,255,0.85)" : style.headInk ? head : style.sub
+  // The band is the frame's own soft tint, so the header stays in dark ink on it.
+  const head = band ? style.ink : style.headInk ?? style.ink
+  // Dates and city also in ink on the band, so they pass contrast on every attendee colour.
+  const metaColor = band ? style.ink : style.headInk ? head : style.sub
   // Big type: the name set noticeably larger.
   const nameSize = big ? (portrait ? 56 : 46) : portrait ? 42 : 34
   const bandLayer = band && (
@@ -423,8 +444,9 @@ function StyledFace({
       className="absolute inset-x-0 top-0"
       style={{
         height: portrait ? 118 : 76,
-        background: `linear-gradient(180deg, ${bandColor}, ${bandColor}ee)`,
-        boxShadow: "inset 0 -1px 0 rgba(255,255,255,0.25)",
+        // The same soft tint and direction as the badge's frame, so they read as one piece.
+        background: `linear-gradient(160deg, ${tint(bandColor, 0.62)}, ${tint(bandColor, 0.48)})`,
+        boxShadow: "inset 0 -1px 0 rgba(255,255,255,0.35)",
       }}
     />
   )
@@ -857,23 +879,32 @@ function HangingBadge(props: React.ComponentProps<typeof Badge>) {
 /* ---------- Small pieces of Planned's UI ---------- */
 
 /**
- * Marks something as made by AI the way Planned does: a small gradient
- * circle, like the soft teal-mint orb on planned.com. No sparkles, no purple.
+ * Planned's own AI mark: a large and a small four-point sparkle in a soft
+ * pink-to-lilac gradient, as used across Planned's interface ("Recommended",
+ * AI suggestions). Used wherever the agent shows up.
  */
-export function AiLabel({ size = 14 }: { size?: number }) {
+export function AiLabel({ size: base = 14 }: { size?: number }) {
+  const id = useId().replace(/[^a-zA-Z0-9]/g, "")
+  // Drawn a touch larger than the nominal size, to read clearly at small sizes.
+  const size = Math.round(base * 1.2)
   return (
-    <span
-      role="img"
-      aria-label="AI"
-      title="AI"
-      className="inline-block shrink-0 rounded-full"
-      style={{
-        width: size,
-        height: size,
-        background: "radial-gradient(circle at 34% 30%, #f1faf8 0%, #bfe3df 30%, #6fb3b0 62%, #2f6e6e 100%)",
-        boxShadow: "0 1px 2px rgba(33,51,58,0.25), inset 0 -1px 2px rgba(33,51,58,0.2)",
-      }}
-    />
+    <svg role="img" aria-label="AI" width={size} height={size} viewBox="0 0 24 24" className="inline-block shrink-0">
+      <title>AI</title>
+      <defs>
+        <linearGradient id={`${id}ai`} x1="2" y1="2" x2="22" y2="22" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#F37BAA" />
+          <stop offset="1" stopColor="#B585E0" />
+        </linearGradient>
+      </defs>
+      <path
+        d="M10 4C10.6 9.4 12.6 11.4 18 12C12.6 12.6 10.6 14.6 10 20C9.4 14.6 7.4 12.6 2 12C7.4 11.4 9.4 9.4 10 4Z"
+        fill={`url(#${id}ai)`}
+      />
+      <path
+        d="M18.6 1.8C18.85 4.1 19.8 5.05 22.1 5.3C19.8 5.55 18.85 6.5 18.6 8.8C18.35 6.5 17.4 5.55 15.1 5.3C17.4 5.05 18.35 4.1 18.6 1.8Z"
+        fill={`url(#${id}ai)`}
+      />
+    </svg>
   )
 }
 
@@ -889,9 +920,9 @@ function Radio({ on }: { on: boolean }) {
   return (
     <span
       className="flex size-[16px] shrink-0 items-center justify-center rounded-full border-[1.5px]"
-      style={{ borderColor: on ? INK : "#cfcfcb" }}
+      style={{ borderColor: on ? SELECT : "#cfcfcb" }}
     >
-      {on && <span className="size-[7px] rounded-full" style={{ background: INK }} />}
+      {on && <span className="size-[7px] rounded-full" style={{ background: SELECT }} />}
     </span>
   )
 }
@@ -931,7 +962,7 @@ function MiniSwitch({ on, onClick, label }: { on: boolean; onClick: () => void; 
       aria-label={label}
       onClick={onClick}
       className="relative h-[18px] w-[30px] shrink-0 rounded-full transition-colors"
-      style={{ background: on ? "#2b2f2f" : "#e2e2df" }}
+      style={{ background: on ? SWITCH : "#e2e2df" }}
     >
       <span className="absolute top-[2px] size-[14px] rounded-full bg-white shadow transition-[left]" style={{ left: on ? 14 : 2 }} />
     </button>
@@ -943,7 +974,7 @@ function Toggle({ on, onClick, label }: { on: boolean; onClick: () => void; labe
     <button type="button" onClick={onClick} className="flex items-center gap-3 text-[13.5px]">
       <span
         className="relative h-[20px] w-[34px] rounded-full transition-colors"
-        style={{ background: on ? "#2b2f2f" : "#e2e2df" }}
+        style={{ background: on ? SWITCH : "#e2e2df" }}
       >
         <span
           className="absolute top-[2px] size-[16px] rounded-full bg-white shadow transition-[left]"
@@ -961,7 +992,7 @@ function MiniBadge({ style, band, big, window: win }: { style?: Style; band?: bo
   return (
     <span
       className="relative block h-[58px] w-[42px] overflow-hidden rounded-[5px] border shadow-[0_2px_6px_rgba(15,15,15,0.08)]"
-      style={{ background: s.surface, borderColor: "#e3e3e0" }}
+      style={{ background: s.surface, borderColor: "var(--line, #e3e3e0)" }}
     >
       {s.art && <BrandArt art={s.art} />}
       <PatternLayer pattern={s.pattern} color={s.accent} />
@@ -977,41 +1008,40 @@ function MiniBadge({ style, band, big, window: win }: { style?: Style; band?: bo
 }
 
 /**
- * Ordering the printed badges, right under the preview: the stock the style
- * is pre-printed on, sized from the guest list with spares for walk-ins.
+ * The printed badges, ready to review right under the preview: the stock the
+ * style is pre-printed on, sized from the guest list with spares for walk-ins.
  */
 function OrderCard({ styleName, size }: { styleName?: string; size: Size }) {
-  const [ordered, setOrdered] = useState(false)
   const guests = 248
   const total = Math.ceil((guests * 1.3) / 10) * 10
   return (
     // One slim row, so it sits under the badge without covering it.
     <div
-      className="absolute inset-x-3 bottom-3 z-20 flex items-center gap-2.5 rounded-[12px] border bg-white/90 py-2 pr-2 pl-2.5 shadow-[0_8px_24px_-14px_rgba(15,15,15,0.25)] backdrop-blur-md"
+      className="absolute inset-x-3 bottom-3 z-20 flex items-center gap-3 rounded-[14px] border bg-white/90 py-3 pr-3 pl-3 shadow-[0_8px_24px_-14px_rgba(15,15,15,0.25)] backdrop-blur-md"
       style={{ borderColor: LINE }}
       title={`${size === "portrait" ? "4 × 6 in" : "6 × 4 in"}, pre-printed on matte stock. ${guests} guests plus 30% spare for walk-ins.`}
     >
-      <span className="flex size-[26px] shrink-0 items-center justify-center rounded-[8px]" style={{ background: "#f1f1ee" }}>
-        <Printer className="size-[13px]" strokeWidth={1.7} />
+      <span className="flex size-[34px] shrink-0 items-center justify-center rounded-[9px]" style={{ background: "var(--chip, #f1f1ee)" }}>
+        <Printer className="size-[16px]" strokeWidth={1.7} />
       </span>
       <div className="min-w-0 flex-1 leading-tight">
-        <div className="truncate text-[12.5px] font-medium">
+        <div className="truncate text-[13.5px] font-medium">
           {total} badges{styleName ? ` · ${styleName}` : ""}
         </div>
-        <div className="text-[11px] tabular-nums" style={{ color: MUTED }}>
-          {ordered ? "Arriving by" : "Delivered by"} 2026-09-29
+        <div className="mt-0.5 text-[12px] tabular-nums" style={{ color: MUTED }}>
+          Estimated delivery 2026-09-29
         </div>
       </div>
-      {ordered ? (
-        <span className="view-in flex items-center gap-1 rounded-[8px] px-2.5 py-1 text-[12px] font-medium" style={{ background: "#e3f0ed", color: "#294B4F" }}>
-          <Check className="size-[13px]" strokeWidth={2.2} />
-          Ordered
-        </span>
-      ) : (
-        <button type="button" onClick={() => setOrdered(true)} className="rounded-[8px] px-3 py-1 text-[12px] font-medium text-white" style={{ background: "#1d1d1b" }}>
-          Order
-        </button>
-      )}
+      {/* The next step is a review (price, delivery address, quantity),
+          not a purchase; nothing is ordered from this one click. */}
+      <button
+        type="button"
+        title="Review price, delivery address and quantity"
+        className="shrink-0 rounded-[8px] px-3 py-1.5 text-[12.5px] font-medium text-white"
+        style={{ background: "#1d1d1b" }}
+      >
+        Review order
+      </button>
     </div>
   )
 }
@@ -1030,6 +1060,91 @@ const NAV: [React.ComponentType<{ className?: string; strokeWidth?: number }>, s
   [ClipboardList, "Survey"],
   [BarChart3, "Insights"],
 ]
+
+/**
+ * Planned's current sidebar, for the new version: the mark and two tools up
+ * top, an event switcher, then grouped sections, with an avatar and Inbox at
+ * the foot. It sits on the page's soft grey, beside a white content panel.
+ */
+type NavIcon = React.ComponentType<{ className?: string; strokeWidth?: number }>
+const NEW_NAV: { heading?: string; items: [NavIcon, string][] }[] = [
+  { items: [[House, "Overview"], [MessageSquare, "Chat"]] },
+  {
+    heading: "Sourcing",
+    items: [[FileText, "Event brief"], [Store, "Marketplace"], [UsersRound, "Suppliers"], [Columns3, "Proposal"], [FilePenLine, "Contracts"], [Receipt, "Payments"]],
+  },
+  { heading: "Planner tools", items: [[MapPinned, "Where to meet"], [ListChecks, "Checklist"], [CalendarDays, "Agenda"]] },
+  { heading: "Attendee management", items: [[LayoutGrid, "Dashboard"], [Users, "Attendees"], [Mails, "Invites & reminders"]] },
+  { heading: "Configurations", items: [[Palette, "Branding"], [Globe, "Event site"]] },
+]
+
+function NewNav() {
+  // The list scrolls; it opens scrolled to the current page, Attendees.
+  const navRef = useRef<HTMLElement>(null)
+  useEffect(() => {
+    const nav = navRef.current
+    const on = nav?.querySelector<HTMLElement>("[data-current]")
+    if (nav && on) nav.scrollTop = Math.max(0, on.offsetTop - nav.clientHeight / 2)
+  }, [])
+  return (
+    <aside className="flex w-[248px] shrink-0 flex-col py-4 pr-3 pl-4">
+      <div className="flex items-center justify-between px-1.5">
+        <PlannedLogo size={20} />
+        <span className="flex items-center gap-3 text-[#5d5d5a]">
+          <LayoutGrid className="size-[16px]" strokeWidth={1.7} />
+          <PanelLeft className="size-[16px]" strokeWidth={1.7} />
+        </span>
+      </div>
+      {/* The event switcher. */}
+      <div className="mt-5 flex items-center gap-2.5 px-1.5">
+        <span className="size-[24px] shrink-0 rounded-[6px]" style={{ background: "linear-gradient(140deg, #2F5A7E, #5B95C4 60%, #9CC6E0)" }} />
+        <span className="min-w-0 flex-1 truncate text-[14px] font-medium">Planned Live</span>
+        <ChevronDown className="size-[15px] text-[#8a8a87]" strokeWidth={1.8} />
+      </div>
+      <nav ref={navRef} className="no-scrollbar relative mt-4 flex min-h-0 flex-1 flex-col overflow-y-auto">
+        {NEW_NAV.map((group, g) => (
+          <div key={g} className={g > 0 ? "mt-2 border-t pt-3" : ""} style={g > 0 ? { borderColor: "#E9EBEE" } : undefined}>
+            {group.heading && (
+              <div className="mb-1 px-2.5 text-[12px]" style={{ color: "#8a8a87" }}>
+                {group.heading}
+              </div>
+            )}
+            <div className="flex flex-col gap-px">
+              {group.items.map(([Icon, label]) => {
+                // Badges lives within Attendees, so that's the current page.
+                const on = label === "Attendees"
+                return (
+                  <span
+                    key={label}
+                    data-current={on || undefined}
+                    className="flex shrink-0 items-center gap-3 rounded-[10px] px-2.5 py-[7px] text-[14px]"
+                    style={on ? { background: "#fff", boxShadow: "0 1px 2px rgba(15,15,15,0.06)", color: INK } : { color: "#3f3f3c" }}
+                  >
+                    <Icon className="size-[16px] text-[#5d5d5a]" strokeWidth={1.7} />
+                    {label}
+                  </span>
+                )
+              })}
+            </div>
+          </div>
+        ))}
+      </nav>
+      {/* The person, and the inbox. */}
+      <div className="mt-3 flex items-center gap-2.5 border-t pt-3" style={{ borderColor: "#E9EBEE" }}>
+        <span className="flex size-[30px] shrink-0 items-center justify-center rounded-full text-[12px] font-medium" style={{ background: "#F6E3DE", color: "#9a5a4a" }}>
+          J
+        </span>
+        <span className="relative flex flex-1 items-center justify-center gap-2 rounded-full bg-white py-[7px] text-[13.5px] shadow-[0_1px_2px_rgba(15,15,15,0.06)]">
+          <span className="relative">
+            <Inbox className="size-[15px]" strokeWidth={1.7} />
+            <span className="absolute -top-[3px] -right-[3px] size-[7px] rounded-full ring-2 ring-white" style={{ background: "#E5484D" }} />
+          </span>
+          Inbox
+        </span>
+      </div>
+    </aside>
+  )
+}
 
 export function PlannedBadge({
   embedded = false,
@@ -1154,8 +1269,14 @@ export function PlannedBadge({
   return (
     // One window tall: the preview fills the height, and the settings scroll
     // inside their own column, cut off at the window's foot.
-    <div className={`flex overflow-hidden ${embedded ? "h-[760px]" : "h-screen"} ${FONT}`} style={{ background: "#ffffff", color: INK }}>
-      {/* The sidebar. */}
+    <div className={`flex overflow-hidden ${embedded ? "h-[760px]" : "h-screen"} ${ai ? "cool-ui" : ""} ${FONT}`} style={{ background: ai ? "#F6F7F9" : "#ffffff", color: INK, ...(ai ? ({ "--line": "#E8EAED", "--panel": "#F5F6F8", "--chip": "#EEF0F2", "--select": "#3B6FD6", "--select-bg": "#F2F6FD" } as React.CSSProperties) : {}) }}>
+      {/* The sidebar: Planned's current nav for the new version; today's as it was. */}
+      {ai && (
+        <div className={embedded ? "flex" : "hidden lg:flex"}>
+          <NewNav />
+        </div>
+      )}
+      {!ai && (
       <aside className={`w-[248px] shrink-0 flex-col border-r px-4 py-4 ${embedded ? "flex" : "hidden lg:flex"}`} style={{ borderColor: LINE }}>
         <div className="flex items-center justify-between px-1">
           <span className="text-[19px] font-bold tracking-[0.06em]">PLANNED</span>
@@ -1187,19 +1308,24 @@ export function PlannedBadge({
           ))}
         </nav>
       </aside>
+      )}
 
-      <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-        <header className="flex h-[56px] shrink-0 items-center border-b px-6 text-[13.5px]" style={{ borderColor: LINE }}>
+      <div
+        className={`flex min-h-0 min-w-0 flex-1 flex-col ${ai ? "my-2 mr-2 overflow-hidden rounded-[10px] border shadow-[0_1px_3px_rgba(15,15,15,0.05)]" : ""}`}
+        // The page itself is an even lighter blue-grey; the header and tabs stay white.
+        style={ai ? { borderColor: "#E8EAED", background: "#FBFBFC" } : undefined}
+      >
+        <header className="flex h-[56px] shrink-0 items-center border-b bg-white px-6 text-[13.5px]" style={{ borderColor: LINE }}>
           <span style={{ color: MUTED }}>Planned Live</span>
           <span className="mx-2" style={{ color: "#c7c7c3" }}>/</span>
           <span className="font-medium">Badges</span>
         </header>
-        <div className="flex shrink-0 gap-6 border-b px-6 text-[13.5px]" style={{ borderColor: LINE }}>
+        <div className="flex shrink-0 gap-6 border-b bg-white px-6 text-[13.5px]" style={{ borderColor: LINE }}>
           {["Overview", "Check-in", "Badges", "Event app"].map((t) => (
             <span
               key={t}
               className={`py-3 ${t === "Badges" ? "border-b-2 font-medium" : ""}`}
-              style={t === "Badges" ? { borderColor: INK } : { color: MUTED }}
+              style={t === "Badges" ? { borderColor: SELECT } : { color: MUTED }}
             >
               {t}
             </span>
@@ -1224,7 +1350,7 @@ export function PlannedBadge({
             {/* New, at the top: the badge's style, already drafted. The agent
                 is a step ahead, working from what Planned knows about the
                 event; the organiser picks, switches sources off, or asks for
-                changes. Marked with Planned's own gradient circle. */}
+                changes. Marked with Planned's own AI sparkle. */}
             {ai && !known && (
             /* Nothing to go on yet: no website, brand or photos. The agent
                doesn't leave a blank field; it says the one thing it needs,
@@ -1234,9 +1360,6 @@ export function PlannedBadge({
                 {/* Title and status share a text baseline. */}
                 <div className="flex items-baseline justify-between gap-2">
                   <div className="flex items-baseline gap-1.5">
-                    <span className="self-center">
-                      <AiLabel size={12} />
-                    </span>
                     <span className="text-[14px] font-medium" style={{ color: INK }}>Badge style</span>
                   </div>
                   <span className="text-[11.5px]" style={{ color: MUTED }}>Waiting for your brand</span>
@@ -1276,9 +1399,6 @@ export function PlannedBadge({
               <div className="field-card p-4">
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex items-center gap-1.5">
-                    <span className={phase === "thinking" ? "ai-pulse inline-flex" : "inline-flex"}>
-                      <AiLabel size={12} />
-                    </span>
                     <span className="text-[14px] font-medium" style={{ color: INK }}>Badge style</span>
                   </div>
                   {/* A quiet way to steer, up in the header. */}
@@ -1289,16 +1409,16 @@ export function PlannedBadge({
                     <button
                       type="button"
                       onClick={() => setAsking(true)}
-                      className="-my-1 flex items-center gap-1.5 rounded-[8px] border bg-white px-2.5 py-[4px] text-[12px] transition-colors hover:bg-[#fafaf8]"
+                      className="-my-1 flex items-center gap-1 rounded-[7px] border bg-white px-2 py-[2px] text-[11.5px] transition-colors hover:bg-[#fafaf8]"
                       style={{ borderColor: LINE, color: INK }}
                     >
-                      <Pencil className="size-[11px]" strokeWidth={1.8} style={{ color: MUTED }} />
+                      <Pencil className="size-[10px]" strokeWidth={1.8} style={{ color: MUTED }} />
                       Refine
                     </button>
                   )}
                 </div>
                 <p className="mt-1 text-[12.5px]" style={{ color: MUTED }}>
-                  Three styles in your event&apos;s brand, ready before you got here. Pick one, or ask for changes.
+                  Three styles drafted from your event&apos;s brand. Pick one, or ask for changes.
                 </p>
 
                 {/* The drafts, ready before anyone asked. */}
@@ -1333,7 +1453,7 @@ export function PlannedBadge({
                         aria-pressed={on}
                         // Built exactly like the Badge template cards below.
                         className="view-in flex flex-col justify-start overflow-hidden rounded-[10px] border text-left transition-colors"
-                        style={{ borderColor: on ? INK : LINE, animationDelay: `${k * 90}ms` }}
+                        style={{ borderColor: on ? SELECT : LINE, animationDelay: `${k * 90}ms` }}
                       >
                         <span className="relative flex h-[84px] items-center justify-center" style={{ background: PANEL }}>
                           <MiniBadge style={d} />
@@ -1341,7 +1461,8 @@ export function PlannedBadge({
                             <Radio on={on} />
                           </span>
                           {k === 0 && (
-                            <span className="absolute top-2 left-2 rounded-full bg-white px-1.5 py-[1px] text-[10px] font-medium" style={{ color: MUTED }}>
+                            <span className="absolute top-2 left-2 flex items-center gap-1 rounded-full bg-white py-[2px] pr-2 pl-1.5 text-[10.5px] font-medium shadow-[0_1px_2px_rgba(15,15,15,0.06)]" style={{ color: INK }}>
+                              <AiLabel size={10} />
                               Suggested
                             </span>
                           )}
@@ -1675,7 +1796,7 @@ export function PlannedBadge({
                     type="button"
                     onClick={() => setSize(id)}
                     className="relative flex items-center gap-3 rounded-[10px] border p-2.5 text-left transition-colors"
-                    style={{ borderColor: size === id ? INK : LINE }}
+                    style={{ borderColor: size === id ? SELECT : LINE }}
                   >
                     <span className="flex size-[48px] shrink-0 items-center justify-center rounded-[8px]" style={{ background: PANEL }}>
                       {/* The badge's shape, with its slot. */}
@@ -1712,7 +1833,7 @@ export function PlannedBadge({
                   type="button"
                   onClick={() => setSize(id)}
                   className="rounded-[12px] border p-4 text-left transition-colors"
-                  style={{ borderColor: size === id ? INK : LINE }}
+                  style={{ borderColor: size === id ? SELECT : LINE }}
                 >
                   <Radio on={size === id} />
                   <div className="mt-3 text-[14px] font-medium">{t}</div>
@@ -1739,7 +1860,7 @@ export function PlannedBadge({
                     // Stacked from the top: a button centres its contents by
                     // default, which left a white strip above the preview.
                     className="flex flex-col justify-start overflow-hidden rounded-[10px] border text-left"
-                    style={{ borderColor: template === id ? INK : LINE }}
+                    style={{ borderColor: template === id ? SELECT : LINE }}
                   >
                     <span className="relative flex h-[84px] items-center justify-center" style={{ background: PANEL }}>
                       <MiniBadge window={id === "window"} band={id === "band"} big={id === "big"} />
@@ -1768,7 +1889,7 @@ export function PlannedBadge({
                       setHexDraft(null)
                     }}
                     className="flex items-center gap-2 rounded-[9px] border px-3 py-1.5 text-[13px]"
-                    style={{ borderColor: role === r.id ? INK : LINE, background: role === r.id ? PANEL : "#fff" }}
+                    style={{ borderColor: role === r.id ? SELECT : LINE, background: role === r.id ? SELECT_BG : "#fff" }}
                   >
                     <span className="size-[13px] rounded-[3px] transition-colors" style={{ background: colorFor(r.id) }} />
                     {r.id}
@@ -1819,7 +1940,7 @@ export function PlannedBadge({
               <Card className="flex flex-col gap-3 p-4">
                 <div className="flex items-center justify-between">
                   <div className="text-[13px]" style={{ color: MUTED }}>Badge code</div>
-                  <span className="rounded-full px-2 py-[2px] text-[11px]" style={{ background: "#f1f1ee", color: MUTED }}>New</span>
+                  <span className="rounded-full px-2 py-[2px] text-[11px]" style={{ background: "var(--chip, #f1f1ee)", color: MUTED }}>New</span>
                 </div>
                 <Toggle on={codeLink} onClick={() => setCodeLink((v) => !v)} label="Code on badge, opens a link" />
                 {codeLink && (
@@ -1881,7 +2002,8 @@ export function PlannedBadge({
                 top edge and the badge hangs centred in the frame. */}
             <div
               className={`relative h-full overflow-hidden rounded-[16px] border ${embedded ? "" : "min-h-[600px]"}`}
-              style={{ borderColor: LINE, background: PANEL }}
+              // New version: a cool blue-grey to sit with the page; today's keeps its warm grey.
+              style={ai ? { borderColor: "#E7E9EC", background: "#F4F5F7" } : { borderColor: LINE, background: PANEL }}
             >
               <div className="absolute inset-x-4 top-4 z-20 flex items-center justify-between text-[12.5px]" style={{ color: MUTED }}>
                 <span>Preview</span>

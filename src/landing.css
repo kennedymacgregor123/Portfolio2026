@@ -1427,3 +1427,34 @@ main:has(.hero-slide a:focus-visible) .title-chevron,
 .tight-cards .field-card {
   padding-top: 12px;
 }
+
+/* A scrolling list without a visible scrollbar. */
+.no-scrollbar {
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* The Planned prototype's new version uses a cool blue-grey palette, so its
+   loading states follow: the skeleton shimmer, the badge's drafting wash and
+   the "Regenerating…" text. Everything else on the site keeps the warm greys. */
+.cool-ui .rb-skel {
+  background: linear-gradient(100deg, #E9EBEE 35%, #F6F7F9 50%, #E9EBEE 65%);
+  background-size: 300% 100%;
+}
+.cool-ui .badge-shimmer {
+  background:
+    linear-gradient(100deg, rgba(255, 255, 255, 0) 30%, rgba(255, 255, 255, 0.85) 50%, rgba(255, 255, 255, 0) 70%),
+    rgba(244, 245, 247, 0.72);
+  background-size: 260% 100%, 100% 100%;
+}
+.cool-ui .text-shimmer {
+  background: linear-gradient(90deg, #80868D 0%, #80868D 35%, #D8DCE0 50%, #80868D 65%, #80868D 100%);
+  background-size: 250% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+@media (prefers-reduced-motion: reduce) {
+  .cool-ui .text-shimmer { color: #80868D; }
+}

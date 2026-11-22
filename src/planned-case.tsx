@@ -1,8 +1,8 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react"
-import { ArrowRight, ArrowUpRight, Brush, Eye, Handshake, LayoutTemplate, PackageCheck, ScanLine, SlidersHorizontal, Store, TrendingUp, UserCheck } from "lucide-react"
+import { ArrowUpRight, Brush, CircleAlert, Eye, Globe, Handshake, LayoutTemplate, PackageCheck, RotateCcw, SlidersHorizontal, Store, TrendingUp, UserCheck } from "lucide-react"
 
 import type { CaseStudy } from "./case-study"
-import { AiLabel, Badge, BrandArt, DRAFTS, LanyardClip, PLAIN, PlannedBadge, PlannedLogo, SlotRim, slotMask, type Pattern, type Style } from "./planned-badge"
+import { AiLabel, Badge, BrandArt, DRAFTS, LanyardClip, PlannedBadge, PlannedLogo, SlotRim, slotMask, type Style } from "./planned-badge"
 import { Scaled } from "./report-kit"
 import { SkillsFigure } from "./planned-skills"
 
@@ -239,45 +239,6 @@ function PageFigure({ ai, known = true }: { ai: boolean; known?: boolean }) {
   )
 }
 
-/** The same attendee, the same details: today's badge beside a branded one. */
-function PlainVsBranded() {
-  const tide = DRAFTS[0]!  // Golden hour
-  return (
-    <div className={`flex w-full flex-col items-center gap-8 sm:flex-row sm:justify-center sm:gap-12 ${FONT}`}>
-      {[
-        { label: "Today", s: PLAIN, accent: PLAIN.accent, pattern: "none" as Pattern },
-        { label: "With the event's brand", s: tide, accent: tide.accent, pattern: tide.pattern },
-      ].map(({ label, s, accent, pattern }) => (
-        <div key={label} className="flex flex-col items-center gap-3">
-          <div className="origin-top scale-[0.72]" style={{ marginBottom: -112 }}>
-            <Badge size="portrait" template="window" role="General" style={s} accent={accent} pattern={pattern} showName showCompany />
-          </div>
-          <span className="text-[12.5px] font-medium text-[#4a4a4a]">{label}</span>
-        </div>
-      ))}
-    </div>
-  )
-}
-
-/** One drafted style across attendee types: the frame changes, the name never moves. */
-function PatternRange() {
-  const s = DRAFTS[0]!
-  return (
-    <div className={`grid w-full grid-cols-2 justify-items-center gap-x-4 gap-y-6 sm:grid-cols-4 ${FONT}`}>
-      {(["General", "VIP", "Speaker", "Staff"] as const).map((role) => (
-        <div key={role} className="flex flex-col items-center gap-2">
-          <div style={{ width: 118, height: 168 }}>
-            <div className="origin-top-left scale-[0.42]" style={{ width: 280 }}>
-              <Badge size="portrait" template="window" role={role} style={s} accent={s.accent} pattern="none" showName showCompany={false} />
-            </div>
-          </div>
-          <span className="text-[12px] text-[#4a4a4a]">{role}</span>
-        </div>
-      ))}
-    </div>
-  )
-}
-
 /** What I assumed going in, and how I'd check each one. None are tested yet. */
 const ASSUMPTIONS: { area: string; icon: typeof Store; tint: string; text: string; check: string }[] = [
   {
@@ -357,188 +318,31 @@ function AssumptionsFigure() {
   )
 }
 
-/** Status-bar glyphs: signal, wi-fi and battery. */
-function StatusIcons() {
-  return (
-    <span className="flex items-center gap-[3px] text-[#1d1d1b]">
-      <svg width="11" height="7" viewBox="0 0 15 9" aria-hidden>
-        {[0, 1, 2, 3].map((k) => (
-          <rect key={k} x={k * 4} y={6 - k * 2} width="3" height={3 + k * 2} rx="0.8" fill="currentColor" />
-        ))}
-      </svg>
-      <svg width="10" height="7" viewBox="0 0 13 9" aria-hidden fill="currentColor">
-        <path d="M6.5 8.6 4.6 6.6a2.7 2.7 0 0 1 3.8 0Z" />
-        <path d="M2.9 4.9a5.1 5.1 0 0 1 7.2 0l-1 1a3.7 3.7 0 0 0-5.2 0Z" />
-        <path d="M1.1 3.1a7.7 7.7 0 0 1 10.8 0l-1 1a6.3 6.3 0 0 0-8.8 0Z" />
-      </svg>
-      <span className="relative flex h-[7px] w-[14px] items-center rounded-[2px] border border-current/40 p-[1px]">
-        <span className="h-full w-[75%] rounded-[1px] bg-current" />
-        <span className="absolute -right-[2px] h-[2.5px] w-[1px] rounded-r-full bg-current/40" />
-      </span>
-    </span>
-  )
-}
-
-/**
- * A phone, drawn with care: a slim titanium frame and side buttons, the
- * Dynamic Island, a status bar, and a browser's floating address bar over an
- * event website in the badge's own style.
- */
-function EventPhone({ style: s }: { style: Style }) {
-  return (
-    <div className="relative shrink-0" style={{ width: 214, height: 438 }}>
-      {/* Side buttons. */}
-      <span className="absolute top-[92px] -left-[2px] h-[22px] w-[3px] rounded-l-[2px] bg-[#3a3a38]" />
-      <span className="absolute top-[124px] -left-[2px] h-[38px] w-[3px] rounded-l-[2px] bg-[#3a3a38]" />
-      <span className="absolute top-[170px] -left-[2px] h-[38px] w-[3px] rounded-l-[2px] bg-[#3a3a38]" />
-      <span className="absolute top-[134px] -right-[2px] h-[58px] w-[3px] rounded-r-[2px] bg-[#3a3a38]" />
-      {/* Frame: a thin metal edge around a black bezel. */}
-      <div
-        className="absolute inset-0 rounded-[38px] p-[3px]"
-        style={{
-          background: "linear-gradient(145deg, #8d8f8c, #4a4b49 40%, #2b2c2a 60%, #77797a)",
-          boxShadow: "0 30px 60px -28px rgba(15,15,15,0.5), 0 10px 20px -12px rgba(15,15,15,0.3)",
-        }}
-      >
-        <div className="h-full w-full rounded-[35px] bg-[#0d0d0c] p-[6px]">
-          <div className="relative h-full w-full overflow-hidden rounded-[30px] bg-white" style={{ fontFamily: "Geist, 'Inter Variable', Inter, sans-serif" }}>
-            {/* Status bar and the Dynamic Island. */}
-            <div className="absolute inset-x-0 top-0 z-20 flex h-[33px] items-center justify-between px-[20px] pt-[1px]">
-              <span className="text-[9px] font-semibold text-[#1d1d1b] tabular-nums">9:41</span>
-              <StatusIcons />
-            </div>
-            <span className="absolute top-[8px] left-1/2 z-30 h-[17px] w-[46px] -translate-x-1/2 rounded-full bg-black" />
-
-            {/* The website. */}
-            <div className="view-in absolute inset-0 overflow-hidden" style={{ animationDelay: "400ms" }}>
-              {/* Site header: sticky nav over the hero. */}
-              <div className="relative overflow-hidden pt-[34px]" style={{ background: s.surface, color: s.ink }}>
-                {s.art && <BrandArt art={s.art} />}
-                <div className="relative flex items-center justify-between px-3.5 py-2">
-                  <span className="flex items-center gap-1.5">
-                    <PlannedLogo size={13} />
-                    <span className="text-[10px] font-semibold tracking-[-0.01em]">Planned Live</span>
-                  </span>
-                  <span className="flex flex-col gap-[3px]" aria-hidden>
-                    <span className="h-[1.5px] w-[12px] rounded-full bg-current" />
-                    <span className="h-[1.5px] w-[12px] rounded-full bg-current" />
-                  </span>
-                </div>
-                <div className="relative px-3.5 pt-3 pb-4">
-                  <span className="inline-flex rounded-full px-2 py-[2px] text-[7.5px] font-semibold tracking-[0.12em] uppercase" style={{ background: "rgba(255,255,255,0.55)" }}>
-                    Day 1 · Live now
-                  </span>
-                  <div className="mt-2 text-[24px] leading-[0.95] font-medium tracking-[-0.035em]">
-                    Planned
-                    <br />
-                    Live
-                  </div>
-                  <div className="mt-1.5 text-[8.5px] leading-[1.45] text-[#3F4D4F] tabular-nums">
-                    2026-10-06 – 2026-10-08 · San Francisco
-                  </div>
-                  <div className="mt-3 flex gap-1.5">
-                    <span className="rounded-full bg-[#21333A] px-3 py-[5px] text-[9px] font-medium whitespace-nowrap text-white">View agenda</span>
-                    <span className="rounded-full bg-white/70 px-3 py-[5px] text-[9px] font-medium whitespace-nowrap text-[#21333A]">Get the app</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Today's agenda, as cards. */}
-              <div className="bg-[#FCFBF4] px-3.5 pt-3">
-                <div className="flex items-baseline justify-between">
-                  <span className="text-[11px] font-semibold text-[#21333A]">Today</span>
-                  <span className="text-[8.5px] text-[#7a8786]">Full agenda →</span>
-                </div>
-                {[
-                  ["09:00", "Opening keynote", "Main stage", true],
-                  ["11:30", "Designing for attendees", "Workshop room B", false],
-                  ["13:00", "Lunch on the terrace", "Level 2", false],
-                ].map(([t, what, where, now]) => (
-                  <div key={t as string} className="mt-1.5 flex items-center gap-2.5 rounded-[10px] border border-[#efeee8] bg-white px-2.5 py-[7px]">
-                    <span className="w-[26px] text-[8.5px] text-[#7a8786] tabular-nums">{t}</span>
-                    <span className="min-w-0 flex-1">
-                      <span className="block truncate text-[9.5px] font-medium text-[#21333A]">{what}</span>
-                      <span className="block text-[8px] text-[#7a8786]">{where}</span>
-                    </span>
-                    {now && <span className="rounded-full bg-[#d6ece9] px-1.5 py-[1px] text-[7px] font-semibold text-[#294B4F]">Now</span>}
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* The browser's floating address bar, and the home indicator. */}
-            <div className="absolute inset-x-0 bottom-0 z-20 px-2.5 pt-6 pb-[6px]" style={{ background: "linear-gradient(to top, rgba(252,251,244,1) 55%, rgba(252,251,244,0))" }}>
-              <div className="flex items-center justify-center gap-1 rounded-[12px] bg-white/90 py-[7px] text-[9.5px] text-[#1d1d1b] shadow-[0_2px_10px_rgba(15,15,15,0.12)] backdrop-blur-md">
-                <svg width="7" height="9" viewBox="0 0 7 9" aria-hidden fill="#7a7a77">
-                  <rect x="0.5" y="4" width="6" height="4.5" rx="1" />
-                  <path d="M1.8 4V2.8a1.7 1.7 0 0 1 3.4 0V4" fill="none" stroke="#7a7a77" strokeWidth="1" />
-                </svg>
-                planned.com/live
-              </div>
-              <div className="mx-auto mt-[7px] h-[3.5px] w-[70px] rounded-full bg-[#1d1d1b]" />
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-/**
- * The badge's code, doing its second job: a phone scans it and lands on the
- * page the organiser chose, here the event's agenda.
- */
-function CodeFigure() {
-  const s = DRAFTS[0]!
-  return (
-    <div className={`flex w-full flex-col items-center gap-6 sm:flex-row sm:justify-center sm:gap-10 ${FONT}`}>
-      {/* The badge, with its code picked out. */}
-      <div style={{ width: 196, height: 280 }} className="relative shrink-0">
-        <div className="origin-top-left scale-[0.7]" style={{ width: 280 }}>
-          <div className="relative">
-            <Badge size="portrait" template="window" role="General" style={s} accent={s.accent} pattern="none" showName showCompany link="planned.com/live" highlightCode />
-          </div>
-        </div>
-      </div>
-
-      {/* The scan. */}
-      <div className="flex items-center gap-2 text-[12px] text-[#6b6b68] sm:flex-col">
-        <ScanLine className="size-[18px]" strokeWidth={1.6} />
-        <span>Scanned with any phone</span>
-        <ArrowRight className="size-[14px] rotate-90 sm:rotate-0" strokeWidth={1.8} />
-      </div>
-
-      {/* The phone, open on the organiser's page. */}
-      <EventPhone style={s} />
-    </div>
-  )
-}
-
 /** The four rules that keep a proactive agent helpful rather than pushy. */
 const PRINCIPLES: { icon: typeof Eye; title: string; text: string; where: string }[] = [
   {
     icon: PackageCheck,
     title: "Come prepared",
-    text: "Draft before anyone asks, from what Planned already knows about the event.",
+    text: "Draft before anyone asks, from what Planned already knows. With nothing to go on, ask for the one thing it needs.",
     where: "Three drafts are waiting when Badges opens.",
   },
   {
     icon: Eye,
-    title: "Show the work",
-    text: "Say what each draft took from each source, in plain words, so nothing feels like magic.",
-    where: "How these were drafted",
-  },
-  {
-    icon: SlidersHorizontal,
-    title: "Easy to steer",
-    text: "Asking for a change takes one line, and the agent redrafts.",
-    where: "Ask for changes, in a line",
+    title: "Show the work, flag doubts",
+    text: "Say what the drafts drew on, and say plainly when something looks off, rather than passing a guess off as finished.",
+    where: "Drafted from 4 sources",
   },
   {
     icon: UserCheck,
-    title: "Never decide alone",
-    text: "Suggest, never commit. Nothing is applied, printed or ordered without the organiser.",
-    where: "Suggested, not final; the order waits for a click.",
+    title: "Steer, undo, decide",
+    text: "Nothing is applied or ordered without the organiser. A change is one line away, and the standard badge one click away.",
+    where: "Ask for changes, and Review order",
+  },
+  {
+    icon: SlidersHorizontal,
+    title: "Speak up rarely",
+    text: "Work quietly in the background, and only nudge when something needs the organiser, like an approaching print deadline.",
+    where: "No notifications; the drafts are simply there.",
   },
 ]
 
@@ -614,8 +418,13 @@ function ManualVsAgent() {
         </div>
         <ol className="mt-3 flex flex-col gap-1.5">
           {agent.map((m, k) => (
-            <li key={m} className="flex items-center gap-2.5 rounded-[9px] px-2.5 py-[6px] text-[12.5px] text-[#21333A]" style={{ background: "linear-gradient(135deg, rgba(214,236,233,0.7), rgba(244,236,207,0.5))" }}>
-              <span className="w-[14px] font-mono text-[10.5px] text-[#7a8786]">{k + 1}</span>
+            /* Cotton candy: pink into lilac into a soft blue, like Planned's app icon. */
+            <li
+              key={m}
+              className="flex items-center gap-2.5 rounded-[9px] px-2.5 py-[6px] text-[12.5px] text-[#1d1d1b]"
+              style={{ background: "linear-gradient(120deg, #FDEFF5 0%, #F6F1FC 50%, #EEF4FE 100%)", boxShadow: "inset 0 0 0 1px rgba(196, 170, 226, 0.25)" }}
+            >
+              <span className="w-[14px] font-mono text-[10.5px] text-[#B386C4]">{k + 1}</span>
               {m}
             </li>
           ))}
@@ -625,6 +434,78 @@ function ManualVsAgent() {
         </p>
       </div>
     </div>
+  )
+}
+
+/* ---------- Shared figure layouts ---------- */
+
+const TINTS = [
+  "linear-gradient(135deg, #d6ece9, #c2e0e1)",
+  "linear-gradient(135deg, #f4eccf, #f3dcae)",
+  "linear-gradient(135deg, #dce8f1, #c9dceb)",
+  "linear-gradient(135deg, #e3eee0, #cfe4d6)",
+]
+
+/** A grid of small cards: an icon tile, a title, a line, and a footnote. */
+function InfoCards({ items, noteLabel }: { items: { icon: typeof Eye; title: string; text: string; note: string }[]; noteLabel: string }) {
+  return (
+    <ol className={`grid w-full gap-3 ${items.length === 3 ? "sm:grid-cols-3" : "sm:grid-cols-2"} ${FONT}`}>
+      {items.map((it, k) => {
+        const Icon = it.icon
+        return (
+          <li key={it.title} className="flex flex-col rounded-[16px] border bg-white p-4" style={{ borderColor: "#ebebe9" }}>
+            <span
+              className="flex size-[38px] items-center justify-center rounded-[11px] text-[#21333A]"
+              style={{ background: TINTS[k % TINTS.length], boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.6)" }}
+            >
+              <Icon className="size-[17px]" strokeWidth={1.7} />
+            </span>
+            <div className="mt-3 text-[14px] font-medium text-[#1d1d1b]">{it.title}</div>
+            <p className="mt-1 text-[13px] leading-[1.45] text-[#4a4a48]">{it.text}</p>
+            <p className="mt-auto pt-3 text-[12.5px] leading-[1.45] text-[#6b6b68]">
+              <span className="font-medium text-[#4a4a48]">{noteLabel} </span>
+              {it.note}
+            </p>
+          </li>
+        )
+      })}
+    </ol>
+  )
+}
+
+/** A vertical timeline: a dot per step, a line between, and an optional tag. */
+function Timeline({ steps }: { steps: { when: string; text: string; tag?: string; loud?: boolean }[] }) {
+  return (
+    <ol className={`w-full max-w-[560px] ${FONT}`}>
+      {steps.map((st, k) => (
+        <li key={st.when} className="relative flex gap-4 pb-5 last:pb-0">
+          {k < steps.length - 1 && <span aria-hidden className="absolute top-[18px] left-[8.5px] h-[calc(100%-14px)] w-px bg-[#e3e3e0]" />}
+          <span
+            className="relative mt-[3px] size-[18px] shrink-0 rounded-full"
+            style={
+              // The site's own style: the step to start with in ink, the rest as rings.
+              st.loud
+                ? { background: "#1d1d1b", boxShadow: "inset 0 0 0 4px #fff, 0 0 0 1.5px #1d1d1b, 0 0 0 4px #fff" }
+                : { background: "#fff", boxShadow: "inset 0 0 0 1.5px #c9c9c6, 0 0 0 3px #fff" }
+            }
+          />
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-[14px] font-medium text-[#1d1d1b]">{st.when}</span>
+              {st.tag && (
+                <span
+                  className="rounded-full px-2 py-[1px] text-[11px]"
+                  style={st.loud ? { background: "#ebebe9", color: "#1d1d1b" } : { background: "#f1f1ee", color: "#6b6b68" }}
+                >
+                  {st.tag}
+                </span>
+              )}
+            </div>
+            <p className="mt-0.5 text-[13px] leading-[1.45] text-[#4a4a48]">{st.text}</p>
+          </div>
+        </li>
+      ))}
+    </ol>
   )
 }
 
@@ -662,7 +543,8 @@ export const PLANNED_CASE: CaseStudy = {
       title: "A strong foundation",
       blurb: [
         "Planned's badge builder already gets the essentials right. Organisers choose a size, a template, a colour per attendee type and what each badge shows. From the outside, the templates seem to put legibility first, which is what a badge needs to do.",
-        "That foundation leaves room for one more layer: an agent that does the first draft before anyone asks. Planned already calls itself the AI operating system for events, and I'm assuming it already holds most of what that agent would need: each event's website, brand and photos.",
+        "Badges also travel further than most of an event's brand. Having worked events, I've seen people wear them all day: at the sessions, at lunch, at the dinner afterwards. Yet in my experience the badge is often one of the last jobs on an organiser's list, and my guess is most don't have the time to brand it themselves.",
+        "Planned already calls itself the AI operating system for events, and I'm assuming it already holds most of what an agent would need to help: each event's website, brand and photos.",
       ],
       media: {
         kind: "demo",
@@ -687,27 +569,13 @@ export const PLANNED_CASE: CaseStudy = {
       },
     },
     {
-      id: "opportunity",
-      label: "Opportunity",
-      title: "A badge is marketing that walks around",
-      blurb: [
-        "Having worked events, I've seen how far a badge travels. Every person wears one all day: at the sessions, at lunch, in the lobby, at the dinner afterwards. Everyone who passes them sees the event's brand.",
-        "That makes the badge one of the most seen pieces of an event's identity, yet in my experience it's often one of the last jobs on an organiser's list. My guess is that most aren't designers and few have the time, so an agent that has already done the first draft could go a long way.",
-      ],
-      media: {
-        kind: "demo",
-        caption: "The same attendee, before and after the brand.",
-        node: <PlainVsBranded />,
-      },
-    },
-    {
       id: "approach",
       label: "Approach",
       title: "A step ahead of the organiser",
       blurb: [
         "If Planned already knows a lot about each event, as I'm assuming it does (its website, brand colours, photos and type), then the agent doesn't need to wait for a brief. It can arrive prepared. When the organiser opens Badges, three styles are already drafted, with one suggested. In the prototype, Planned is running its own event, so the drafts come from planned.com: its hazy evening skies, soft grey cloud, feathered mint paint and heavy grain, set in its slate-teal ink.",
-        "Everything stays in the organiser's hands. Nothing is applied until they pick a draft, and they don't have to: the standard badge is always there. They can ask for a change in a line, like “warmer”, and a short note shows which sources the drafts drew on.",
-        "The agent is marked with Planned's own gradient circle, so it feels native to the product rather than bolted on. Size, template, attendee colours and content all work exactly as they do today. It even has the order ready: once the look is set, the printed badges are sized from the guest list with spares for walk-ins, waiting for one click. I don't know how Planned handles printing today, so this is my best guess at where ordering would sit.",
+        "Everything stays in the organiser's hands. Nothing is applied until they pick a draft, and they don't have to: the standard badge is always there. They can ask for a change in a line, like “warmer”, and names, roles and IDs keep their place in every draft, so the badge still reads at a glance.",
+        "The agent is marked with Planned's own pink AI sparkle, so it feels native to the product rather than bolted on. Size, template, attendee colours and content all work exactly as they do today. It even has the order ready: once the look is set, the printed badges are sized from the guest list with spares for walk-ins, ready for the organiser to review. I don't know how Planned handles printing today, or whether it does, so this is my best guess at where ordering would sit. A code on each badge can also open the event's agenda for anyone who scans it, and the agent can suggest switching it to the feedback survey once the event is over.",
       ],
       media: {
         kind: "demo",
@@ -731,18 +599,26 @@ export const PLANNED_CASE: CaseStudy = {
       },
     },
     {
-      id: "empty",
-      label: "No context",
-      title: "When there's nothing to go on yet",
+      id: "unsure",
+      label: "Unsure",
+      title: "When the agent isn't sure",
       blurb: [
-        "I don't know exactly how events get set up in Planned, but I'd expect that not every one starts with a website and a brand kit. When the agent has nothing to go on, it doesn't fall back to an empty prompt. It says the one thing it needs, offers a one-click way to give it, and keeps watching, so the drafts appear on their own once the event's site goes live.",
-        "Nothing is blocked while it waits: today's templates and colours all still work, so the organiser can carry on and come back to the style later.",
+        "I'd expect an agent that comes prepared to sometimes come prepared with the wrong thing. My guess is that brand data is often messy: a low-res logo, colours that drift across a website, an old site that hasn't been updated. And I'd imagine some events won't have a website or brand to work from at all.",
+        "So I've designed the agent to say what it isn't sure about rather than pass a guess off as finished, to ask for the one thing it needs when it has nothing to go on, and to never take away the way out. Whether that's enough to keep organisers' trust is something I'd want to test.",
       ],
       media: {
         kind: "demo",
-        caption: "The same page with nothing to go on yet. Try “Use the event website”.",
-        interactive: true,
-        node: <PageFigure ai known={false} />,
+        caption: "Three ways the agent handles being wrong, unsure or empty-handed.",
+        node: (
+          <InfoCards
+            noteLabel="In the prototype:"
+            items={[
+              { icon: CircleAlert, title: "Flag the problem", text: "Say plainly what looks off, and offer the fix right there.", note: "Not built yet. A short note under the drafts, like a logo too low-res for print, with the fix beside it." },
+              { icon: Globe, title: "Ask for what it needs", text: "With no website or brand yet, ask for the one thing that unlocks the drafts, and keep watching for the event site.", note: "Open the full page with no context to try it." },
+              { icon: RotateCcw, title: "An easy way out", text: "Nothing is applied until picked, and the standard badge is always one click away.", note: "Click the chosen draft again to go back." },
+            ]}
+          />
+        ),
         fullPage: "#planned-empty",
       },
     },
@@ -751,8 +627,8 @@ export const PLANNED_CASE: CaseStudy = {
       label: "Skills",
       title: "Five skills behind one card",
       blurb: [
-        "The agent can be a step ahead because its work is split into skills that run in the background, each with one job. Two read what I'm assuming Planned already knows, the event's website and its photos, long before anyone opens Badges. One reads any note the organiser adds. One composes the drafts with a sense of taste, and the last checks every draft for accessibility before anyone sees it.",
-        "Splitting it up means each skill can be written, tested and improved on its own, and the accessibility check can't be skipped. A draft that fails is sent back, not shown.",
+        "The way I picture it, the agent can be a step ahead because its work is split into skills that run in the background, each with one job. Two read what I'm assuming Planned already knows, the event's website and its photos, long before anyone opens Badges. One reads any note the organiser adds. One composes the drafts with a sense of taste, and the last checks every draft for accessibility before anyone sees it.",
+        "My thinking is that splitting it up would let each skill be written, tested and improved on its own, and would make the accessibility check hard to skip: a draft that fails is sent back, not shown.",
       ],
       media: {
         kind: "demo",
@@ -762,58 +638,26 @@ export const PLANNED_CASE: CaseStudy = {
       },
     },
     {
-      id: "control",
-      label: "Control",
-      title: "Steer it, don't build it",
-      blurb: [
-        "The drafts are a starting point, not a decision. The organiser picks the one that feels right, and if none do, they steer: ask for a change in a line, and the agent redrafts. There's no design tool to learn, and every draft keeps the badge as legible as the templates it builds on.",
-        "Names, roles and IDs keep their place and size in every style, so the badge still does its first job at a glance.",
-      ],
-      media: {
-        kind: "demo",
-        caption: "One style across attendee types. The frame colour changes, the name never moves.",
-        node: <PatternRange />,
-      },
-    },
-    {
-      id: "code",
-      label: "Code",
-      title: "Every badge, a way in",
-      blurb: [
-        "Planned's badges carry the attendee's ID. Adding a code beside it, as many event badges have, would let the badge open a page the organiser chooses for anyone who scans it with a phone: the agenda, the event app, a sponsor's offer or a sign-up for next year.",
-        "That could turn hundreds of badges into hundreds of ways in, and every scan would be a moment the organiser can see and count. The printed code can't change, but if it points to a Planned link rather than a fixed address, which is how dynamic codes usually work, where it leads can. That would let the agent come prepared here too: pointing the code at the agenda during the event, and suggesting a switch to the feedback survey once it's over.",
-      ],
-      media: {
-        kind: "demo",
-        caption: "The code on the badge, opening the event's agenda on any phone.",
-        node: <CodeFigure />,
-      },
-    },
-    {
       id: "next",
       label: "What's next",
-      title: "What I'd test next",
+      title: "What I'd measure and ship first",
       blurb: [
-        "First, whether the agent earns its place: how often organisers keep the suggested draft, how often they steer it, and whether arriving prepared feels helpful or presumptuous. Then the practical side: on-site printers often print attendee details in black only, so styles would need to live on the pre-printed stock while names stay crisp in black.",
-        "Beyond badges, the same pattern could take on other repetitive parts of running an event: drafting the agenda layout, the event app and the signage from the same brand, so organisers spend their time on decisions, not set-up.",
+        "I wouldn't ship this all at once. The first step is just the drafts, then steering, and each one should earn the next.",
+        "To know whether it's working, I'd watch whether organisers keep the suggested drafts, how long it takes to reach a finished badge, how often they steer, and how many print orders come through Planned rather than outside vendors. Each ties back to one of the assumptions.",
+        "Two practical checks early on: on-site printers often print attendee details in black only, so styles would need to live on pre-printed stock; and whether the same agent could prepare signage, the agenda and the event app in the same way.",
+        "The biggest open question for me is whether organisers actually want an agent this proactive, or would rather start from a blank template and stay in full control. That's the first thing I'd want to learn, and the answer would shape everything above.",
       ],
       media: {
         kind: "demo",
-        caption: "Three directions drawn from planned.com.",
+        caption: "A possible rollout, smallest useful step first.",
         node: (
-          <div className={`flex w-full flex-col items-center gap-6 sm:flex-row sm:justify-center sm:gap-6 ${FONT}`}>
-            {DRAFTS.map((d) => (
-              <div key={d.id} className="flex flex-col items-center gap-2">
-                {/* Sized to the badge as it's shown, so the row packs tightly. */}
-                <div style={{ width: 140, height: 200 }}>
-                  <div className="origin-top-left scale-[0.5]" style={{ width: 280 }}>
-                    <Badge size="portrait" template="window" role="General" style={d} accent={d.accent} pattern={d.pattern} showName showCompany />
-                  </div>
-                </div>
-                <span className="text-[12px] text-[#4a4a4a]">{d.name}</span>
-              </div>
-            ))}
-          </div>
+          <Timeline
+            steps={[
+              { when: "1. Drafts from the website", text: "Three styles from the event's site, ready when Badges opens. Pick one or keep the standard badge.", tag: "Start here", loud: true },
+              { when: "2. Steering", text: "Ask for changes, add sources, attach pictures, and see how the drafts were made." },
+              { when: "3. Beyond badges", text: "The same agent drafts signage, the agenda layout and the event app from the same brand." },
+            ]}
+          />
         ),
       },
     },

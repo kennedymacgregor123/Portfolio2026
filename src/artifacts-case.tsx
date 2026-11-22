@@ -836,7 +836,7 @@ function TemplateCard({ title, blurb, icon, sheet }: (typeof TEMPLATES)[number])
       <div className="flex gap-3 px-2 pt-2">
         <span
           className="flex size-[30px] shrink-0 items-center justify-center rounded-[8px] border bg-white shadow-[0_1px_2px_rgba(15,15,15,0.04)]"
-          style={{ borderColor: "#ececea", color: TPL_GREEN }}
+          style={{ borderColor: "#ececea", color: "#4b5160" }}
           aria-hidden
         >
           {icon}

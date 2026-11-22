@@ -6,6 +6,8 @@ import {
   Box,
   CalendarDays,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   ClipboardList,
   Globe,
   Home,
@@ -172,6 +174,62 @@ export const DRAFTS: Style[] = [
     art: "paint",
   },
 ]
+
+/*
+ * Later rounds: the same brand read again, so each regenerate brings a fresh
+ * set of three. Round one is always DRAFTS; after that the sets cycle.
+ */
+const MORE_DRAFTS: Style[] = [
+  {
+    id: "dusk",
+    name: "Dusk",
+    blurb: "Cooler evening sky",
+    surface: "linear-gradient(180deg, #8FA6AE 0%, #A9B7B8 30%, #C9C8B6 60%, #DCC9A6 100%)",
+    ink: "#21333A",
+    sub: "#3F4D4F",
+    display: GEIST,
+    accent: "#294B4F",
+    pattern: "none",
+    art: "sunset",
+  },
+  {
+    id: "haze",
+    name: "Morning haze",
+    blurb: "Pale cloud, light grain",
+    surface: "linear-gradient(180deg, #C4C8C5 0%, #CED0CB 55%, #D6D6D0 100%)",
+    ink: "#21333A",
+    sub: "#4a5557",
+    display: GEIST,
+    accent: "#4F9897",
+    pattern: "none",
+    art: "cloud",
+  },
+  {
+    id: "seaglass",
+    name: "Sea glass",
+    blurb: "Deeper teal paint",
+    surface: "#D3E0DD",
+    ink: "#21333A",
+    sub: "#51605F",
+    display: GEIST,
+    accent: "#294B4F",
+    pattern: "none",
+    art: "paint",
+  },
+]
+const POOL = [...DRAFTS, ...MORE_DRAFTS]
+const LATER_SETS = [[3, 4, 5], [4, 0, 5], [1, 3, 2], [5, 1, 3]]
+function draftsFor(round: number): Style[] {
+  const set = round === 0 ? [0, 1, 2] : LATER_SETS[(round - 1) % LATER_SETS.length]!
+  return set.map((i) => POOL[i]!)
+}
+/** Source names, for the line that says what made a round. */
+const SOURCE_NAMES: Record<string, string> = {
+  site: "planned.com/live",
+  colours: "brand colours",
+  photos: "event photos",
+  type: "Geist",
+}
 
 /** The palette pulled from planned.com. */
 const BRAND = ["#4F9897", "#294B4F", "#21333A", "#E3C97A"]
@@ -1199,7 +1257,7 @@ export function PlannedBadge({
     if (extra) setExtras((v) => v.filter((e) => e.id !== key))
     else setRemoved((v) => [...v, key])
     setLastRemoved({ key, name, extra })
-    redraft()
+    redraft(`without ${SOURCE_NAMES[key] ?? name}`)
   }
   const undoRemove = () => {
     if (!lastRemoved) return
@@ -1207,11 +1265,11 @@ export function PlannedBadge({
     if (extra) setExtras((v) => [...v, extra])
     else setRemoved((v) => v.filter((k) => k !== key))
     setLastRemoved(null)
-    redraft()
+    redraft(`with ${SOURCE_NAMES[key] ?? lastRemoved.name} again`)
   }
   const toggle = (key: string) => {
     setOff((v) => ({ ...v, [key]: !v[key] }))
-    redraft()
+    redraft(`${off[key] ? "with" : "without"} ${SOURCE_NAMES[key] ?? key}`)
   }
   const [askedFiles, setAskedFiles] = useState<string[]>([])
   const [phase, setPhase] = useState<"thinking" | "done">("done")
@@ -1222,7 +1280,11 @@ export function PlannedBadge({
   const timer = useRef<number | undefined>(undefined)
   useEffect(() => () => window.clearTimeout(timer.current), [])
 
-  const redraft = () => {
+  // Every regenerate is a round. Earlier rounds are kept, so the organiser
+  // can flip back to drafts they liked; each says what made it.
+  const [rounds, setRounds] = useState<{ notes: string[]; shown: number }>({ notes: [""], shown: 0 })
+  const redraft = (note?: string) => {
+    if (note) setRounds((r) => ({ notes: [...r.notes, note], shown: r.notes.length }))
     setPhase("thinking")
     window.clearTimeout(timer.current)
     timer.current = window.setTimeout(() => setPhase("done"), 1400)
@@ -1241,7 +1303,7 @@ export function PlannedBadge({
     setAskedFiles(attached)
     setAsk("")
     setAttached([])
-    redraft()
+    redraft(`with ${[ask.trim() && `“${ask.trim()}”`, ...attached].filter(Boolean).join(" + ")}`)
   }
   // Each click adds another item; names cycle, then number themselves.
   const addExtra = (kind: ExtraKind) => {
@@ -1254,7 +1316,7 @@ export function PlannedBadge({
   }
   const useExtras = () => {
     setExtras((v) => v.map((e) => ({ ...e, fresh: false })))
-    redraft()
+    redraft(`with ${freshCount} new ${freshCount === 1 ? "source" : "sources"}`)
   }
   const freshCount = extras.filter((e) => e.fresh).length
   const fresh = freshCount > 0
@@ -1406,6 +1468,34 @@ export function PlannedBadge({
                     /* One steady status, with a light sweeping across the words. */
                     <span className="text-shimmer text-[12px]">Regenerating…</span>
                   ) : (
+                    <span className="flex items-center gap-2">
+                    {/* Earlier rounds, a step back or forward. Only there once
+                        there's more than one. */}
+                    {rounds.notes.length > 1 && (
+                      <span className="-my-1 flex items-center text-[11.5px] tabular-nums" style={{ color: MUTED }}>
+                        <button
+                          type="button"
+                          aria-label="Previous round"
+                          disabled={rounds.shown === 0}
+                          onClick={() => setRounds((r) => ({ ...r, shown: Math.max(0, r.shown - 1) }))}
+                          className="flex size-[20px] items-center justify-center rounded-[6px] transition-colors hover:bg-[#f4f4f2] disabled:pointer-events-none disabled:opacity-35"
+                        >
+                          <ChevronLeft className="size-[13px]" strokeWidth={2} />
+                        </button>
+                        <span aria-live="polite" aria-label={`Round ${rounds.shown + 1} of ${rounds.notes.length}`}>
+                          {rounds.shown + 1}/{rounds.notes.length}
+                        </span>
+                        <button
+                          type="button"
+                          aria-label="Next round"
+                          disabled={rounds.shown === rounds.notes.length - 1}
+                          onClick={() => setRounds((r) => ({ ...r, shown: Math.min(r.notes.length - 1, r.shown + 1) }))}
+                          className="flex size-[20px] items-center justify-center rounded-[6px] transition-colors hover:bg-[#f4f4f2] disabled:pointer-events-none disabled:opacity-35"
+                        >
+                          <ChevronRight className="size-[13px]" strokeWidth={2} />
+                        </button>
+                      </span>
+                    )}
                     <button
                       type="button"
                       onClick={() => setAsking(true)}
@@ -1415,15 +1505,18 @@ export function PlannedBadge({
                       <Pencil className="size-[10px]" strokeWidth={1.8} style={{ color: MUTED }} />
                       Refine
                     </button>
+                    </span>
                   )}
                 </div>
-                <p className="mt-1 text-[12.5px]" style={{ color: MUTED }}>
-                  Three styles drafted from your event&apos;s brand. Pick one, or ask for changes.
+                <p className="mt-1 truncate text-[12.5px]" style={{ color: MUTED }}>
+                  {rounds.shown === 0
+                    ? "Three styles drafted from your event’s brand. Pick one, or ask for changes."
+                    : `Redrafted ${rounds.notes[rounds.shown]}. Pick one, or ask for changes.`}
                 </p>
 
                 {/* The drafts, ready before anyone asked. */}
                 <div className="mt-3 grid grid-cols-3 gap-2.5">
-                  {DRAFTS.map((d, k) => {
+                  {draftsFor(rounds.shown).map((d, k) => {
                     const on = style.id === d.id
                     return phase === "thinking" ? (
                       /* Shaped like the card that's coming: a preview with a
@@ -1715,7 +1808,7 @@ export function PlannedBadge({
                               onClick={() => {
                                 setAsked("")
                                 setAskedFiles([])
-                                redraft()
+                                redraft("without your note")
                               }}
                             />
                           </span>

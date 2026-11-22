@@ -8,6 +8,7 @@ import {
   ChevronDown,
   ChevronLeft,
   ChevronRight,
+  Ellipsis,
   ClipboardList,
   Globe,
   Home,
@@ -1282,12 +1283,57 @@ export function PlannedBadge({
 
   // Every regenerate is a round. Earlier rounds are kept, so the organiser
   // can flip back to drafts they liked; each says what made it.
-  const [rounds, setRounds] = useState<{ notes: string[]; shown: number }>({ notes: [""], shown: 0 })
+  // Each round keeps its own set of drafts (n), so deleting one never
+  // reshuffles the others.
+  const [rounds, setRounds] = useState<{ list: { note: string; n: number }[]; shown: number; next: number }>({
+    list: [{ note: "", n: 0 }],
+    shown: 0,
+    next: 1,
+  })
+  const round = rounds.list[rounds.shown]!
   const redraft = (note?: string) => {
-    if (note) setRounds((r) => ({ notes: [...r.notes, note], shown: r.notes.length }))
+    if (note)
+      setRounds((r) => ({ list: [...r.list, { note, n: r.next }], shown: r.list.length, next: r.next + 1 }))
     setPhase("thinking")
     window.clearTimeout(timer.current)
     timer.current = window.setTimeout(() => setPhase("done"), 1400)
+  }
+  // Tidying rounds, from a small menu beside Refine: a round is a set of
+  // three drafts, so the options say which rounds go.
+  const [roundMenu, setRoundMenu] = useState(false)
+  const roundMenuRef = useRef<HTMLSpanElement>(null)
+  useEffect(() => {
+    if (!roundMenu) return
+    const close = (e: Event) => {
+      if (e instanceof KeyboardEvent ? e.key === "Escape" : !roundMenuRef.current?.contains(e.target as Node)) setRoundMenu(false)
+    }
+    document.addEventListener("pointerdown", close)
+    document.addEventListener("keydown", close)
+    return () => {
+      document.removeEventListener("pointerdown", close)
+      document.removeEventListener("keydown", close)
+    }
+  }, [roundMenu])
+  // Managing rounds: the drafts give way to a list of every round, to tick
+  // and delete in bulk. A round holding the style in use can't be deleted,
+  // and at least one round always stays.
+  const [managing, setManaging] = useState(false)
+  const [picked, setPicked] = useState<number[]>([])
+  const inUse = (n: number) => style.id !== PLAIN.id && draftsFor(n).some((d) => d.id === style.id)
+  const deletePicked = () => {
+    setRounds((r) => {
+      const list = r.list.filter((x) => !picked.includes(x.n))
+      if (list.length === 0) return r
+      // Stay on the round being viewed, or the nearest one after it.
+      const after = r.list.slice(r.shown).find((x) => !picked.includes(x.n))
+      const shown = after ? list.indexOf(after) : list.length - 1
+      return { ...r, list, shown }
+    })
+    setPicked([])
+  }
+  const doneManaging = () => {
+    setManaging(false)
+    setPicked([])
   }
   // With nothing to go on, one click gives the agent what it needs; it then
   // drafts and applies its suggestion, as it would have done ahead of time.
@@ -1463,15 +1509,16 @@ export function PlannedBadge({
                   <div className="flex items-center gap-1.5">
                     <span className="text-[14px] font-medium" style={{ color: INK }}>Badge style</span>
                   </div>
-                  {/* A quiet way to steer, up in the header. */}
-                  {phase === "thinking" ? (
+                  {/* A quiet way to steer, up in the header: earlier rounds, and a
+                      menu holding Refine and tidying rounds. */}
+                  {managing ? null : phase === "thinking" ? (
                     /* One steady status, with a light sweeping across the words. */
                     <span className="text-shimmer text-[12px]">Regenerating…</span>
                   ) : (
                     <span className="flex items-center gap-2">
                     {/* Earlier rounds, a step back or forward. Only there once
                         there's more than one. */}
-                    {rounds.notes.length > 1 && (
+                    {rounds.list.length > 1 && (
                       <span className="-my-1 flex items-center text-[11.5px] tabular-nums" style={{ color: MUTED }}>
                         <button
                           type="button"
@@ -1482,41 +1529,160 @@ export function PlannedBadge({
                         >
                           <ChevronLeft className="size-[13px]" strokeWidth={2} />
                         </button>
-                        <span aria-live="polite" aria-label={`Round ${rounds.shown + 1} of ${rounds.notes.length}`}>
-                          {rounds.shown + 1}/{rounds.notes.length}
+                        <span aria-live="polite" aria-label={`Round ${rounds.shown + 1} of ${rounds.list.length}`}>
+                          {rounds.shown + 1}/{rounds.list.length}
                         </span>
                         <button
                           type="button"
                           aria-label="Next round"
-                          disabled={rounds.shown === rounds.notes.length - 1}
-                          onClick={() => setRounds((r) => ({ ...r, shown: Math.min(r.notes.length - 1, r.shown + 1) }))}
+                          disabled={rounds.shown === rounds.list.length - 1}
+                          onClick={() => setRounds((r) => ({ ...r, shown: Math.min(r.list.length - 1, r.shown + 1) }))}
                           className="flex size-[20px] items-center justify-center rounded-[6px] transition-colors hover:bg-[#f4f4f2] disabled:pointer-events-none disabled:opacity-35"
                         >
                           <ChevronRight className="size-[13px]" strokeWidth={2} />
                         </button>
                       </span>
                     )}
-                    <button
-                      type="button"
-                      onClick={() => setAsking(true)}
-                      className="-my-1 flex items-center gap-1 rounded-[7px] border bg-white px-2 py-[2px] text-[11.5px] transition-colors hover:bg-[#fafaf8]"
-                      style={{ borderColor: LINE, color: INK }}
-                    >
-                      <Pencil className="size-[10px]" strokeWidth={1.8} style={{ color: MUTED }} />
-                      Refine
-                    </button>
+                    {(
+                      <span ref={roundMenuRef} className="relative -my-1 flex">
+                        <button
+                          type="button"
+                          aria-label="Style options"
+                          aria-haspopup="menu"
+                          aria-expanded={roundMenu}
+                          onClick={() => setRoundMenu((v) => !v)}
+                          className="flex size-[22px] items-center justify-center rounded-[7px] transition-colors hover:bg-[#f4f4f2]"
+                          style={{ color: MUTED, background: roundMenu ? "#f4f4f2" : undefined }}
+                        >
+                          <Ellipsis className="size-[14px]" strokeWidth={2} />
+                        </button>
+                        {roundMenu && (
+                          <span
+                            role="menu"
+                            className="view-in absolute top-full right-0 z-20 mt-1 flex w-max flex-col rounded-[10px] border bg-white p-1 text-[12.5px] shadow-[0_1px_2px_rgba(15,15,15,0.04),0_8px_24px_-8px_rgba(15,15,15,0.16)]"
+                            style={{ borderColor: LINE, color: INK }}
+                          >
+                            <button
+                              type="button"
+                              role="menuitem"
+                              onClick={() => {
+                                setRoundMenu(false)
+                                setAsking(true)
+                              }}
+                              className="rounded-[7px] px-2.5 py-1.5 text-left transition-colors hover:bg-[#f4f4f2]"
+                            >
+                              Refine
+                            </button>
+                            {rounds.list.length > 1 && (
+                              <>
+                                <span className="mx-1 my-1 h-px" style={{ background: LINE }} />
+                                <button
+                                  type="button"
+                                  role="menuitem"
+                                  onClick={() => {
+                                    setRoundMenu(false)
+                                    setAsking(false)
+                                    setManaging(true)
+                                  }}
+                                  className="rounded-[7px] px-2.5 py-1.5 text-left transition-colors hover:bg-[#f4f4f2]"
+                                >
+                                  Manage rounds…
+                                </button>
+                              </>
+                            )}
+                          </span>
+                        )}
+                      </span>
+                    )}
                     </span>
                   )}
                 </div>
                 <p className="mt-1 truncate text-[12.5px]" style={{ color: MUTED }}>
-                  {rounds.shown === 0
+                  {managing
+                    ? "Select the rounds you no longer need."
+                    : round.n === 0
                     ? "Three styles drafted from your event’s brand. Pick one, or ask for changes."
-                    : `Redrafted ${rounds.notes[rounds.shown]}. Pick one, or ask for changes.`}
+                    : `Redrafted ${round.note}. Pick one, or ask for changes.`}
                 </p>
 
+                {managing ? (
+                  <div className="view-in mt-3 overflow-hidden rounded-[10px] border" style={{ borderColor: LINE }}>
+                    <div className="max-h-[232px] overflow-y-auto">
+                      {rounds.list.map((r, i) => {
+                        const locked = inUse(r.n)
+                        const on = picked.includes(r.n)
+                        const note = r.n === 0 ? "First drafts, from your brand" : r.note.charAt(0).toUpperCase() + r.note.slice(1)
+                        return (
+                          <label
+                            key={r.n}
+                            className={`flex items-center gap-3 px-3 py-2 ${i > 0 ? "border-t" : ""} ${locked ? "" : "cursor-pointer hover:bg-[#fafaf8]"}`}
+                            style={{ borderColor: LINE }}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={on}
+                              disabled={locked}
+                              onChange={() => setPicked((v) => (on ? v.filter((x) => x !== r.n) : [...v, r.n]))}
+                              aria-label={`Select round ${i + 1}`}
+                              className="size-[14px] shrink-0 accent-[#1d1d1b] disabled:opacity-40"
+                            />
+                            {/* The round's three drafts, small. */}
+                            <span className="flex shrink-0 gap-1" aria-hidden>
+                              {draftsFor(r.n).map((d) => (
+                                <span key={d.id} className="flex h-[34px] w-[28px] items-center justify-center overflow-hidden rounded-[5px]" style={{ background: PANEL }}>
+                                  <span className="block origin-center scale-[0.46]">
+                                    <MiniBadge style={d} />
+                                  </span>
+                                </span>
+                              ))}
+                            </span>
+                            <span className="min-w-0 flex-1 leading-tight">
+                              <span className="block text-[11px] tabular-nums" style={{ color: MUTED }}>Round {i + 1}</span>
+                              <span className="block truncate text-[12.5px]">{note}</span>
+                            </span>
+                            {locked && (
+                              <span className="shrink-0 rounded-full px-1.5 py-[1px] text-[10.5px] font-medium" style={{ background: PANEL, color: MUTED }}>
+                                In use
+                              </span>
+                            )}
+                          </label>
+                        )
+                      })}
+                    </div>
+                    <div className="flex items-center justify-between gap-2 border-t py-1.5 pr-1.5 pl-3" style={{ borderColor: LINE }}>
+                      <span className="text-[12px]" style={{ color: MUTED }} aria-live="polite">
+                        {picked.length === 0
+                          ? `${rounds.list.length} rounds`
+                          : picked.length >= rounds.list.length
+                            ? "Keep at least one round"
+                            : `${picked.length} selected`}
+                      </span>
+                      <span className="flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={deletePicked}
+                          disabled={picked.length === 0 || picked.length >= rounds.list.length}
+                          className="rounded-[7px] border bg-white px-2.5 py-1 text-[12px] font-medium transition-colors hover:bg-[#f4f4f2] disabled:pointer-events-none disabled:opacity-40"
+                          style={{ borderColor: LINE, color: "#b8433b" }}
+                        >
+                          Delete selected
+                        </button>
+                        <button
+                          type="button"
+                          onClick={doneManaging}
+                          className="rounded-[7px] px-2.5 py-1 text-[12px] font-medium text-white"
+                          style={{ background: "#1d1d1b" }}
+                        >
+                          Done
+                        </button>
+                      </span>
+                    </div>
+                  </div>
+                ) : (
+                  <>
                 {/* The drafts, ready before anyone asked. */}
                 <div className="mt-3 grid grid-cols-3 gap-2.5">
-                  {draftsFor(rounds.shown).map((d, k) => {
+                  {draftsFor(round.n).map((d, k) => {
                     const on = style.id === d.id
                     return phase === "thinking" ? (
                       /* Shaped like the card that's coming: a preview with a
@@ -1866,6 +2032,8 @@ export function PlannedBadge({
 
 
                   </div>
+                )}
+                  </>
                 )}
               </div>
             </div>

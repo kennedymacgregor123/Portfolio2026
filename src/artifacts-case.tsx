@@ -372,7 +372,8 @@ function KitHeader() {
 
 export function KitKpi() {
   return (
-    <KitSheet fit>
+    // In the single column the tile is wide; keep the card card-sized there.
+    <KitSheet fit className="max-sm:right-auto max-sm:w-[12rem]">
       <div className="px-3 pt-2.5 pb-4">
         <KitLabel>Net New ARR</KitLabel>
         <div className="mt-1.5 text-[20px] leading-none font-semibold tracking-[-0.4px] tabular-nums">$512K</div>
@@ -1261,14 +1262,15 @@ function PromptToReport() {
           and scaled to the panel, rising from the foot and fading away there,
           and filling in a piece at a time. */}
       <div
-        className="kit-fade-b absolute inset-x-0 top-[6%] bottom-0 transition-[opacity,translate] duration-[450ms] ease-[cubic-bezier(0.4,0,0.2,1)]"
+        className="kit-fade-b absolute inset-x-0 top-[6%] bottom-[8%] transition-[opacity,translate] sm:bottom-0 duration-[450ms] ease-[cubic-bezier(0.4,0,0.2,1)]"
         style={{
           opacity: reportIn && !leaving ? 1 : 0,
           translate: reportIn && !leaving ? "0 0" : "0 12px",
         }}
         aria-hidden={!reportIn}
       >
-        <div className="mx-auto w-[78%] max-w-[23.5rem]">
+        {/* Wider on a phone, so the finished report runs past the fade at the foot. */}
+        <div className="mx-auto w-[88%] max-w-[23.5rem] sm:w-[78%]">
           <Scaled width={560}>
             <div
               className="rounded-[14px] border bg-[#fbfbfa] px-[36px] pt-[30px] pb-[40px] shadow-[0_1px_2px_rgba(15,15,15,0.04),0_18px_40px_-16px_rgba(15,15,15,0.16)]"

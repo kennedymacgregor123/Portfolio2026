@@ -534,7 +534,17 @@ export function ReportUIHero() {
   return (
     <Clock.Provider value={t}>
       <div ref={frameRef} className="relative h-full w-full">
-        <div className={`report-window-fade absolute inset-0 overflow-hidden ${fit.cropped ? "cropped" : ""}`}>
+        {/* The fade is measured from the window, not the frame: on a phone the
+            frame is far taller than the window, and a frame-based fade would
+            end below it. */}
+        <div
+          className={`report-window-fade absolute inset-0 overflow-hidden ${fit.cropped ? "cropped" : ""}`}
+          style={
+            {
+              "--fade-y": `linear-gradient(to bottom, #000 ${fit.top + WIN_H * fit.scale * 0.76}px, transparent ${fit.top + WIN_H * fit.scale * 0.967}px)`,
+            } as React.CSSProperties
+          }
+        >
           <div
             className="report-window pointer-events-none absolute flex overflow-hidden rounded-[30px] bg-[#f8f8f7] p-[16px] font-['Inter_Variable',Inter,sans-serif]"
             style={{

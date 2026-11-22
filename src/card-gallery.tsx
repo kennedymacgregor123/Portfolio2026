@@ -27,13 +27,13 @@ const TYPES: { label: string; citation: Citation }[] = [
   { label: "Signal", citation: signalPain },
 ]
 
-function Arrow({ direction, onClick }: { direction: "left" | "right"; onClick: () => void }) {
+function Arrow({ direction, onClick, className = "flex" }: { direction: "left" | "right"; onClick: () => void; className?: string }) {
   return (
     <button
       type="button"
       onClick={onClick}
       aria-label={direction === "left" ? "Previous card type" : "Next card type"}
-      className="relative z-10 flex size-9 shrink-0 items-center justify-center rounded-full border border-white bg-[var(--bar)] text-muted-foreground shadow-[0_1px_2px_rgba(15,15,15,0.04),0_6px_16px_-8px_rgba(15,15,15,0.12)] transition-colors hover:bg-white hover:text-foreground"
+      className={`relative z-10 ${className} size-9 shrink-0 items-center justify-center rounded-full border border-white bg-[var(--bar)] text-muted-foreground shadow-[0_1px_2px_rgba(15,15,15,0.04),0_6px_16px_-8px_rgba(15,15,15,0.12)] transition-colors hover:bg-white hover:text-foreground`}
     >
       <svg viewBox="0 0 16 16" className="size-4" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
         {direction === "left" ? <path d="M10 3 5 8l5 5" /> : <path d="m6 3 5 5-5 5" />}
@@ -91,7 +91,8 @@ export function CardGallery() {
       </div>
 
       <div className="flex w-full items-center justify-between gap-2">
-        <Arrow direction="left" onClick={() => step(-1)} />
+        {/* Beside the card on wider screens; on a phone they move down by the label. */}
+        <Arrow direction="left" onClick={() => step(-1)} className="hidden sm:flex" />
         <div className="relative flex-1" style={{ height: stageH }}>
           {(prev === null ? [index] : [prev, index]).map((i) => {
             const leaving = i !== index
@@ -123,9 +124,11 @@ export function CardGallery() {
             )
           })}
         </div>
-        <Arrow direction="right" onClick={() => step(1)} />
+        <Arrow direction="right" onClick={() => step(1)} className="hidden sm:flex" />
       </div>
 
+      <div className="flex items-center gap-6">
+        <Arrow direction="left" onClick={() => step(-1)} className="flex sm:hidden" />
       <div className="flex flex-col items-center gap-3">
         <p className="project-title" aria-live="polite">
           {TYPES[index]!.label}
@@ -145,6 +148,8 @@ export function CardGallery() {
             />
           ))}
         </div>
+      </div>
+        <Arrow direction="right" onClick={() => step(1)} className="flex sm:hidden" />
       </div>
     </div>
   )

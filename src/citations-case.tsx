@@ -29,7 +29,10 @@ const CARD_W = 336
 function FitCard({ children, className = "" }: { children: React.ReactNode; className?: string }) {
   return (
     <div className={`w-full max-w-[21rem] ${className}`}>
-      <Scaled width={CARD_W}>{children}</Scaled>
+      {/* Unclipped, so the card's drop shadow isn't cut off at its edges. */}
+      <Scaled width={CARD_W} clip={false}>
+        {children}
+      </Scaled>
     </div>
   )
 }
@@ -145,7 +148,8 @@ function DriftExample() {
 
   return (
     <div ref={ref} className={`relative w-full max-w-[32rem] text-left ${wide ? "pt-8 pb-14" : "pt-12 pb-24"}`}>
-      <ScribbleNote target="[data-drift-report]" className="top-0 right-1 sm:-right-4">
+      {/* On a narrow screen the arrow has too little room, so the note stands alone. */}
+      <ScribbleNote key={wide ? "report-wide" : "report-narrow"} target="[data-drift-report]" arrow={wide} className="top-0 right-1 sm:-right-4">
         Report says 37…
       </ScribbleNote>
       <p className="project-title">Pipeline review: EMEA</p>

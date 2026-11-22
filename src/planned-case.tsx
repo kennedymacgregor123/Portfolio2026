@@ -208,6 +208,13 @@ export function PlannedHero() {
       // Fit to the badge, not the whole scene: the faded top of the strap
       // runs off the frame, so the badge itself can be much larger.
       const crop = 70
+      if (w < 480) {
+        // Phones: fit to the badge and its chip only, and centre it in the frame.
+        const tall = 430
+        const scale = Math.min(w / 450, h / tall) * 0.96
+        setFit({ scale, left: w / 2 - 580 * scale, top: (h - tall * scale) / 2 - crop * scale })
+        return
+      }
       const scale = Math.min(w / 760, h / (HERO_H - crop - 40)) * 0.96
       setFit({ scale, left: w / 2 - (HERO_W / 2) * scale, top: -crop * scale })
     }

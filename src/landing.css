@@ -408,14 +408,14 @@ body {
 }
 
 /* The card-type wheel: each card with the same soft shadow as elsewhere,
-   a little smaller on a narrow screen so it fits between the arrows. */
+   a little smaller on a narrow screen, where the arrows sit below it. */
 .card-wheel-card {
   width: fit-content;
   filter: drop-shadow(0 12px 28px rgba(15, 15, 15, 0.12));
 }
 @media (max-width: 639px) {
   .card-wheel-card {
-    zoom: 0.86;
+    zoom: 0.8;
   }
 }
 
@@ -704,6 +704,16 @@ main:has(.hero-slide a:focus-visible) .title-chevron,
   /* One pass each time the pointer enters, ending with the band off the
      block's far edge. */
   animation: shimmer 1.1s cubic-bezier(0.4, 0, 0.3, 1) 1 forwards;
+}
+/* On touch, a tap or drag leaves the slide "hovered", and the text-clipped
+   shimmer can paint nothing through the word spans, so the paragraph
+   vanishes. The shimmer is for a mouse only. */
+@media (hover: none) {
+  .hero-slide:hover .prose-shimmer {
+    background-image: none;
+    color: var(--ink);
+    animation: none;
+  }
 }
 /* The same diagonal light crosses the card, in step with the text, so the
    shimmer reads even where the card covers most of the paragraph. */

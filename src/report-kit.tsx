@@ -26,7 +26,8 @@ const DOTS = "0.01 4"
  * it's given, keeping the height in step: a component shown smaller, exactly
  * as it's designed rather than reflowed.
  */
-export function Scaled({ width, children }: { width: number; children: React.ReactNode }) {
+/** `clip={false}` lets a shadow spill past the box (it still takes only the content's space). */
+export function Scaled({ width, children, clip = true }: { width: number; children: React.ReactNode; clip?: boolean }) {
   const boxRef = useRef<HTMLDivElement>(null)
   const innerRef = useRef<HTMLDivElement>(null)
   const [fit, setFit] = useState({ scale: 0.4, h: 0 })
@@ -45,7 +46,7 @@ export function Scaled({ width, children }: { width: number; children: React.Rea
     return () => ro.disconnect()
   }, [width])
   return (
-    <div ref={boxRef} className="relative w-full overflow-hidden" style={{ height: fit.h }}>
+    <div ref={boxRef} className={`relative w-full ${clip ? "overflow-hidden" : ""}`} style={{ height: fit.h }}>
       <div
         ref={innerRef}
         className="absolute top-0 left-0"

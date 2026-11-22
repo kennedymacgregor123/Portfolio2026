@@ -667,9 +667,8 @@ main:has(.hero-slide a:focus-visible) .title-chevron,
    and a light sweeps across the paragraph. */
 .prose-shimmer {
   --ink: color-mix(in oklab, var(--foreground) 75%, transparent);
-  /* The band lightens the text it crosses without washing it out. */
-  --glint: color-mix(in oklab, var(--foreground) 10%, transparent);
   color: var(--ink);
+  position: relative;
 }
 .hero-slide {
   transition: transform 400ms cubic-bezier(0.2, 0.8, 0.2, 1);
@@ -693,32 +692,39 @@ main:has(.hero-slide a:focus-visible) .title-chevron,
   --lift-x: 4px;
   --lift-y: -8px;
 }
-.hero-slide:hover .prose-shimmer {
+/* The light is a band of page colour laid over the paragraph, which lightens
+   the text it crosses. Clipping a gradient to the text instead left the
+   paragraph blank, since the words keep the filter from their fade-in and a
+   text clip doesn't paint through filtered children. */
+.prose-shimmer::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
   /* A diagonal band, top left to bottom right. */
   background-image: linear-gradient(
     120deg,
-    var(--ink) 0%,
-    var(--ink) 35%,
-    var(--glint) 46%,
-    var(--glint) 54%,
-    var(--ink) 65%,
-    var(--ink) 100%
+    transparent 0%,
+    transparent 35%,
+    color-mix(in oklab, var(--page) 85%, transparent) 46%,
+    color-mix(in oklab, var(--page) 85%, transparent) 54%,
+    transparent 65%,
+    transparent 100%
   );
   background-size: 250% 250%;
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+}
+.hero-slide:hover .prose-shimmer::after {
+  opacity: 1;
   /* One pass each time the pointer enters, ending with the band off the
      block's far edge. */
   animation: shimmer 1.1s cubic-bezier(0.4, 0, 0.3, 1) 1 forwards;
 }
-/* On touch, a tap or drag leaves the slide "hovered", and the text-clipped
-   shimmer can paint nothing through the word spans, so the paragraph
-   vanishes. The shimmer is for a mouse only. */
+/* On touch, a tap or drag leaves the slide "hovered"; the shimmer is for a
+   mouse only. */
 @media (hover: none) {
-  .hero-slide:hover .prose-shimmer {
-    background-image: none;
-    color: var(--ink);
+  .hero-slide:hover .prose-shimmer::after {
+    opacity: 0;
     animation: none;
   }
 }
@@ -773,7 +779,7 @@ main:has(.hero-slide a:focus-visible) .title-chevron,
   .blur-in-char,
   .about-rule,
   .about-foot,
-  .hero-slide:hover .prose-shimmer {
+  .hero-slide:hover .prose-shimmer::after {
     animation: none;
   }
   .hero-slide,

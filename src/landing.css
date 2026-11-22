@@ -106,18 +106,40 @@ body {
 }
 /* Behind the floating bar, the page colour fades out downward, so content
    scrolling up passes under the bar cleanly instead of showing above it. */
+/* It stops above the bar, so the page shows through the glass. */
 .header-shelf {
-  background: linear-gradient(to bottom, var(--page) 65%, transparent);
+  background: linear-gradient(to bottom, var(--page) 6px, transparent 18px);
 }
 
-/* The header bar: white, with a soft two-layer shadow so it floats just
-   off the page. */
+/* The header bar: frosted glass. The page behind is blurred and brightened
+   under a mostly opaque tint, so content scrolling under it reads as soft
+   colour, never as shapes, and the text on it keeps its contrast. A bright
+   top edge and rim catch the light; a soft two-layer shadow lifts it off
+   the page. */
 .site-bar {
-  background: var(--bar);
-  border-color: #fff;
+  background: color-mix(in oklab, var(--bar) 72%, transparent);
+  -webkit-backdrop-filter: blur(20px) saturate(180%) brightness(1.04);
+  backdrop-filter: blur(20px) saturate(180%) brightness(1.04);
+  border-color: rgba(255, 255, 255, 0.7);
   box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.85),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.25),
     0 1px 2px rgba(15, 15, 15, 0.04),
     0 8px 24px -8px rgba(15, 15, 15, 0.1);
+}
+/* Solid where the blur isn't available, or for anyone who has asked their
+   system for less transparency. */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .site-bar {
+    background: var(--bar);
+  }
+}
+@media (prefers-reduced-transparency: reduce) {
+  .site-bar {
+    background: var(--bar);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
 }
 
 /* Case study pages. Type and colours follow the captions and About page. */

@@ -47,7 +47,7 @@ export function ViewSwitch({
             className={`rounded-[8px] px-2.5 py-1 text-[14px] tracking-[0.2px] transition-colors duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] focus-visible:outline-1 focus-visible:outline-offset-1 focus-visible:outline-[#0f0f0f]/40 ${
               active
                 ? "bg-[#e6e6e3] font-medium text-[#0f0f0f]"
-                : "text-[#7a7a77] hover:text-[#0f0f0f]"
+                : "text-[#62625f] hover:text-[#0f0f0f]"
             }`}
           >
             {o.label}

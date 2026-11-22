@@ -1662,7 +1662,11 @@ export function PlannedBadge({
                     </div>
                     <div className="mt-3 flex items-center justify-between gap-2">
                       <span className="text-[12px]" style={{ color: MUTED }} aria-live="polite">
-                        {picked.length > 0 && picked.length >= totalDrafts ? "Keep at least one draft" : `${totalDrafts} drafts`}
+                        {picked.length === 0
+                          ? `${totalDrafts} drafts`
+                          : picked.length >= totalDrafts
+                            ? "Keep at least one draft"
+                            : `${picked.length} selected`}
                       </span>
                       <span className="flex items-center gap-1.5">
                         <button
@@ -1672,7 +1676,7 @@ export function PlannedBadge({
                           className="rounded-[7px] border bg-white px-2.5 py-1 text-[12px] font-medium transition-colors hover:bg-[#f4f4f2] disabled:pointer-events-none disabled:opacity-40"
                           style={{ borderColor: LINE, color: "#b8433b" }}
                         >
-                          {picked.length > 0 ? `Delete ${picked.length} selected` : "Delete selected"}
+                          Delete selected
                         </button>
                         <button
                           type="button"

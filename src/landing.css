@@ -112,18 +112,15 @@ body {
 }
 
 /* The header bar: frosted glass. The page behind is blurred and brightened
-   under a mostly opaque tint, so content scrolling under it reads as soft
-   colour, never as shapes, and the text on it keeps its contrast. A bright
-   top edge and rim catch the light; a soft two-layer shadow lifts it off
-   the page. */
+   under a half tint, so content scrolling under it shows as soft shapes
+   while the text on it keeps its contrast. A soft two-layer shadow lifts it
+   off the page. */
 .site-bar {
-  background: color-mix(in oklab, var(--bar) 72%, transparent);
-  -webkit-backdrop-filter: blur(20px) saturate(180%) brightness(1.04);
-  backdrop-filter: blur(20px) saturate(180%) brightness(1.04);
-  border-color: rgba(255, 255, 255, 0.7);
+  background: color-mix(in oklab, var(--bar) 50%, transparent);
+  -webkit-backdrop-filter: blur(10px) saturate(180%) brightness(1.04);
+  backdrop-filter: blur(10px) saturate(180%) brightness(1.04);
+  border-color: #fff;
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.85),
-    inset 0 -1px 0 rgba(255, 255, 255, 0.25),
     0 1px 2px rgba(15, 15, 15, 0.04),
     0 8px 24px -8px rgba(15, 15, 15, 0.1);
 }

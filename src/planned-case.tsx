@@ -580,7 +580,7 @@ export const PLANNED_CASE: CaseStudy = {
       label: "Approach",
       title: "A step ahead of the organiser",
       blurb: [
-        "If Planned already knows each event's website, brand and photos, as I'm assuming it does, the agent doesn't need a brief. When the organiser opens Badges, three styles are already drafted, one suggested. In the prototype, they come from planned.com.",
+        "If Planned already knows each event's website, brand and photos, as I'm assuming it does, the agent doesn't need a brief. When the organiser opens Badges, three styles are already drafted, one suggested. The agent drafts once it knows enough of the brand to make three genuinely different styles, and once someone could use them: when the event site goes live, or when the organiser first opens Badges. After that, it waits to be asked. In the prototype, they come from planned.com.",
         "The organiser stays in control: nothing is applied until they pick a draft, a change is one line away, and names and IDs never move. Everything else works as it does today. The agent also has a print order ready, sized from the guest list, though I don't know how Planned handles printing, so that part is my best guess.",
       ],
       media: {

@@ -1333,7 +1333,10 @@ export function PlannedBadge({
   const [managing, setManaging] = useState(false)
   const [picked, setPicked] = useState<string[]>([])
   const totalDrafts = rounds.list.reduce((t, r) => t + kept(r.n).length, 0)
+  // Each delete can be undone, newest first, until Manage closes.
+  const [undoStack, setUndoStack] = useState<(typeof rounds)[]>([])
   const deletePicked = () => {
+    setUndoStack((v) => [...v, rounds])
     setRounds((r) => {
       const gone = [...r.gone, ...picked]
       const left = (n: number) => draftsFor(n).some((d) => !gone.includes(`${n}:${d.id}`))
@@ -1343,24 +1346,25 @@ export function PlannedBadge({
     })
     setPicked([])
   }
-  // Deletes made while managing stick on Done; Cancel puts them all back.
-  const beforeManaging = useRef<typeof rounds | null>(null)
   const startManaging = () => {
-    beforeManaging.current = rounds
+    setUndoStack([])
     setManaging(true)
   }
   const doneManaging = () => {
     setManaging(false)
     setPicked([])
+    setUndoStack([])
   }
-  const cancelManaging = () => {
-    if (beforeManaging.current) setRounds(beforeManaging.current)
-    doneManaging()
+  const undoDelete = () => {
+    const last = undoStack[undoStack.length - 1]
+    if (!last) return
+    setRounds(last)
+    setUndoStack((v) => v.slice(0, -1))
   }
   useEffect(() => {
     if (!managing) return
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") cancelManaging()
+      if (e.key === "Escape") doneManaging()
     }
     document.addEventListener("keydown", onKey)
     return () => document.removeEventListener("keydown", onKey)
@@ -1541,19 +1545,7 @@ export function PlannedBadge({
                   </div>
                   {/* A quiet way to steer, up in the header: earlier rounds, and a
                       menu holding Refine and tidying rounds. */}
-                  {managing ? (
-                    /* Leaving without deleting: anything deleted here comes back. */
-                    <button
-                      type="button"
-                      aria-label="Cancel"
-                      title="Cancel"
-                      onClick={cancelManaging}
-                      className="-my-1 flex size-[22px] items-center justify-center rounded-[7px] transition-colors hover:bg-[#f4f4f2]"
-                      style={{ color: MUTED }}
-                    >
-                      <X className="size-[14px]" strokeWidth={1.8} />
-                    </button>
-                  ) : phase === "thinking" ? (
+                  {managing ? null : phase === "thinking" ? (
                     /* One steady status, with a light sweeping across the words. */
                     <span className="text-shimmer text-[12px]">Regenerating…</span>
                   ) : (
@@ -1702,15 +1694,28 @@ export function PlannedBadge({
                             : `${picked.length} selected`}
                       </span>
                       <span className="flex items-center gap-1.5">
-                        <button
-                          type="button"
-                          onClick={deletePicked}
-                          disabled={picked.length === 0 || picked.length >= totalDrafts}
-                          className="rounded-[7px] border bg-white px-2.5 py-1 text-[12px] font-medium transition-colors hover:bg-[#f4f4f2] disabled:pointer-events-none disabled:opacity-40"
-                          style={{ borderColor: LINE, color: "#b8433b" }}
-                        >
-                          Delete selected
-                        </button>
+                        {/* With nothing selected, the delete button becomes a
+                            way back from the last delete. */}
+                        {picked.length === 0 && undoStack.length > 0 ? (
+                          <button
+                            type="button"
+                            onClick={undoDelete}
+                            className="rounded-[7px] border bg-white px-2.5 py-1 text-[12px] font-medium transition-colors hover:bg-[#f4f4f2]"
+                            style={{ borderColor: LINE, color: INK }}
+                          >
+                            Undo
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={deletePicked}
+                            disabled={picked.length === 0 || picked.length >= totalDrafts}
+                            className="rounded-[7px] border bg-white px-2.5 py-1 text-[12px] font-medium transition-colors hover:bg-[#f4f4f2] disabled:pointer-events-none disabled:opacity-40"
+                            style={{ borderColor: LINE, color: "#b8433b" }}
+                          >
+                            Delete selected
+                          </button>
+                        )}
                         <button
                           type="button"
                           onClick={doneManaging}

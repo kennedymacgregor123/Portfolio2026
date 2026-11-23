@@ -1293,10 +1293,19 @@ export function PlannedBadge({
     gone: [],
   })
   const kept = (n: number) => draftsFor(n).filter((d) => !rounds.gone.includes(`${n}:${d.id}`))
-  const round = rounds.list[rounds.shown]!
+  // What's left, packed into pages of three from the newest end: deleting
+  // drafts from different rounds closes the gaps, every page but the oldest
+  // is full, and the latest round always shows whole. "shown" is a page.
+  const pages = (() => {
+    const flat = rounds.list.flatMap((r) => kept(r.n).map((d) => ({ d, n: r.n, key: `${r.n}:${d.id}` }))).reverse()
+    const out: (typeof flat)[] = []
+    for (let i = 0; i < flat.length; i += 3) out.unshift(flat.slice(i, i + 3).reverse())
+    return out
+  })()
+  const page = Math.max(0, Math.min(rounds.shown, pages.length - 1))
   const redraft = (note?: string) => {
     if (note)
-      setRounds((r) => ({ ...r, list: [...r.list, { note, n: r.next }], shown: r.list.length, next: r.next + 1 }))
+      setRounds((r) => ({ ...r, list: [...r.list, { note, n: r.next }], shown: Number.MAX_SAFE_INTEGER, next: r.next + 1 }))
     setPhase("thinking")
     window.clearTimeout(timer.current)
     timer.current = window.setTimeout(() => setPhase("done"), 1400)
@@ -1330,17 +1339,32 @@ export function PlannedBadge({
       const left = (n: number) => draftsFor(n).some((d) => !gone.includes(`${n}:${d.id}`))
       const list = r.list.filter((x) => left(x.n))
       if (list.length === 0) return r
-      // Stay on the round being viewed, or the nearest one after it.
-      const after = r.list.slice(r.shown).find((x) => left(x.n))
-      const shown = after ? list.indexOf(after) : list.length - 1
-      return { ...r, list, shown, gone }
+      return { ...r, list, gone }
     })
     setPicked([])
+  }
+  // Deletes made while managing stick on Done; Cancel puts them all back.
+  const beforeManaging = useRef<typeof rounds | null>(null)
+  const startManaging = () => {
+    beforeManaging.current = rounds
+    setManaging(true)
   }
   const doneManaging = () => {
     setManaging(false)
     setPicked([])
   }
+  const cancelManaging = () => {
+    if (beforeManaging.current) setRounds(beforeManaging.current)
+    doneManaging()
+  }
+  useEffect(() => {
+    if (!managing) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") cancelManaging()
+    }
+    document.addEventListener("keydown", onKey)
+    return () => document.removeEventListener("keydown", onKey)
+  }, [managing])
   // With nothing to go on, one click gives the agent what it needs; it then
   // drafts and applies its suggestion, as it would have done ahead of time.
   const learn = () => {
@@ -1517,32 +1541,44 @@ export function PlannedBadge({
                   </div>
                   {/* A quiet way to steer, up in the header: earlier rounds, and a
                       menu holding Refine and tidying rounds. */}
-                  {managing ? null : phase === "thinking" ? (
+                  {managing ? (
+                    /* Leaving without deleting: anything deleted here comes back. */
+                    <button
+                      type="button"
+                      aria-label="Cancel"
+                      title="Cancel"
+                      onClick={cancelManaging}
+                      className="-my-1 flex size-[22px] items-center justify-center rounded-[7px] transition-colors hover:bg-[#f4f4f2]"
+                      style={{ color: MUTED }}
+                    >
+                      <X className="size-[14px]" strokeWidth={1.8} />
+                    </button>
+                  ) : phase === "thinking" ? (
                     /* One steady status, with a light sweeping across the words. */
                     <span className="text-shimmer text-[12px]">Regenerating…</span>
                   ) : (
                     <span className="flex items-center gap-2">
                     {/* Earlier rounds, a step back or forward. Only there once
                         there's more than one. */}
-                    {rounds.list.length > 1 && (
+                    {pages.length > 1 && (
                       <span className="-my-1 flex items-center text-[11.5px] tabular-nums" style={{ color: MUTED }}>
                         <button
                           type="button"
                           aria-label="Previous round"
-                          disabled={rounds.shown === 0}
-                          onClick={() => setRounds((r) => ({ ...r, shown: Math.max(0, r.shown - 1) }))}
+                          disabled={page === 0}
+                          onClick={() => setRounds((r) => ({ ...r, shown: Math.max(0, page - 1) }))}
                           className="flex size-[20px] items-center justify-center rounded-[6px] transition-colors hover:bg-[#f4f4f2] disabled:pointer-events-none disabled:opacity-35"
                         >
                           <ChevronLeft className="size-[13px]" strokeWidth={2} />
                         </button>
-                        <span aria-live="polite" aria-label={`Round ${rounds.shown + 1} of ${rounds.list.length}`}>
-                          {rounds.shown + 1}/{rounds.list.length}
+                        <span aria-live="polite" aria-label={`Drafts ${page + 1} of ${pages.length}`}>
+                          {page + 1}/{pages.length}
                         </span>
                         <button
                           type="button"
                           aria-label="Next round"
-                          disabled={rounds.shown === rounds.list.length - 1}
-                          onClick={() => setRounds((r) => ({ ...r, shown: Math.min(r.list.length - 1, r.shown + 1) }))}
+                          disabled={page === pages.length - 1}
+                          onClick={() => setRounds((r) => ({ ...r, shown: Math.min(pages.length - 1, page + 1) }))}
                           className="flex size-[20px] items-center justify-center rounded-[6px] transition-colors hover:bg-[#f4f4f2] disabled:pointer-events-none disabled:opacity-35"
                         >
                           <ChevronRight className="size-[13px]" strokeWidth={2} />
@@ -1579,7 +1615,7 @@ export function PlannedBadge({
                             >
                               Refine
                             </button>
-                            {rounds.list.length > 1 && (
+                            {pages.length > 1 && (
                               <>
                                 <span className="mx-1 my-1 h-px" style={{ background: LINE }} />
                                 <button
@@ -1588,7 +1624,7 @@ export function PlannedBadge({
                                   onClick={() => {
                                     setRoundMenu(false)
                                     setAsking(false)
-                                    setManaging(true)
+                                    startManaging()
                                   }}
                                   className="rounded-[7px] px-2.5 py-1.5 text-left transition-colors hover:bg-[#f4f4f2]"
                                 >
@@ -1613,11 +1649,10 @@ export function PlannedBadge({
                   <div className="view-in mt-3">
                     {/* Every round, newest first, a row of drafts each. */}
                     <div className="-mr-1 flex max-h-[330px] flex-col gap-2 overflow-y-auto pr-1">
-                      {[...rounds.list].reverse().map((r) => (
-                        <div key={r.n}>
+                      {[...pages].reverse().map((pg) => (
+                        <div key={pg[0]!.key}>
                           <div className="grid grid-cols-3 gap-2">
-                            {kept(r.n).map((d) => {
-                              const key = `${r.n}:${d.id}`
+                            {pg.map(({ d, key }) => {
                               const locked = style.id === d.id
                               const on = picked.includes(key)
                               return (
@@ -1691,12 +1726,12 @@ export function PlannedBadge({
                   <>
                 {/* The drafts, ready before anyone asked. */}
                 <div className="mt-3 grid grid-cols-3 gap-2.5">
-                  {kept(round.n).map((d, k) => {
+                  {(pages[page] ?? []).map(({ d, n, key }, k) => {
                     const on = style.id === d.id
                     return phase === "thinking" ? (
                       /* Shaped like the card that's coming: a preview with a
                          ghost badge, and two soft lines for its name. */
-                      <div key={d.id} className="flex h-[143px] flex-col overflow-hidden rounded-[10px] border" style={{ borderColor: LINE }}>
+                      <div key={key} className="flex h-[143px] flex-col overflow-hidden rounded-[10px] border" style={{ borderColor: LINE }}>
                         <span className="flex h-[84px] items-center justify-center" style={{ background: PANEL }}>
                           <span className="relative block h-[58px] w-[42px] overflow-hidden rounded-[5px] bg-white shadow-[0_2px_6px_rgba(15,15,15,0.06)]">
                             <span className="rb-skel rb-on" style={{ animationDelay: `${k * 140}ms` }} />
@@ -1713,7 +1748,7 @@ export function PlannedBadge({
                       </div>
                     ) : (
                       <button
-                        key={d.id}
+                        key={key}
                         type="button"
                         // Picking is optional: clicking the chosen draft again
                         // goes back to the standard badge.
@@ -1728,7 +1763,7 @@ export function PlannedBadge({
                           <span className="absolute top-2 right-2">
                             <Radio on={on} />
                           </span>
-                          {d.id === draftsFor(round.n)[0]!.id && (
+                          {d.id === draftsFor(n)[0]!.id && (
                             <span className="absolute top-2 left-2 flex items-center gap-1 rounded-full bg-white py-[2px] pr-2 pl-1.5 text-[10.5px] font-medium shadow-[0_1px_2px_rgba(15,15,15,0.06)]" style={{ color: INK }}>
                               <AiLabel size={10} />
                               Suggested

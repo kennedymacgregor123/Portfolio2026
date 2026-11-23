@@ -1606,9 +1606,7 @@ export function PlannedBadge({
                 <p className="mt-1 truncate text-[12.5px]" style={{ color: MUTED }}>
                   {managing
                     ? "Select the drafts you no longer need."
-                    : round.n === 0
-                    ? "Three styles drafted from your event’s brand. Pick one, or ask for changes."
-                    : `Redrafted ${round.note}. Pick one, or ask for changes.`}
+                    : "Three styles drafted from your event’s brand. Pick one, or ask for changes."}
                 </p>
 
                 {managing ? (
